@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AaaS</title>
 <link rel="stylesheet" href="/clinic-theme.css">
-<script>if(/[?&]bot=1/.test(location.search))document.documentElement.classList.add('aaas-unified')</script>
+<script>if(/[?&]bot=1/.test(location.search)){document.documentElement.classList.add('aaas-unified');document.documentElement.dataset.theme='light'}</script>
 </head>
 <body>
 
@@ -3446,7 +3446,9 @@ function wpHash(s){let h=2166136261;for(const c of String(s))h=Math.imul(h^c.cha
 function wpFace(seed,size=40){
   const kind=String(seed).split(':')[0];
   const name=(KIND[kind]||['orbit'])[0];
-  return `<svg class="wp-face" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15.15" fill="#0c0c0c" stroke="rgba(255,255,255,.16)"/><g transform="translate(4 4)" fill="none" stroke="#f5f5f5" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round">${IC[name]||IC.orbit}</g></svg>`;
+  const mark=botMode?'<rect width="32" height="32" rx="8" fill="currentColor"/>':'<circle cx="16" cy="16" r="15.15" fill="#0c0c0c" stroke="rgba(255,255,255,.16)"/>';
+  const stroke=botMode?'#fff':'#f5f5f5';
+  return `<svg class="wp-face" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">${mark}<g transform="translate(4 4)" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${IC[name]||IC.orbit}</g></svg>`;
 }
 const wpSeed=a=>(a.avatar&&a.avatar.seed)||(a.kind+':'+a.id);
 function wpAva(a,size=40){

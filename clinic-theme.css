@@ -49,7 +49,72 @@ h1, h2, h3, b, button, input, select, textarea { font-family: var(--font); }
 .kanban-col { flex: 1 0 200px; background: var(--soft); border-radius: var(--radius); padding: 10px; }
 .kanban-col header { display: flex; justify-content: space-between; margin-bottom: 8px; }
 .deal { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-bottom: 8px; }
-html.aaas-unified { --font: Inter, "Segoe UI", system-ui, sans-serif; --ink: #17182b; --bg: #f5f6fb; --page: #f5f6fb; --mute: #5e6478; --sans: Inter, "Segoe UI", system-ui, sans-serif; --serif: Inter, "Segoe UI", system-ui, sans-serif; --accent: #2f2a86; --dark: #2f2a86; --line: #e4e7f2; --soft: #eef0fb; --navy: #17182b; }
+html.aaas-unified { --font: Inter, "Segoe UI", system-ui, sans-serif; --ink: #17182b; --bg: #ffffff; --page: #f5f6fb; --mute: #5e6478; --mute2: #5e6478; --sans: Inter, "Segoe UI", system-ui, sans-serif; --serif: Inter, "Segoe UI", system-ui, sans-serif; --accent: var(--primary); --dark: var(--primary); --line: #e4e7f2; --bd: #e4e7f2; --soft: #eef0fb; --navy: #17182b; --pv: #eef0fb; }
+/* Bot Mode uses the same surfaces, type and controls as the dashboard. */
+body.bot-mode {
+  --ink: #17182b; --mute: #5e6478; --mute2: #5e6478; --bg: #ffffff; --page: #f5f6fb; --soft: #eef0fb;
+  --line: #e4e7f2; --bd: #e4e7f2; --accent: var(--primary); --dark: var(--primary); --pv: #eef0fb;
+  --sans: var(--font); --serif: var(--font);
+  font-family: var(--font); font-size: 15px; background: var(--page); color: var(--ink);
+}
+body.bot-mode .wp,
+body.bot-mode .wp-side,
+body.bot-mode .wp-main,
+body.bot-mode .wp-hd,
+body.bot-mode .topbar,
+body.bot-mode .wp-user { background: var(--card) !important; color: var(--ink) !important; }
+body.bot-mode .wp-side { border-right: 1px solid var(--line); }
+body.bot-mode .wp-sh b,
+body.bot-mode .wp-agt b,
+body.bot-mode .wp-rowh b,
+body.bot-mode .wp-pin b,
+body.bot-mode .wp-hd b,
+body.bot-mode .wp-user { color: var(--ink); font-size: 15px; }
+body.bot-mode .wp-sh small,
+body.bot-mode .wp-agt small,
+body.bot-mode .wp-rowt small { color: var(--muted); }
+body.bot-mode .btn.dk,
+body.bot-mode .go,
+body.bot-mode .wp-av,
+body.bot-mode .wp-orb,
+body.bot-mode .wp-chiefav { background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important; box-shadow: none !important; }
+body.bot-mode .wp-face { background: transparent !important; color: var(--primary) !important; }
+body.bot-mode .wp-pins { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px 8px 8px; }
+body.bot-mode .wp-pin { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; max-width: none; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; }
+body.bot-mode .wp-pin.sel,
+body.bot-mode .wp-row.sel,
+body.bot-mode .wp-ag.sel,
+body.bot-mode .nav-i.on { background: var(--soft) !important; color: var(--primary) !important; box-shadow: none !important; }
+body.bot-mode .wp-ring { border-radius: 8px; box-shadow: none !important; padding: 0; background: transparent; width: 28px; height: 28px; }
+body.bot-mode .wp-ring .wp-face,
+body.bot-mode .wp-pin .wp-face { width: 28px; height: 28px; }
+body.bot-mode .tile { width: 28px; height: 28px; border-radius: 8px !important; background: var(--soft) !important; color: var(--primary) !important; box-shadow: none !important; }
+body.bot-mode .wp-search input,
+body.bot-mode .wp-comp textarea,
+body.bot-mode .wp-f input,
+body.bot-mode .wp-f textarea,
+body.bot-mode .wp-f select { font-size: 15px; font-family: var(--font); }
+body.bot-mode .wp-tag { display: none; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.form input, .form select, .form textarea,
+.stack input, .stack select, .stack textarea,
+.field input, .field select, .field textarea,
+.small input, .small select, .small textarea {
+  font: 15px/1.4 var(--font);
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-height: 40px;
+  width: 100%;
+}
+.chief-mini header { background: var(--card); color: var(--ink); border-bottom: 1px solid var(--line); }
+.chief-mini header .ava { background: var(--primary); color: #fff; }
+.chief-mini header button { color: var(--ink); }
+.chief-mini header button:hover { background: var(--soft); }
+.bot-sw.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+.chat-fab, .chat-fab.bot { background: var(--primary); color: #fff; }
 @media (max-width: 800px) {
   .side { width: 100%; height: auto; position: relative; }
   .app { flex-direction: column; }

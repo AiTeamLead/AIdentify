@@ -15,6 +15,7 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - **Privacy, terms, and a deletion request**, marked for a lawyer to review, with a grievance officer. Linked from the footer and signup.
 - **Per-item copies** of approvals, rules, and skills, so a list is not one blob. The old key is still written.
 - A shared theme for Chief and the dashboards, a cost estimate, and an eval script for 30 scenarios.
+- Bot Mode uses the same light surfaces, indigo accent, Inter type and list navigation as the dashboards. The sample account is named for the industry you picked, and the sample agency CRM starts with a few demo contacts and deals.
 
 ### Changed
 - The sample business opens as a digital marketing agency. A dental sample is still one click away in the industry list.

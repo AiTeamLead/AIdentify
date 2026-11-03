@@ -29,7 +29,7 @@ function crmPage() {
         + stages.filter((n) => n.id !== s.id).slice(0, 3).map((n) => '<button class="btn-ghost" type="button" data-crm="stage" data-id="' + esc(deal.id) + '" data-stage="' + esc(n.id) + '">' + esc(n.name) + '</button>').join(' ')
         + '</article>').join('') + '</section>';
   }).join('');
-  const rows = vis(contacts, ['name', 'email', 'phone']).map((c) => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.email || '') + '</td><td>' + esc(c.phone || '') + '</td><td>' + (c.tags || []).map((t) => '<span class="pill" style="background:' + esc(t.color || '#eef2f6') + '">' + esc(t.name) + '</span>').join(' ') + '</td></tr>').join('');
+  const rows = vis(contacts, ['name', 'email', 'phone']).map((c) => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.email || '') + '</td><td>' + esc(c.phone || '') + '</td><td>' + (c.tags || []).map((t) => '<span class="pill" style="background:' + esc(t.color || 'var(--soft)') + '">' + esc(t.name) + '</span>').join(' ') + '</td></tr>').join('');
   return banner() + '<h1>CRM</h1><p class="sub">Contacts, companies and deals stay in AaaS. Nothing is synced to Salesforce or another CRM. A message still waits for your approval.</p>'
     + '<div class="kpis"><div class="tile"><div class="k">Pipeline</div><div class="v">' + money(dash.pipelineValue) + '</div></div>'
     + '<div class="tile"><div class="k">Follow-ups due</div><div class="v">' + esc(dash.followUpsDue || 0) + '</div></div>'
@@ -38,7 +38,7 @@ function crmPage() {
     + '<button class="btn' + (box.tab === 'list' ? '' : '-ghost') + '" type="button" data-crm="tab" data-tab="list">List</button>'
     + '<button class="btn-ghost" type="button" data-crm="export">Export CSV</button></div>'
     + '<form class="form" data-crm="add"><label>Contact name<input name="name" required></label><label>Phone<input name="phone"></label><label>Email<input name="email" type="email"></label><label>Tags<input name="tags" placeholder="retainer, warm"></label><div><button class="btn" type="submit">Add contact</button></div></form>'
-    + '<label class="small">Search<input id="crmQ" value="' + esc(box.q || '') + '" placeholder="Name, email, phone"></label>'
+    + '<label class="field">Search<input id="crmQ" value="' + esc(box.q || '') + '" placeholder="Name, email, phone"></label>'
     + (box.tab === 'list'
       ? '<div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Tags</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">No contacts yet.</td></tr>') + '</tbody></table></div>'
       : '<div class="kanban">' + board + '</div>');
