@@ -1,0 +1,1806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AaaS · Clinic team</title>
+<link rel="stylesheet" href="/clinic-theme.css">
+<style>
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; }
+body { font:15px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; color:var(--ink); background:var(--bg); }
+button,input,select,textarea { font:inherit; color:inherit; }
+button { cursor:pointer; }
+:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+.app { display:flex; min-height:100vh; }
+.side { width:248px; flex:none; background:#fff; border-right:1px solid var(--line); display:flex; flex-direction:column; padding:18px 6px 14px 12px; position:sticky; top:0; height:100vh; overflow-y:scroll; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#b7c1cd #f1f4f8; }
+.side::-webkit-scrollbar { width:10px; }
+.side::-webkit-scrollbar-track { background:#f1f4f8; }
+.side::-webkit-scrollbar-thumb { background:#b7c1cd; border-radius:10px; border:2px solid #f1f4f8; min-height:40px; }
+.side::-webkit-scrollbar-thumb:hover { background:#8f9bab; }
+.brand { display:flex; gap:10px; align-items:center; padding:0 8px 16px; }
+.mark { width:28px; height:28px; border-radius:8px; background:var(--blue); color:#fff; display:grid; place-items:center; font-weight:700; font-size:14px; }
+.brand b { display:block; font-size:15px; }
+.brand span { display:block; color:var(--muted); font-size:12px; font-weight:400; }
+.nav { display:flex; flex-direction:column; gap:2px; flex:none; }
+.side > * { flex:none; }
+.nav button { text-align:left; background:transparent; border:0; border-radius:8px; padding:8px 10px; color:var(--ink); display:flex; justify-content:space-between; align-items:center; }
+.nav button[aria-current="page"] { background:var(--soft); color:var(--blue); font-weight:600; }
+.nav button:hover { background:#f6f8fb; }
+.badge { background:#eef2f6; color:var(--ink); border-radius:99px; font-size:12px; padding:0 7px; min-width:20px; text-align:center; }
+.nav button[aria-current="page"] .badge { background:#d7e4ff; color:var(--blue); }
+.side .grow { flex:1 0 12px; }
+.industry-name { margin-top:4px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#f6f8fb; color:var(--ink); font-size:15px; }
+.side select { width:100%; margin-top:4px; border:1px solid var(--line); border-radius:8px; padding:8px; background:#fff; font-size:16px; }
+.role-switch { display:flex; gap:6px; padding:8px; }
+.role-switch button { flex:1; border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 4px; font-size:12px; }
+.role-switch button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+.out { margin:6px 8px 0; background:transparent; border:0; color:var(--muted); text-align:left; padding:6px; }
+.main { flex:1; min-width:0; padding:28px 32px 96px; overflow-x:auto; }
+.banner { background:var(--amber-bg); color:#6b4700; border:1px solid #f3e2c0; border-radius:10px; padding:10px 12px; margin-bottom:16px; font-size:13px; }
+h1 { font-size:26px; letter-spacing:-.03em; margin:0 0 4px; font-weight:650; }
+.sub { color:var(--muted); margin:0 0 18px; }
+.callout { background:#fff; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:10px; padding:12px 14px; margin-bottom:16px; }
+.kpis, .team, .split, .days { display:grid; gap:12px; }
+.kpis { grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); margin-bottom:18px; }
+.team { grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); }
+.card, .tile { background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+.tile { padding:14px; }
+.tile .k { color:var(--muted); font-size:13px; }
+.tile .v { font-size:26px; font-weight:650; letter-spacing:-.03em; margin-top:4px; }
+.tile .hint { color:var(--muted); font-size:12px; margin-top:4px; }
+.team button.tile { width:100%; text-align:left; }
+.team button.tile:hover { border-color:#c9d7f5; }
+.muted { color:var(--muted); }
+.small { font-size:13px; color:var(--muted); }
+h2 { font-size:16px; margin:22px 0 8px; }
+table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { font-size:12px; color:var(--muted); font-weight:600; background:#fafbfc; }
+tr:last-child td { border-bottom:0; }
+.scroll { max-height:440px; overflow:auto; border-radius:12px; }
+.pill { display:inline-block; border-radius:99px; padding:2px 8px; font-size:12px; background:#eef2f6; }
+.pill.new, .pill.pending, .pill.draft, .pill.queued { background:#fff6e5; color:var(--amber); }
+.pill.booked, .pill.scheduled, .pill.approved, .pill.completed { background:var(--green-bg); color:var(--green); }
+.pill.noshow, .pill.rejected, .pill.cancelled, .pill.closed, .pill.overdue { background:var(--red-bg); color:var(--red); }
+.pill.paid { background:var(--green-bg); color:var(--green); }
+.pill.unpaid { background:var(--amber-bg); color:var(--amber); }
+.btn, .btn-ghost, .btn-danger { border-radius:8px; padding:8px 12px; border:1px solid transparent; }
+.btn { background:var(--blue); color:#fff; }
+.btn:hover { background:var(--blue-d); }
+.btn-ghost { background:#fff; border-color:var(--line); }
+.ai-box { border:1px solid var(--line); border-radius:12px; padding:12px 14px 4px; margin:6px 0 0; display:grid; gap:10px; min-width:0; }
+.ai-box legend { font-weight:650; font-size:13px; padding:0 6px; }
+.model-other[hidden], .ai-load-msg[hidden], .biz-other[hidden] { display:none !important; }
+.ai-box select { width:100%; }
+select[aria-busy="true"] { cursor:progress; }
+.btn-danger { background:#fff; border-color:#f0d0d0; color:var(--red); }
+.btn:disabled, .btn-ghost:disabled { opacity:.5; cursor:not-allowed; }
+.row-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.form { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin:10px 0 16px; }
+.form label, .stack label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
+.form input, .form select, .form textarea, .stack input, .stack select, .stack textarea { border:1px solid #d5dbe3; border-radius:8px; padding:8px 10px; background:#fff; width:100%; }
+.form .wide { grid-column:span 2; }
+.form .full { grid-column:1 / -1; }
+.split { grid-template-columns:1fr 1fr; align-items:start; }
+.days { grid-template-columns:repeat(7, minmax(0,1fr)); }
+.day { background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px; min-height:140px; }
+.day b { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+.cal-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.cal-head b { font-size:16px; min-width:150px; text-align:center; }
+.cal-src { margin-left:auto; }
+.cal { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; }
+.cal-w { font-size:12px; font-weight:650; color:var(--muted); padding:0 4px; }
+.cal-cell { background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px; min-height:96px; display:flex; flex-direction:column; gap:4px; min-width:0; }
+.cal-cell.blank { background:transparent; border:0; }
+.cal-cell.today { border-color:var(--blue); box-shadow:inset 0 0 0 1px var(--blue); }
+.cal-d { font-size:12px; font-weight:650; color:var(--muted); }
+.cal-cell.today .cal-d { color:var(--blue); }
+.fest { text-align:left; font-size:11.5px; line-height:1.3; border:0; border-radius:6px; padding:4px 6px; background:#fff4e0; color:#7a4b00; cursor:pointer; overflow-wrap:anywhere; }
+.fest.pub { background:#ffe9e4; color:#8a2a12; }
+.fest:hover, .fest:focus-visible { filter:brightness(.96); outline:2px solid var(--blue); outline-offset:1px; }
+.fest-h { margin:18px 0 8px; font-size:15px; }
+.fest-list { display:grid; gap:8px; margin-bottom:8px; }
+.fest-row { display:flex; justify-content:space-between; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+@media (max-width:720px) { .cal { gap:3px; } .cal-cell { min-height:64px; padding:4px; } .cal-w { font-size:10px; } .fest { font-size:10px; padding:2px 4px; } .cal-cell .post { display:none; } .cal-src { margin-left:0; width:100%; } }
+.post { font-size:12px; background:#f6f8fb; border-radius:8px; padding:6px; margin-top:6px; }
+.draft { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:10px; }
+.draft p { margin:6px 0; white-space:pre-wrap; }
+.rules { margin-top:16px; }
+.auth { min-height:100vh; display:grid; place-items:center; padding:24px; }
+.domains { margin:18px 0; display:grid; gap:8px; }
+.domains > b { font-size:14px; }
+.dom-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
+.dom { display:flex; flex-direction:column; gap:2px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); text-decoration:none; }
+.dom:hover, .dom:focus-visible { border-color:var(--blue); background:#f6f8fb; }
+.dom span { font-weight:600; font-size:14px; }
+.dom code { font-size:12px; color:var(--muted); }
+.dom-badge { justify-self:start; width:max-content; }
+.landing { min-height:100vh; display:grid; grid-template-columns:1.1fr .9fr; gap:28px; align-items:center; padding:32px 6vw; }
+.hero h1 { font-size:40px; letter-spacing:-.04em; line-height:1.1; }
+.plans { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-top:16px; }
+.banner.ended { background:#fde8e8; color:#8a1f1f; border-color:#f3c7c7; }
+.recovered { background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin:8px 0 16px; }
+.recovered .v { font-size:40px; font-weight:650; letter-spacing:-.03em; }
+.recovered ul { display:flex; flex-wrap:wrap; gap:8px 18px; margin:10px 0 0; padding:0; list-style:none; }
+.banner .btn { margin:8px 8px 0 0; }
+.panel { width:min(440px, 100%); background:#fff; border:1px solid var(--line); border-radius:16px; padding:28px; box-shadow:var(--shadow); }
+.panel h1 { font-size:28px; }
+.stack { display:flex; flex-direction:column; gap:10px; }
+.tabs { display:flex; gap:6px; margin-bottom:12px; }
+.tabs button { flex:1; border:1px solid var(--line); background:#fff; border-radius:8px; padding:8px; }
+.tabs button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+.err { color:var(--red); font-size:13px; min-height:1.2em; }
+.roles { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.roles button { text-align:left; padding:16px; }
+.roles ul { margin:8px 0 0; padding-left:18px; color:var(--muted); }
+.bot-sw { position:fixed; top:10px; right:12px; z-index:40; display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:6px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--ink); box-shadow:var(--shadow); font-size:13px; font-weight:650; }
+.bot-sw i { width:18px; height:18px; border-radius:50%; background:#c5ced8; display:inline-block; }
+.bot-sw.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+.bot-sw.on i { background:#fff; }
+.bot-on { min-height:100vh; }
+.bot-frame { position:fixed; inset:0; width:100%; height:100%; height:100dvh; border:0; background:var(--bg); z-index:8; }
+.chief { display:flex; flex-direction:column; height:calc(100vh - 28px); height:calc(100dvh - 28px); background:#fff; overflow:hidden; }
+.chief header { padding:18px 22px; border-bottom:1px solid var(--line); }
+.chief header b { display:block; font-size:20px; }
+.chief header span { color:var(--muted); font-size:13px; }
+.chief .log { flex:1; overflow:auto; padding:22px; display:flex; flex-direction:column; gap:12px; }
+.chief form { display:flex; gap:8px; padding:14px; border-top:1px solid var(--line); }
+.chief input { flex:1; border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-size:16px; }
+.home-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:16px; align-items:start; }
+.drawer-back { position:fixed; inset:0; background:rgba(23,24,43,.28); z-index:30; }
+.drawer { position:fixed; top:0; right:0; height:100%; width:min(420px, 100%); z-index:31; padding:20px; overflow:auto; border-radius:0; }
+@media (max-width:800px) { .home-grid { grid-template-columns:1fr; } .chief { height:calc(100dvh - 12px); } }
+.chat-fab { position:fixed; right:20px; bottom:20px; background:var(--ink); color:#fff; border:0; border-radius:999px; padding:12px 16px; box-shadow:0 8px 24px rgba(16,24,40,.18); z-index:5; }
+.chat-fab.bot { display:inline-flex; align-items:center; gap:8px; padding:10px 16px 10px 12px; font-weight:650; }
+.chat-fab.bot .robot { width:22px; height:22px; }
+.chat-fab.bot.open { opacity:0; pointer-events:none; }
+.chief-mini { position:fixed; right:20px; bottom:20px; width:min(400px, calc(100vw - 32px)); height:min(620px, calc(100vh - 100px)); background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:0 24px 60px rgba(16,24,40,.22); display:flex; flex-direction:column; overflow:hidden; z-index:30; transform-origin:bottom right; animation:miniIn .18s ease-out; }
+.chief-mini[hidden] { display:none; }
+.chief-mini.full { inset:0; right:0; bottom:0; left:0; top:0; width:100vw; height:100vh; height:100dvh; border:0; border-radius:0; z-index:60; animation:none; }
+.chief-mini header { display:flex; align-items:center; gap:10px; padding:10px 10px 10px 14px; background:var(--ink); color:#fff; }
+.chief-mini header .ava { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.14); flex:none; }
+.chief-mini header .t { flex:1; min-width:0; display:grid; line-height:1.2; }
+.chief-mini header .t b { font-size:14px; }
+.chief-mini header .t span { font-size:11.5px; opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chief-mini header button { width:32px; height:32px; border:0; border-radius:8px; background:transparent; color:#fff; display:grid; place-items:center; cursor:pointer; padding:0; }
+.chief-mini header button:hover { background:rgba(255,255,255,.14); }
+.chief-mini iframe { flex:1; width:100%; border:0; background:#fff; }
+@keyframes miniIn { from { opacity:0; transform:scale(.94) translateY(8px); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion:reduce) { .chief-mini { animation:none; } }
+.chat { position:fixed; right:20px; bottom:72px; width:min(360px, calc(100vw - 32px)); height:460px; background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:0 16px 40px rgba(16,24,40,.16); display:flex; flex-direction:column; z-index:5; }
+.chat header { padding:12px 14px; border-bottom:1px solid var(--line); font-weight:650; }
+.chat .log { flex:1; overflow:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.bubble { border-radius:12px; padding:8px 10px; max-width:95%; white-space:pre-wrap; }
+.bubble.u { align-self:flex-end; background:var(--soft); }
+.bubble.a { align-self:flex-start; background:#f6f8fb; }
+.chat form { display:flex; gap:6px; padding:10px; border-top:1px solid var(--line); }
+.chat input { flex:1; min-width:0; border:1px solid #d5dbe3; border-radius:8px; padding:8px 10px; font-size:16px; }
+.chat form .btn { flex:none; }
+.toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:#1b2430; color:#fff; padding:10px 14px; border-radius:10px; z-index:6; max-width:min(480px, calc(100vw - 24px)); }
+.link { color:var(--blue); }
+.placeholder { opacity:.85; }
+.conn { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.conn .actions { display:flex; flex-direction:column; gap:6px; align-items:flex-end; flex:none; }
+.src { list-style:none; margin:8px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
+.src li { background:#f6f8fb; border-radius:999px; padding:4px 10px; font-size:13px; }
+.visit-q { margin:0 0 12px; }
+.terms { margin:8px 0 0; padding-left:18px; }
+.scroll { overflow:auto; -webkit-overflow-scrolling:touch; }
+table { min-width:520px; }
+@media (max-width:1100px) {
+  .days, .split, .form, .roles, .plans { grid-template-columns:1fr 1fr; }
+  .side { width:220px; }
+  .landing { grid-template-columns:1fr; padding:24px 16px 40px; }
+  .hero h1 { font-size:32px; }
+  .panel { width:min(560px, 100%); }
+}
+@media (max-width:800px) {
+  .app { flex-direction:column; }
+  .side { width:auto; height:auto; position:relative; border-right:0; border-bottom:1px solid var(--line); padding:12px 10px 8px; }
+  .nav { flex-direction:row; overflow:auto; gap:4px; padding-bottom:4px; flex:none; margin:0; padding:0 0 4px; }
+  .side { overflow:visible; }
+  .nav button { white-space:nowrap; flex:none; min-height:40px; }
+  .brand span { max-width:70vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .role-switch { flex-wrap:wrap; }
+  .days, .roles { grid-template-columns:1fr 1fr; }
+  .split, .form, .plans, .agent-kpis { grid-template-columns:1fr !important; }
+  .main { padding:16px 14px 108px; }
+  .side .grow { display:none; }
+  h1 { font-size:22px; }
+  .hero h1 { font-size:30px; }
+  .tile .v { font-size:22px; }
+  .form input, .form select, .form textarea, .stack input, .stack select, .stack textarea { font-size:16px; }
+  .conn { flex-direction:column; }
+  .conn .actions { align-items:flex-start; flex-direction:row; flex-wrap:wrap; }
+  .chat { left:8px; right:8px; width:auto; height:min(70vh, 520px); bottom:64px; }
+  .bot-sw { top:8px; right:8px; }
+  .chat-fab { right:12px; bottom:12px; min-height:44px; }
+  .chief-mini { right:8px; left:8px; bottom:8px; width:auto; height:min(78vh, 620px); }
+  .auth { padding:12px; align-items:start; }
+  .landing { padding:16px 12px 32px; gap:16px; }
+}
+@media (max-width:480px) {
+  .days, .roles, .plans { grid-template-columns:1fr; }
+  .hero h1 { font-size:26px; }
+  .panel { padding:18px 14px; }
+  th, td { padding:8px; }
+}
+
+/* ---------- onboarding (Typeform-style, fits the screen) ---------- */
+.ob { position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr; background:var(--bg); overflow:hidden; }
+.ob-bar { position:absolute; top:0; left:0; right:0; height:4px; background:rgba(47,42,134,.10); z-index:3; }
+.ob-bar i { display:block; height:100%; width:0; background:linear-gradient(90deg, #10b981, #2f2a86); border-radius:0 4px 4px 0; transition:width .45s cubic-bezier(.2,.7,.2,1); }
+.ob-head { position:relative; padding:clamp(14px, 2.6vh, 26px) clamp(20px, 4vw, 56px) clamp(14px, 2.4vh, 24px); background:#f7f7f9; border-bottom:1px solid #e9eaf2;
+  background-image:radial-gradient(#dcdfeb 1px, transparent 1px); background-size:18px 18px; }
+.ob-headrow { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.ob-brand .mark { background:var(--primary); color:#fff; }
+.ob-h { font-size:clamp(24px, 2.6vw, 34px); line-height:1.15; letter-spacing:-.02em; margin:clamp(8px, 1.6vh, 16px) 0 4px; color:var(--ink); }
+.ob-h span { background:linear-gradient(90deg, #2f2a86, #0e8f62); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.ob-lead { margin:0; color:var(--muted); font-size:14.5px; line-height:1.5; max-width:720px; }
+.ob-foot { margin:0; font-size:13px; color:var(--muted); }
+.ob-link { background:none; border:0; padding:0; color:var(--primary); text-decoration:underline; text-underline-offset:3px; cursor:pointer; font-size:13px; }
+/* horizontal flow: node cards joined by lines (grey dotted → green when right, red when something needs fixing) */
+.ob-flow { list-style:none; display:flex; align-items:flex-start; margin:clamp(12px, 2.2vh, 20px) 0 0; padding:4px 2px 2px; overflow-x:auto; scrollbar-width:thin; }
+.ob-flow li { position:relative; flex:1 1 0; min-width:96px; display:flex; justify-content:center; }
+.ob-flow li:not(:last-child)::after { content:''; position:absolute; top:24px; left:calc(50% + 40px); right:calc(-50% + 40px); height:0; border-top:2px dashed #c3c7d6; transition:border-color .3s; }
+.ob-flow li.line-ok:not(:last-child)::after { border-top:2.5px solid #10b981; }
+.ob-flow li.line-bad:not(:last-child)::after { border-top:2.5px solid #ef4444; }
+.ob-flow button { display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:0; padding:0; cursor:pointer; color:var(--muted); font-size:12.5px; }
+.ob-flow button:disabled { cursor:default; }
+.ob-node { position:relative; display:grid; place-items:center; width:72px; height:48px; background:#fff; border:1px solid #e3e5ee; border-radius:12px; box-shadow:0 1px 2px rgba(23,24,43,.05); transition:all .2s; }
+.ob-flow button:not(:disabled):hover .ob-node { border-color:#c9c4fb; box-shadow:0 6px 16px rgba(47,42,134,.10); transform:translateY(-1px); }
+.ob-chipico { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:7px; font-size:12px; }
+.ob-chipico b { font-weight:700; font-size:12px; }
+.c-role { background:#fde2ea; color:#b0164e; } .c-biz { background:#dbeafe; color:#1d4ed8; } .c-city { background:#dbeafe; color:#1d4ed8; }
+.c-services { background:#fef3c7; color:#a16207; } .c-audience { background:#fef3c7; color:#a16207; } .c-ai { background:#ede9fe; color:#6d28d9; } .c-review { background:#dcfce7; color:#15803d; }
+.ob-badge { position:absolute; right:-11px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:800; color:#fff; background:#2a2d3e; border:2px solid #f7f7f9; z-index:1; transition:background .25s; }
+.ob-flow li.ok .ob-badge { background:#10b981; }
+.ob-flow li.bad .ob-badge { background:#ef4444; animation:obPulse 1.2s ease-in-out 2; }
+.ob-flow li.now .ob-node { border-color:var(--primary); box-shadow:0 0 0 3px rgba(47,42,134,.14); }
+.ob-flow li.now.bad .ob-node, .ob-flow li.bad .ob-node { border-color:#fca5a5; box-shadow:0 0 0 3px rgba(239,68,68,.14); }
+.ob-flow li.ok .ob-node { border-color:#a7f3d0; }
+.ob-flow li.now .ob-lab { color:var(--ink); font-weight:650; } .ob-flow li.ok .ob-lab { color:#047857; } .ob-flow li.bad .ob-lab { color:#b91c1c; font-weight:600; }
+.ob-flow li:not(.now):not(.ok):not(.bad) .ob-node { opacity:.7; }
+@keyframes obPulse { 50% { box-shadow:0 0 0 6px rgba(239,68,68,.25); } }
+.ob-main { position:relative; display:flex; flex-direction:column; min-height:0; overflow:auto; padding:clamp(10px, 2vh, 24px) clamp(20px, 6vw, 96px); }
+.ob-top { display:flex; justify-content:space-between; align-items:center; }
+.ob-back { background:none; border:0; color:var(--muted); font-size:14px; padding:6px 0; cursor:pointer; }
+.ob-back:disabled { visibility:hidden; }
+.ob-count { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.ob-form { flex:1; display:flex; flex-direction:column; justify-content:center; width:min(1080px, 100%); margin:0 auto; padding:8px 0 16px; }
+.ob-step:not([data-step="role"]) { width:min(720px, 100%); margin:0 auto; }
+.ob-step { display:none; }
+.ob-step.on { display:block; animation:obIn .42s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes obIn { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+.ob-q { display:flex; gap:12px; align-items:baseline; font-size:clamp(22px, 2.6vw, 30px); font-weight:650; line-height:1.25; letter-spacing:-.01em; margin:0 0 8px; color:var(--ink); }
+.ob-q em { font-style:normal; color:var(--primary); }
+.ob-n { display:inline-flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--primary); flex:none; transform:translateY(-2px); }
+.ob-sub { margin:0 0 22px 38px; color:var(--muted); font-size:15px; line-height:1.5; }
+.ob-body { margin-left:38px; }
+.ob-input { width:100%; font-size:clamp(20px, 2.2vw, 26px); border:0; border-bottom:2px solid #c9cde6; border-radius:0; background:transparent; padding:8px 2px 10px; color:var(--primary-d); outline:none; transition:border-color .2s; resize:none; }
+.ob-input::placeholder { color:#a8aec7; }
+.ob-input:focus { border-bottom-color:var(--primary); box-shadow:0 2px 0 0 var(--primary); }
+.ob-ta { font-size:clamp(18px, 1.9vw, 22px); line-height:1.4; min-height:64px; }
+.ob-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.ob-chip { border:1px solid #d6daf0; background:#fff; color:var(--ink); border-radius:999px; padding:7px 13px; font-size:13.5px; cursor:pointer; transition:all .15s; }
+.ob-chip:hover, .ob-chip:focus-visible { border-color:var(--primary); color:var(--primary); background:var(--soft); }
+.ob-chip.used { background:var(--green-bg); border-color:#a9dcc5; color:var(--green); }
+.ob-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:10px; }
+.ob-card { position:relative; display:flex; align-items:center; gap:12px; padding:12px 14px; background:#fff; border:1.5px solid #dfe2f2; border-radius:14px; cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s; }
+.ob-card:hover { border-color:#a99ff5; transform:translateY(-1px); box-shadow:0 6px 18px rgba(47,42,134,.08); }
+.ob-card input { position:absolute; opacity:0; pointer-events:none; }
+.ob-card:has(input:focus-visible) { outline:2px solid var(--primary); outline-offset:2px; }
+.ob-card.sel { border-color:var(--primary); background:linear-gradient(180deg, #f6f5ff, #fff); box-shadow:0 0 0 3px rgba(47,42,134,.12); }
+.ob-key { width:22px; height:22px; border-radius:6px; border:1px solid #cfd3ea; font-size:11px; font-weight:700; color:var(--muted); display:grid; place-items:center; flex:none; background:#fff; }
+.ob-card.sel .ob-key { background:var(--primary); color:#fff; border-color:var(--primary); }
+.ob-ico { font-size:24px; line-height:1; flex:none; }
+.ob-ct { display:grid; gap:2px; min-width:0; }
+.ob-ct b { font-size:14.5px; } .ob-ct small { font-size:12px; color:var(--muted); line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.ob-field { display:grid; gap:4px; margin-top:16px; } .ob-field > span { font-size:13px; color:var(--muted); }
+.ob-other[hidden] { display:none !important; }
+.ob-actions { display:flex; align-items:center; gap:14px; margin:28px 0 0 38px; flex-wrap:wrap; }
+.ob-ok, .ob-go { min-height:46px; padding:0 22px; font-size:16px; font-weight:600; border-radius:10px; box-shadow:0 8px 20px rgba(47,42,134,.22); }
+.ob-go { margin-top:18px; width:100%; min-height:52px; font-size:17px; }
+.ob-hint { font-size:12.5px; color:var(--muted); } .ob-hint b { font-weight:600; }
+.ob-skip { background:none; border:0; color:var(--muted); text-decoration:underline; text-underline-offset:3px; font-size:14px; cursor:pointer; margin-left:auto; }
+.ob-ai { display:grid; gap:10px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; }
+.ob-ai label { display:grid; gap:4px; font-size:13px; color:var(--muted); }
+.ob-review { margin:0; display:grid; gap:8px; }
+.ob-review > div { display:grid; grid-template-columns:110px 1fr auto; gap:12px; align-items:start; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.ob-review dt { font-size:13px; color:var(--muted); } .ob-review dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
+.ob-edit { background:none; border:0; color:var(--primary); font-size:13px; cursor:pointer; padding:0; }
+.ob-msg { position:sticky; bottom:12px; align-self:center; margin:0; background:#1b2430; color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; box-shadow:0 10px 30px rgba(0,0,0,.18); animation:obIn .25s both; }
+.ob-msg[hidden] { display:none; }
+.ob-shake { animation:obShake .36s; }
+@keyframes obShake { 20%, 60% { transform:translateX(-6px); } 40%, 80% { transform:translateX(6px); } }
+@media (max-height:820px) and (min-width:861px) { .ob-lead { display:none; } .ob-h { margin-bottom:0; } .ob-actions { margin-top:18px; } .ob-q { margin-bottom:4px; } .ob-card { padding:9px 12px; } .ob-ct small { -webkit-line-clamp:1; } .ob-sub { margin-bottom:14px; } }
+@media (max-width:860px) {
+  .ob { position:static; display:flex; flex-direction:column; min-height:100dvh; overflow:visible; }
+  .ob-head { padding:14px 14px 12px; }
+  .ob-foot, .ob-lead { display:none; }
+  .ob-h { font-size:21px; margin-top:10px; }
+  .ob-flow { justify-content:flex-start; gap:0; }
+  .ob-flow li { flex:0 0 84px; min-width:84px; }
+  .ob-flow li:not(:last-child)::after { left:calc(50% + 34px); right:calc(-50% + 34px); }
+  .ob-node { width:60px; height:42px; } .ob-chipico { padding:3px 6px; gap:4px; } .ob-flow button { font-size:11.5px; }
+  .ob-main { padding:12px 16px 28px; overflow:visible; }
+  .ob-form { justify-content:flex-start; padding-top:14px; }
+  .ob-sub, .ob-body, .ob-actions { margin-left:0; }
+  .ob-q { font-size:22px; }
+  .ob-cards { grid-template-columns:1fr; }
+  .ob-hint { display:none; }
+  .ob-review > div { grid-template-columns:1fr auto; } .ob-review dt { grid-column:1 / -1; }
+}
+@media (prefers-reduced-motion:reduce) { .ob-step.on, .ob-shake, .ob-flow li.bad .ob-badge { animation:none; } .ob-bar i { transition:none; } }
+
+/* ---- premium touches: live preview, tags, live ✓, motion, finale ---- */
+.ob-stage { flex:1; display:grid; grid-template-columns:minmax(0, 1fr); gap:clamp(20px, 3vw, 48px); align-items:center; min-height:0; }
+.ob-preview { display:none; align-self:center; }
+@media (min-width:1200px) { .ob-stage { grid-template-columns:minmax(0, 1fr) 340px; } .ob-stage .ob-form { width:100%; } .ob-preview { display:block; }
+  .ob-stage[data-at="role"] { grid-template-columns:minmax(0, 1fr); } .ob-stage[data-at="role"] .ob-preview { display:none; } }
+.pv-card { background:#fff; border:1px solid #e6e8f2; border-radius:18px; padding:16px; box-shadow:0 20px 50px rgba(23,24,43,.08); position:relative; overflow:hidden; }
+.pv-card::before { content:''; position:absolute; inset:-40% -30% auto auto; width:220px; height:220px; background:radial-gradient(closest-side, rgba(109,93,252,.16), transparent); pointer-events:none; }
+.pv-top { display:flex; align-items:center; gap:10px; }
+.pv-ico { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-size:22px; background:linear-gradient(135deg, #eef0ff, #e7f6ef); flex:none; }
+.pv-top div { display:grid; min-width:0; flex:1; } .pv-name { font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .pv-top small { color:var(--muted); font-size:12px; }
+.pv-live { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:#047857; background:#e7f6ef; padding:3px 7px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; flex:none; }
+.pv-live i { width:6px; height:6px; border-radius:50%; background:#10b981; animation:pvBlink 1.6s infinite; }
+@keyframes pvBlink { 50% { opacity:.25; } }
+.pv-svc { display:flex; flex-wrap:wrap; gap:5px; margin-top:12px; } .pv-svc span { font-size:11.5px; background:var(--soft); color:var(--primary); padding:3px 8px; border-radius:999px; }
+.pv-h { margin:14px 0 8px; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; } .pv-h small { text-transform:none; font-weight:500; letter-spacing:0; }
+.pv-team { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.pv-team li { display:flex; align-items:center; gap:9px; font-size:13px; opacity:.45; }
+.pv-team li.in { opacity:1; animation:pvIn .4s var(--d) both; }
+.pv-team li.in.still { animation:none; }
+@keyframes pvIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:none; } }
+.pv-av { width:26px; height:26px; border-radius:8px; color:#fff; font-size:10.5px; font-weight:700; display:grid; place-items:center; flex:none; }
+.pv-an { flex:1; } .pv-st { font-size:11px; color:#047857; font-weight:600; }
+.pv-post { font-size:13px; line-height:1.45; background:#f6f7fb; border:1px solid #eceef6; border-radius:12px 12px 12px 4px; padding:10px 12px; color:var(--ink); }
+.pv-post small { display:block; margin-top:6px; font-size:11px; color:var(--muted); }
+.ob-iw { position:relative; } .ob-iw .ob-input { padding-right:40px; }
+.ob-okic { position:absolute; right:4px; top:50%; transform:translateY(-50%) scale(.4); width:28px; height:28px; border-radius:50%; background:#10b981; color:#fff; display:grid; place-items:center; font-size:15px; font-weight:800; opacity:0; transition:all .25s cubic-bezier(.3,1.6,.5,1); }
+.ob-iw.valid .ob-okic { opacity:1; transform:translateY(-50%) scale(1); }
+.ob-iw.valid .ob-input { border-bottom-color:#10b981; }
+.ob-cheer { min-height:20px; margin:8px 0 0; font-size:14px; color:#047857; } .ob-cheer:empty { visibility:hidden; }
+.ob-tags { display:flex; flex-wrap:wrap; align-items:center; gap:8px; border-bottom:2px solid #c9cde6; padding:6px 2px 10px; cursor:text; transition:border-color .2s; }
+.ob-tags:focus-within { border-bottom-color:var(--primary); box-shadow:0 2px 0 0 var(--primary); }
+.ob-tags.has { border-bottom-color:#10b981; }
+.ob-tag { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(180deg, #f3f1ff, #ebe8ff); color:var(--primary-d); border:1px solid #d8d3fb; border-radius:999px; padding:6px 6px 6px 12px; font-size:15px; font-weight:500; animation:tagIn .22s cubic-bezier(.3,1.5,.5,1) both; }
+@keyframes tagIn { from { transform:scale(.6); opacity:0; } to { transform:none; opacity:1; } }
+.ob-tagx { width:22px; height:22px; border-radius:50%; border:0; background:rgba(47,42,134,.10); color:var(--primary); font-size:15px; line-height:1; cursor:pointer; display:grid; place-items:center; padding:0; }
+.ob-tagx:hover { background:var(--primary); color:#fff; }
+.ob-tag-in { flex:1; min-width:180px; border:0; outline:none; background:transparent; font-size:clamp(18px, 1.9vw, 22px); padding:6px 2px; color:var(--primary-d); }
+.ob-tag-in::placeholder { color:#a8aec7; }
+.ob-form[data-dir="back"] .ob-step.on { animation-name:obInBack; }
+@keyframes obInBack { from { opacity:0; transform:translateY(-18px); } to { opacity:1; transform:none; } }
+.ob-ok { transition:transform .15s, box-shadow .15s; } .ob-ok:hover { transform:translateY(-1px); box-shadow:0 12px 26px rgba(47,42,134,.28); }
+.ob-go { background:linear-gradient(90deg, #2f2a86, #4a3fd1 55%, #0e8f62); background-size:200% 100%; transition:background-position .5s, transform .15s; }
+.ob-go:hover { background-position:100% 0; transform:translateY(-1px); }
+.ob-build { position:fixed; inset:0; z-index:90; display:grid; place-items:center; background:rgba(23,24,43,.55); backdrop-filter:blur(6px); animation:obIn .25s both; }
+.obb-card { width:min(420px, calc(100vw - 32px)); background:#fff; border-radius:20px; padding:26px 24px; box-shadow:0 30px 80px rgba(0,0,0,.3); text-align:center; }
+.obb-card h2 { margin:14px 0 16px; font-size:20px; }
+.obb-card ul { list-style:none; margin:0; padding:0; display:grid; gap:8px; text-align:left; }
+.obb-card li { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; background:#f6f7fb; font-size:14px; color:var(--muted); transition:all .3s; }
+.obb-card li em { margin-left:auto; font-style:normal; font-size:12px; }
+.obb-card li.on { background:#e7f6ef; color:var(--ink); } .obb-card li.on em { color:#047857; font-weight:700; }
+.obb-dot { width:10px; height:10px; border-radius:50%; background:#c9cde6; flex:none; transition:background .3s; } .obb-card li.on .obb-dot { background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.2); }
+.obb-spin { width:44px; height:44px; margin:0 auto; border-radius:50%; border:4px solid #e4e7f2; border-top-color:var(--primary); animation:obbSpin .9s linear infinite; }
+.ob-build.ok .obb-spin { animation:none; border-color:#10b981; background:#10b981 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/24px no-repeat; }
+@keyframes obbSpin { to { transform:rotate(360deg); } }
+.obb-confetti { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+.obb-confetti i { position:absolute; top:-12px; left:var(--x); width:8px; height:14px; background:var(--c); border-radius:2px; transform:rotate(var(--r)); animation:obbFall 1.3s var(--d) cubic-bezier(.2,.6,.4,1) forwards; }
+@keyframes obbFall { to { transform:translateY(105vh) rotate(calc(var(--r) + 540deg)); opacity:.9; } }
+@media (max-height:820px) { .pv-card { padding:12px 14px; } .pv-h { margin:10px 0 6px; } .pv-team { gap:4px; } .pv-team li { font-size:12.5px; } .pv-av { width:22px; height:22px; font-size:9.5px; } .pv-post { font-size:12px; padding:8px 10px; } .pv-svc { margin-top:8px; } }
+@media (prefers-reduced-motion:reduce) { .ob-tag, .pv-team li.in, .pv-live i, .ob-build { animation:none; } }
+
+/* ---- "Meet Chief" callout beside the Chief button ---- */
+.chief-tip { position:fixed; right:20px; bottom:84px; z-index:31; width:min(360px, calc(100vw - 32px)); background:#fff; border:1px solid #e3e5f2; border-radius:16px; padding:16px 16px 14px; box-shadow:0 24px 60px rgba(23,24,43,.18); animation:ctIn .45s cubic-bezier(.2,.8,.2,1) both; }
+.chief-tip::after { content:''; position:absolute; right:46px; bottom:-8px; width:14px; height:14px; background:#fff; border-right:1px solid #e3e5f2; border-bottom:1px solid #e3e5f2; transform:rotate(45deg); }
+@keyframes ctIn { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:none; } }
+.ct-x { position:absolute; top:8px; right:8px; width:28px; height:28px; border:0; background:none; border-radius:8px; color:var(--muted); font-size:18px; cursor:pointer; }
+.ct-x:hover { background:var(--soft); }
+.ct-head { display:flex; align-items:center; gap:10px; padding-right:24px; }
+.ct-ico { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg, #2f2a86, #6d5dfc); flex:none; }
+.ct-ico .robot { width:22px; height:22px; }
+.ct-head div { display:grid; } .ct-head b { font-size:15.5px; } .ct-head small { font-size:12px; color:var(--muted); }
+.chief-tip p { margin:10px 0 0; font-size:14px; line-height:1.5; color:var(--ink); }
+.ct-ex { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; } .ct-ex span { font-size:12px; background:var(--soft); color:var(--primary); border-radius:999px; padding:4px 9px; }
+.chief-tip .ct-safe { font-size:12.5px; color:#047857; margin-top:8px; }
+.ct-acts { display:flex; gap:8px; margin-top:12px; } .ct-acts .btn { flex:1; }
+.chat-fab.bot.pulse { animation:fabPulse 1.8s ease-in-out infinite; }
+@keyframes fabPulse { 0%, 100% { box-shadow:0 8px 24px rgba(16,24,40,.18), 0 0 0 0 rgba(109,93,252,.45); } 50% { box-shadow:0 8px 24px rgba(16,24,40,.18), 0 0 0 12px rgba(109,93,252,0); } }
+@media (max-width:720px) { .chief-tip { right:8px; left:8px; width:auto; bottom:72px; } .chief-tip::after { right:40px; } }
+@media (prefers-reduced-motion:reduce) { .chief-tip, .chat-fab.bot.pulse { animation:none; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// "/" is the owner sign-in. Links meant for the workplace app (Bot Mode frame, password reset, "forgot") go on to /app.
+(function () {
+  if (!/^\/(index\.html)?$/.test(location.pathname)) return;
+  if (/[?&]bot=1(&|$)/.test(location.search) || /(^#|&)as_reset=/.test(location.hash) || location.hash === '#forgot') location.replace('/app' + location.search + location.hash);
+})();
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+function chatMd(raw) {
+  const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+  let s = escHtml(raw);
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  return s;
+}
+const inr = (n) => '₹' + Number(n || 0).toLocaleString('en-IN');
+const when = (iso) => { const t = Date.parse(iso); if (!t) return ''; return new Date(t).toLocaleString('en-IN', { timeZone:'Asia/Kolkata', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); };
+const dayKey = (iso) => { const t = Date.parse(iso); if (!t) return ''; return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(t)); };
+const hello = () => { const h = Number(new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Kolkata', hour:'numeric', hourCycle:'h23' }).format(new Date())); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
+const PILL = { new:'New', booked:'Booked', closed:'Closed', completed:'Completed', noshow:'No-show', cancelled:'Cancelled', pending:'Waiting', approved:'Approved', rejected:'Skipped', scheduled:'On calendar', draft:'Draft', queued:'Queued', paid:'Paid', unpaid:'Unpaid', overdue:'Overdue' };
+const pill = (s) => `<span class="pill ${esc(s)}">${esc(PILL[s] || s || '')}</span>`;
+const SCREENS = ['dash','front','recall','reviews','social','insights','billing','approvals','connections','pricing','usage','privacy','visit','settings','setup'];
+
+let token = sessionStorage.getItem('aaas_clinic_token') || '';
+let meta = { demoLogin:false };
+let state = null;
+let screen = 'login';
+let wiz = 1, wizPaste = '', wizCsv = '', wizPhone = '', wizTone = '', wizDrafts = [];
+let mode = 'signin';
+let err = '';
+let toast = '';
+let advanced = true; // the dashboard is home; the full-page Chief opens only when asked for
+let chiefTipNow = false;
+let botMode = false;
+// Domain-specific URL: the page is served at every industry path (/clinic, /Realestate, …).
+const START_PATH = (location.pathname.replace(/\.html$/i, '').replace(/\/+$/, '').replace(/^\/index$/, '') || '/clinic');
+// "/" lists every industry; each industry path (/clinic, /Realestate, …) has its own sign-in for that industry.
+const ON_ROOT = /^\/(index(\.html)?)?$/.test(location.pathname);
+try { if (!ON_ROOT) sessionStorage.setItem('aaas_link', START_PATH); else sessionStorage.removeItem('aaas_link'); } catch (e) {}
+function toRoot() { if (location.pathname !== '/' || location.hash) history.replaceState(null, '', '/'); }
+// the industry of the link this tab came in on (signed-out sign-in page, and "For this link" on the industry picker)
+function entryPack() { let l = ''; try { l = (sessionStorage.getItem('aaas_link') || '').toLowerCase(); } catch (e) {} return l ? ((state && state.packs) || meta.packs || []).find((p) => p.path && p.path.toLowerCase() === l) : null; }
+function homePath() { return (state && state.role && state.rolePath) || (token ? START_PATH : '/'); }
+function syncPath() {
+  if (!state || !state.role || !state.rolePath) return;
+  if (location.pathname !== state.rolePath) history.replaceState(null, '', state.rolePath + location.hash); // setView() drops the hash once it is read
+  if (state.roleTitle) document.title = 'AaaS · ' + state.roleTitle;
+}
+// Clean URLs: the address is just the industry path (/Institute). The screen you are on is kept in this tab's
+// sessionStorage, so a refresh returns to it. Old links with #front, #bot… still work once and are then cleaned.
+function viewHint() {
+  const h = location.hash.replace('#', '');
+  if (h && !h.includes('=')) return h;
+  try { return sessionStorage.getItem('aaas_view') || ''; } catch (e) { return ''; }
+}
+function setView(v) {
+  try { sessionStorage.setItem('aaas_view', v); } catch (e) {}
+  if (location.hash || location.pathname !== homePath()) history.replaceState(null, '', homePath());
+}
+function linkPack() { return entryPack(); }
+let miniOpen = false;
+const ROBOT = '<svg class="robot" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3"/><circle cx="12" cy="2.6" r=".9" fill="currentColor"/><rect x="4" y="6.5" width="16" height="12" rx="4"/><circle cx="9" cy="12.3" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="12.3" r="1.4" fill="currentColor" stroke="none"/><path d="M9.5 15.8h5"/><path d="M2 11.5v3M22 11.5v3"/></svg>';
+let botReturn = 'dash';
+let drawer = null;
+let chatOpen = false;
+let chatLog = [];
+let chatDraft = '';
+let chatBusy = false;
+let showAdd = '';
+let skipProfile = false;
+
+const root = document.getElementById('root');
+async function api(path, body) {
+  const r = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers: { 'content-type':'application/json', ...(token ? { authorization:'Bearer ' + token } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) { token = ''; sessionStorage.removeItem('aaas_clinic_token'); screen = 'login'; toRoot(); throw new Error(d.message || 'Please sign in again.'); }
+  if (!r.ok) throw new Error(d.message || 'That did not work.');
+  return d;
+}
+function flash(m) { toast = m; setTimeout(() => { if (toast === m) { toast = ''; render(); } }, 3500); }
+function go(s) { screen = s; showAdd = ''; setView(s); render(); }
+function pname(id) { const p = (state.patients || []).find((x) => x.id === id); return p ? p.name : 'Unknown'; }
+function wanted() { const h = viewHint(); return SCREENS.includes(h) && !(h === 'visit' && state && !state.visitKit) ? h : 'dash'; }
+
+function planCards() {
+  const plans = meta.plans || [];
+  const notes = meta.pricing || {};
+  return `<div class="plans">${plans.map((p) => `<div class="tile"><div class="k">${esc(p.name)}</div><div class="v">${inr(p.priceInr)}<span class="small"> / month</span></div><div class="hint">${esc(p.blurb)}</div></div>`).join('')}</div>
+    <p class="small">${esc(notes.annualNote || '')}</p><p class="small">${esc(notes.byokNote || '')}</p>`;
+}
+function domainsCard(cur) {
+  const packs = meta.packs || [];
+  if (!packs.length) return '';
+  return `<section class="domains" aria-label="Industries"><b>${cur ? 'Other industries' : 'Choose your industry'}</b>
+    <div class="dom-grid">${packs.filter((p) => !cur || p.id !== cur.id).map((p) => `<a class="dom" href="${esc(p.path)}"><span>${esc(p.title)}</span><code>${esc(p.path)}</code></a>`).join('')}</div>
+    ${cur ? '<a class="small" href="/">All industries</a>' : ''}</section>`;
+}
+function loginView() {
+  const hero = meta.hero || "A small team's work, without hiring one";
+  const cur = entryPack();
+  return `<div class="landing"><section class="hero">
+    <div class="brand"><div class="mark">A</div><div><b>AaaS</b><span>${cur ? esc(cur.title) : 'For the owner'}</span></div></div>
+    <h1>${esc(hero)}</h1>
+    <p class="sub">${cur ? esc(cur.blurb) + ' ' : ''}A personal AI team for a small business: daily sales, follow-up, marketing and billing. Not an enterprise suite. You approve anything that would leave the building.</p>
+    ${domainsCard(cur)}
+    ${planCards()}
+    <p class="small">Nothing is charged on this page. WhatsApp is a link you open. No SMS.</p>
+  </section><form class="panel stack" data-act="auth">
+    ${cur ? `<span class="badge dom-badge">${esc(cur.title)}</span>` : ''}
+    <h1>${mode==='create'?'Create your account':'Sign in'}</h1>
+    <p class="sub">${cur ? `Email and password. Then your business. The team is set up for ${esc(cur.title.toLowerCase())}.` : 'Email and password. Then your business, then an industry. The team is created for you.'}</p>
+    <div class="tabs"><button type="button" class="${mode==='signin'?'on':''}" data-act="mode" data-mode="signin">Sign in</button><button type="button" class="${mode==='create'?'on':''}" data-act="mode" data-mode="create">Create account</button></div>
+    ${mode==='create'?'<label>Your name<input name="name" autocomplete="name" required></label>':''}
+    <label>Email<input name="email" type="email" autocomplete="username" required></label>
+    <label>Password<input name="password" type="password" autocomplete="${mode==='create'?'new-password':'current-password'}" required minlength="8"></label>
+    <div class="err">${esc(err)}</div>
+    <button class="btn" type="submit">${mode==='create'?'Create account':'Sign in'}</button>
+    ${meta.google?'<a class="btn-ghost" href="/api/auth/google/start?next=clinic" style="text-align:center;text-decoration:none">Continue with Google</a>':''}
+    ${meta.demoLogin?'<button class="btn-ghost" type="button" data-act="demo">Explore the sample business</button><p class="small">Local or staging only. Opens a sample owner account. No password is shown.</p>':''}
+  </form></div>`;
+}
+const AI_PROVIDERS_FALLBACK = [
+  { id: 'openrouter', name: 'OpenRouter', models: ['anthropic/claude-sonnet-4.5', 'openai/gpt-4o', 'google/gemini-2.5-pro'], defaultModel: 'anthropic/claude-sonnet-4.5' },
+  { id: 'openai', name: 'OpenAI', models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1'], defaultModel: 'gpt-4o-mini' },
+  { id: 'xai', name: 'xAI Grok', models: ['grok-4.5', 'grok-4', 'grok-3'], defaultModel: 'grok-4.5' },
+  { id: 'google', name: 'Google Gemini', models: ['gemini-2.5-flash', 'gemini-2.5-pro'], defaultModel: 'gemini-2.5-flash' },
+  { id: 'anthropic', name: 'Anthropic', models: ['claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'], defaultModel: 'claude-sonnet-4-5' },
+  { id: 'bedrock', name: 'Amazon Bedrock', models: ['global.anthropic.claude-sonnet-4-5-20250929-v1:0', 'apac.anthropic.claude-sonnet-4-20250514-v1:0', 'amazon.nova-pro-v1:0', 'amazon.nova-lite-v1:0'], defaultModel: 'global.anthropic.claude-sonnet-4-5-20250929-v1:0', regions: ['us-east-1', 'us-west-2', 'ap-south-1', 'ap-southeast-1', 'eu-central-1', 'eu-west-1'], defaultRegion: 'us-east-1' },
+];
+function aiProviders() { const l = state && state.aiKey && state.aiKey.providers; return (l && l.length) ? l : (meta.aiProviders || AI_PROVIDERS_FALLBACK); }
+// Provider + model + API key, shared by the profile page, setup step 6 and Settings.
+function aiKeyFields(ctx, opts = {}) {
+  const k = (state && state.aiKey) || {};
+  const provs = aiProviders();
+  const cur = provs.find((p) => p.id === k.provider) || provs[0];
+  const own = k.source === 'own';
+  const model = own ? (k.model || '') : '';
+  return `<label>AI provider<select name="provider" data-ai-provider>${provs.map((p) => `<option value="${esc(p.id)}" ${p.id === cur.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
+    <label>Model<select name="model" data-ai-model>${modelOptions(cur, model)}</select></label>
+    <label class="ai-region" ${cur.regions ? '' : 'hidden'}>AWS region<select name="region" data-ai-region>${regionOptions(cur, own && k.provider === cur.id ? k.region : '')}</select></label>
+    <label class="model-other" ${modelIsOther(cur, model) ? '' : 'hidden'}>Model id<input name="modelOther" value="${esc(modelIsOther(cur, model) ? model : '')}" placeholder="Exact model id from the provider" autocomplete="off" spellcheck="false"></label>
+    <p class="small ai-load-msg" role="status" hidden></p>
+    <label>API key<input name="key" type="password" autocomplete="off" placeholder="${own ? 'Saved ' + esc(k.name || '') + ' key ' + esc(k.hint || '') + '. Paste a new one to replace it' : 'Paste the whole key'}" ${opts.required && !own ? 'required' : ''}></label>
+    <p class="small">The model list fills in from the provider once your key is pasted. The key is checked once, stored encrypted, and only the last 4 characters are shown.</p>`;
+}
+const liveModels = {}; // provider id -> models loaded from the provider this session
+function modelList(p) { return liveModels[p.id] || p.models || []; }
+function modelIsOther(p, m) { return !!m && !modelList(p).includes(m); }
+function modelOptions(p, sel) {
+  const list = modelList(p), def = p.defaultModel || list[0] || '';
+  const other = modelIsOther(p, sel);
+  return `<option value="" ${!sel ? 'selected' : ''}>Provider default${def ? ' (' + esc(def) + ')' : ''}</option>`
+    + `<optgroup label="${liveModels[p.id] ? 'All models on your key (' + list.length + ')' : 'Popular models'}">${list.map((m) => `<option value="${esc(m)}" ${m === sel ? 'selected' : ''}>${esc(m)}</option>`).join('')}</optgroup>`
+    + `<option value="__other" ${other ? 'selected' : ''}>Other… (type a model id)</option>`;
+}
+// Amazon Bedrock runs in one AWS region (where your models are enabled); other providers have none
+function regionOptions(p, sel) { const L = p.regions || [], cur = sel || p.defaultRegion || L[0] || ''; return L.concat(cur && !L.includes(cur) ? [cur] : []).map((r) => `<option value="${esc(r)}" ${r === cur ? 'selected' : ''}>${esc(r)}${r === 'ap-south-1' ? ' (Mumbai)' : r === 'us-east-1' ? ' (N. Virginia)' : ''}</option>`).join(''); }
+function modelFromForm(f) { return f.model === '__other' ? String(f.modelOther || '').trim() : String(f.model || '').trim(); }
+// Saves the AI choice from a form. Returns true when something was saved.
+async function saveAiFrom(f) {
+  const key = String(f.key || '').trim(), model = modelFromForm(f);
+  if (f.model === '__other' && !model) throw new Error('Type the model id, or pick one from the list.');
+  const k = (state && state.aiKey) || {};
+  const provider = f.provider || 'openrouter';
+  const region = provider === 'bedrock' ? String(f.region || '') : '';
+  if (key) { await api('/api/ai/key', { provider, key, model, region }); return true; }
+  if (k.source === 'own' && k.provider === provider && region && region !== (k.region || '')) { await api('/api/ai/key', { provider, key: '', model, region }); return true; }
+  if (k.source === 'own' && k.provider === provider && model !== (k.model || '') && !(model === '' && k.model === (aiProviders().find((p) => p.id === provider) || {}).defaultModel)) {
+    await api('/api/ai/key', { provider, key: '', model, region }); return true;
+  }
+  if (k.source === 'own' && k.provider !== provider && model) throw new Error('Paste the API key for the new provider.');
+  return false;
+}
+// ---------- Onboarding: one question at a time (Typeform-style), fits the screen ----------
+// All steps live in one <form data-act="profile">, so the submit handler, the AI-key fields and the model
+// auto-load keep working. Moving between steps only toggles classes; typed values are kept in `ob`.
+const OB_ICONS = { dental: '🦷', aesthetic: '✨', coach: '🧭', realestate: '🏠', studio: '💪', home: '🛋️', institute: '🎓', other: '➕' };
+const OB_CITIES = ['Hyderabad', 'Bengaluru', 'Mumbai', 'Delhi', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad'];
+let ob = null;
+function obInit() {
+  if (ob) return ob;
+  const p = (state && state.profile) || {};
+  const ep = entryPack();
+  ob = { step: 0, role: (state && state.role) || (ep && ep.id) || '', businessType: p.businessType || '', biz: (state && state.biz) || '', city: (state && state.city) || '', services: p.services || '', audience: p.audience || '' };
+  return ob;
+}
+function obSteps() {
+  const locked = !!(state && state.role);
+  return [
+    ...(locked ? [] : [{ id: 'role', label: 'Business' }]),
+    { id: 'biz', label: 'Name' }, { id: 'city', label: 'City' }, { id: 'services', label: 'Services' },
+    { id: 'audience', label: 'Customers' }, { id: 'ai', label: 'AI key' }, { id: 'review', label: 'Review' },
+  ];
+}
+function obPacks() { return (state && state.packs) || meta.packs || []; }
+function obPack() { return obPacks().find((x) => x.id === ob.role) || null; }
+function obChips(field, list) {
+  const uniq = [...new Set(list.filter(Boolean))];
+  return uniq.length ? `<div class="ob-chips">${uniq.map((c) => `<button type="button" class="ob-chip" data-ob-chip="${esc(field)}" data-v="${esc(c)}">+ ${esc(c)}</button>`).join('')}</div>` : '';
+}
+const obList = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolean);
+function obTagsHtml(field, ph) {
+  const tags = obList(ob[field]);
+  return `<div class="ob-tags${tags.length ? ' has' : ''}" data-tags="${field}">
+      ${tags.map((t, i) => `<span class="ob-tag">${esc(t)}<button type="button" class="ob-tagx" data-tag-del="${field}" data-i="${i}" aria-label="Remove ${esc(t)}">×</button></span>`).join('')}
+      <input class="ob-tag-in" data-tag-in="${field}" placeholder="${tags.length ? 'Add another…' : esc(ph)}" maxlength="80" autocomplete="off" aria-label="${field === 'services' ? 'Add a service' : 'Add a customer group'}">
+      <textarea name="${field}" hidden>${esc(ob[field] || '')}</textarea></div>`;
+}
+function obCheer(id) {
+  const v = String((ob && ob[id]) || '').trim(); if (!v) return '';
+  const n = obList(v).length;
+  return { biz: `Love it — ${v} it is.`, city: `📍 ${v}. Posts and reviews will mention it.`,
+    services: `${n} service${n === 1 ? '' : 's'} added. ${n < 3 ? 'Add a couple more if you like.' : 'Great mix.'}`,
+    audience: `${n} group${n === 1 ? '' : 's'} to reach. Your posts will speak to them.` }[id] || '';
+}
+const OB_AV = ['#6d5dfc', '#0ea5e9', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6'];
+function obPreviewHtml() {
+  const pk = obPack(), name = String(ob.biz || '').trim(), city = String(ob.city || '').trim();
+  const svc = obList(ob.services), aud = obList(ob.audience);
+  const kind = ob.role === 'other' ? (ob.businessType || 'Your business') : (pk ? pk.title : 'Pick a business type');
+  const agents = (pk && pk.agents) || ['Front Desk', 'Follow-up', 'Reviews & Referrals', 'Social Media', 'Owner Insights', 'Billing & Invoicing'];
+  const post = name ? `📣 This week at ${name}${city ? ', ' + city : ''}: ${svc[0] ? svc.slice(0, 2).join(' and ') : 'something new'}${aud[0] ? ' for ' + aud[0].toLowerCase() : ''}. Reply here to book.` : '';
+  return `<div class="pv-card">
+      <div class="pv-top"><span class="pv-ico">${OB_ICONS[ob.role] || '🏢'}</span><div><b class="pv-name">${esc(name || 'Your business')}</b><small>${esc(kind)}${city ? ' · 📍 ' + esc(city) : ''}</small></div><span class="pv-live"><i></i>Live preview</span></div>
+      ${svc.length ? `<div class="pv-svc">${svc.slice(0, 6).map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+      <p class="pv-h">Your AI team${pk ? '' : ' <small>(appears when you pick a business)</small>'}</p>
+      <ul class="pv-team">${agents.map((a, i) => `<li class="${pk ? (ob.pvShown === ob.role ? 'in still' : 'in') : ''}" style="--d:${i * 70}ms"><span class="pv-av" style="background:${OB_AV[i % OB_AV.length]}">${esc(a.split(/\s|&/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase())}</span><span class="pv-an">${esc(a)}</span><span class="pv-st">${pk ? 'Ready' : '—'}</span></li>`).join('')}</ul>
+      ${post ? `<p class="pv-h">First post draft</p><div class="pv-post">${esc(post)}<small>Waits for your approval · nothing is published</small></div>` : ''}
+    </div>`;
+}
+// Finale: "Building your team…" — the six teammates check in one by one, then confetti.
+function obBuildStart(title, agents) {
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const el = document.createElement('div'); el.className = 'ob-build'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+  el.innerHTML = `<div class="obb-card"><div class="obb-spin" aria-hidden="true"></div><h2>Building your team${title ? ' for ' + esc(title) : ''}…</h2>
+    <ul>${agents.map((a, i) => `<li data-i="${i}"><span class="obb-dot" aria-hidden="true"></span>${esc(a)}<em>Hiring…</em></li>`).join('')}</ul></div>`;
+  document.body.appendChild(el);
+  const items = [...el.querySelectorAll('li')]; let k = 0;
+  const tick = () => { if (k < items.length) { items[k].classList.add('on'); items[k].querySelector('em').textContent = 'Ready'; k++; } };
+  const timer = setInterval(tick, reduce ? 60 : 380); const started = Date.now();
+  return {
+    async done() {
+      await new Promise((r) => setTimeout(r, Math.max(0, (reduce ? 400 : items.length * 380 + 300) - (Date.now() - started))));
+      clearInterval(timer); while (k < items.length) tick();
+      el.querySelector('h2').textContent = 'Your team is ready 🎉'; el.classList.add('ok');
+      if (!reduce) { const c = document.createElement('div'); c.className = 'obb-confetti'; c.innerHTML = [...Array(36)].map((_, i) => `<i style="--x:${Math.round(Math.random() * 100)}vw;--d:${(Math.random() * .6).toFixed(2)}s;--r:${Math.round(Math.random() * 360)}deg;--c:${OB_AV[i % OB_AV.length]}"></i>`).join(''); el.appendChild(c); }
+      await new Promise((r) => setTimeout(r, reduce ? 300 : 1300)); el.remove();
+    },
+    fail() { clearInterval(timer); el.remove(); },
+  };
+}
+// the team slides in once per business type; later repaints keep it still
+function obMarkShown() { if (ob && ob.role) setTimeout(() => { if (ob) ob.pvShown = ob.role; }, 700); }
+function obPaintPreview() {
+  const pv = root.querySelector('.ob-preview'); if (pv && ob) { pv.innerHTML = obPreviewHtml(); obMarkShown(); }
+  for (const id of ['biz', 'city', 'services', 'audience']) {
+    const c = root.querySelector(`[data-cheer="${id}"]`); if (c) c.textContent = obCheer(id);
+    const w = root.querySelector(`[name="${id}"]`); const iw = w && w.closest('.ob-iw'); if (iw) iw.classList.toggle('valid', !!String(ob[id] || '').trim());
+  }
+}
+function obSetTags(field, list) {
+  const uniq = []; for (const t of list) { const v = String(t).replace(/,/g, ' ').trim().slice(0, 80); if (v && !uniq.some((u) => u.toLowerCase() === v.toLowerCase())) uniq.push(v); }
+  ob[field] = uniq.join(', ').slice(0, 400);
+  const box = root.querySelector(`[data-tags="${field}"]`);
+  if (box) { const tmp = document.createElement('div'); tmp.innerHTML = obTagsHtml(field, box.querySelector('.ob-tag-in').placeholder); box.replaceWith(tmp.firstElementChild); }
+  const inp = root.querySelector(`[data-tag-in="${field}"]`); if (inp) inp.focus();
+  obPaintTrack(); obPaintPreview();
+}
+function obKey(n) { return `<span class="ob-n">${n}<span aria-hidden="true">→</span></span>`; }
+function profileView() {
+  obInit();
+  const steps = obSteps(), at = Math.min(ob.step, steps.length - 1), total = steps.length;
+  const pk = obPack(), sug = (pk && pk.suggest) || {};
+  const typeName = ob.role === 'other' ? (ob.businessType || 'business') : ((pk && pk.title) || 'business');
+  const nameFor = ob.biz || 'your business';
+  const idx = (id) => steps.findIndex((x) => x.id === id) + 1;
+  const step = (id, body, opts = {}) => `<section class="ob-step${steps[at].id === id ? ' on' : ''}" data-step="${id}" aria-hidden="${steps[at].id === id ? 'false' : 'true'}">
+      <p class="ob-q">${obKey(idx(id))}<span>${body.q}</span></p>${body.sub ? `<p class="ob-sub">${body.sub}</p>` : ''}
+      <div class="ob-body">${body.html}</div>
+      ${opts.final ? '' : `<div class="ob-actions"><button class="btn ob-ok" type="button" data-ob="next">${opts.ok || 'OK'} <span aria-hidden="true">✓</span></button><span class="ob-hint">press <b>Enter ↵</b></span>${opts.skip ? `<button class="ob-skip" type="button" data-ob="skip">${opts.skip}</button>` : ''}</div>`}
+    </section>`;
+  const roleStep = state && state.role ? '' : step('role', {
+    q: 'What kind of business are you running?', sub: 'Your team, labels and sample rows follow this. It is set once, at setup.',
+    html: `<div class="ob-cards" role="radiogroup" aria-label="Business">${obPacks().map((x, k) => `<label class="ob-card${ob.role === x.id ? ' sel' : ''}">
+        <input type="radio" name="role" value="${esc(x.id)}" ${ob.role === x.id ? 'checked' : ''}>
+        <span class="ob-key" aria-hidden="true">${String.fromCharCode(65 + k)}</span><span class="ob-ico" aria-hidden="true">${OB_ICONS[x.id] || '🏢'}</span>
+        <span class="ob-ct"><b>${esc(x.id === 'other' ? 'Other' : x.title)}</b><small>${esc(x.id === 'other' ? 'Tell us what it is' : x.blurb)}</small></span></label>`).join('')}</div>
+      <label class="ob-field ob-other" ${ob.role === 'other' ? '' : 'hidden'}><span>Type of business</span><input class="ob-input" name="businessType" maxlength="80" value="${esc(ob.businessType)}" placeholder="e.g. Bakery, Travel agency, Pet clinic" autocomplete="off"></label>`,
+  });
+  const reviewRows = [
+    ...(state && state.role ? [] : [['Business', ob.role === 'other' ? (ob.businessType || 'Other') : ((pk && pk.title) || '—'), 'role']]),
+    ['Name', ob.biz || '—', 'biz'], ['City', ob.city || '—', 'city'], ['Services', ob.services || '—', 'services'], ['Customers', ob.audience || '—', 'audience'],
+  ];
+  const form = `<form class="ob-form" data-act="profile" novalidate>
+    ${roleStep}
+    ${step('biz', { q: `What’s the name of your ${esc(typeName.toLowerCase())}?`, sub: 'This is how your posts and messages sign off.',
+      html: `<div class="ob-iw${String(ob.biz).trim() ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="80" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheer('biz'))}</p>` })}
+    ${step('city', { q: `Where is <em>${esc(nameFor)}</em>?`, sub: 'Posts and review requests mention the city.',
+      html: `<div class="ob-iw${String(ob.city).trim() ? ' valid' : ''}"><input class="ob-input" name="city" maxlength="80" value="${esc(ob.city)}" placeholder="City" autocomplete="address-level2" list="obCities"><span class="ob-okic" aria-hidden="true">✓</span></div><datalist id="obCities">${OB_CITIES.map((c) => `<option value="${esc(c)}"></option>`).join('')}</datalist><p class="ob-cheer" data-cheer="city" aria-live="polite">${esc(obCheer('city'))}</p>${obChips('city', OB_CITIES)}` })}
+    ${step('services', { q: 'What do you offer?', sub: 'Type a service and press <b>Enter</b> or comma. Tap a suggestion to add it.',
+      html: `${obTagsHtml('services', 'e.g. ' + ((sug.services || [])[0] || 'Consultation'))}<p class="ob-cheer" data-cheer="services" aria-live="polite">${esc(obCheer('services'))}</p>${obChips('services', sug.services || [])}` })}
+    ${step('audience', { q: 'Who do you want to reach?', sub: 'The people your posts and follow-ups speak to. Add as many as you like.',
+      html: `${obTagsHtml('audience', 'e.g. Families nearby')}<p class="ob-cheer" data-cheer="audience" aria-live="polite">${esc(obCheer('audience'))}</p>${obChips('audience', ['Families nearby', 'Working professionals', 'Students', 'Senior citizens', ...(sug.audience || [])])}` })}
+    ${step('ai', { q: 'Connect your AI', sub: 'Agents run on your own key and you pay the provider directly. You can skip this and add it later in Settings.',
+      html: `<div class="ob-ai">${aiKeyFields('profile')}</div>` }, { skip: 'Skip for now' })}
+    ${step('review', { q: 'All set? Here’s your team brief.', sub: 'Check it once. Your team is created as soon as you confirm.',
+      html: `<dl class="ob-review">${reviewRows.map(([k, v, id]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd><button type="button" class="ob-edit" data-ob="goto" data-to="${id}">Edit</button></div>`).join('')}</dl>
+      <div class="err">${esc(err)}</div>
+      <button class="btn ob-go" type="submit">${state && state.role ? 'Save' : 'Create my team'} <span aria-hidden="true">→</span></button>` }, { final: true })}
+  </form>`;
+  const pct = Math.round((at / (total - 1)) * 100);
+  return `<div class="ob">
+    <div class="ob-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+    <header class="ob-head">
+      <div class="ob-headrow">
+        <div class="brand ob-brand"><div class="mark">A</div><div><b>AaaS</b><span>${esc(pk ? (ob.role === 'other' && ob.businessType ? ob.businessType : pk.title) : 'Your AI team')}</span></div></div>
+        <p class="ob-foot">About 2 minutes · <button type="button" class="ob-link" data-act="go" data-screen="setup" data-wiz="call">Prefer a setup call?</button></p>
+      </div>
+      <h1 class="ob-h">Let’s build your team${ob.biz ? ` for <span>${esc(ob.biz)}</span>` : ''}.</h1>
+      <p class="ob-lead">Six AI teammates for enquiries, follow-ups, reviews, social posts, insights and invoices. Nothing goes out until you approve it.</p>
+    </header>
+    <main class="ob-main">
+      <div class="ob-top"><button type="button" class="ob-back" data-ob="back" ${at === 0 ? 'disabled' : ''}>← Back</button><span class="ob-count">${at + 1} of ${total}</span></div>
+      <div class="ob-stage" data-at="${steps[at].id}">${form}<aside class="ob-preview" aria-label="Live preview of your team">${obPreviewHtml()}${(obMarkShown(), '')}</aside></div>
+      <p class="ob-msg" role="alert" hidden></p>
+    </main>
+  </div>`;
+}
+// step navigation without re-rendering, so focus, typed text and the AI fields stay put
+function obShow(i) {
+  const steps = obSteps(); const from = ob.step; ob.step = Math.max(0, Math.min(i, steps.length - 1)); ob.dir = ob.step < from ? 'back' : 'fwd';
+  if (['biz', 'city', 'review'].includes(steps[ob.step].id)) render(); // those questions quote earlier answers
+  const id = steps[ob.step].id;
+  const fm = root.querySelector('.ob-form'); if (fm) fm.dataset.dir = ob.dir;
+  const stg = root.querySelector('.ob-stage'); if (stg) stg.dataset.at = id;
+  obPaintPreview();
+  root.querySelectorAll('.ob-step').forEach((sec) => { const on = sec.dataset.step === id; sec.classList.toggle('on', on); sec.setAttribute('aria-hidden', on ? 'false' : 'true'); });
+  ob.seen = ob.seen || {}; steps.slice(0, ob.step).forEach((x) => { ob.seen[x.id] = true; });
+  obPaintTrack();
+  const pct = Math.round((ob.step / (steps.length - 1)) * 100);
+  const bar = root.querySelector('.ob-bar'); if (bar) { bar.setAttribute('aria-valuenow', pct); bar.querySelector('i').style.width = pct + '%'; }
+  const cnt = root.querySelector('.ob-count'); if (cnt) cnt.textContent = `${ob.step + 1} of ${steps.length}`;
+  const back = root.querySelector('.ob-back'); if (back) back.disabled = ob.step === 0;
+  setTimeout(() => { const sec = root.querySelector('.ob-step.on'); const f = sec && (sec.querySelector('.ob-tag-in, .ob-input:not([hidden] *), select, .ob-go') || sec.querySelector('input')); if (f && !(f.closest('[hidden]'))) f.focus({ preventScroll: true }); }, 40);
+}
+function obRestore(k) {
+  const f = root.querySelector('.ob-form'); if (!f) return;
+  const ps = f.querySelector('[name="provider"]'), ms = f.querySelector('[name="model"]');
+  if (ps && k.provider && ps.value !== k.provider && [...ps.options].some((o) => o.value === k.provider)) {
+    ps.value = k.provider; const pk = aiProviders().find((x) => x.id === k.provider); if (ms && pk) ms.innerHTML = modelOptions(pk, '');
+  }
+  if (ms && k.model && [...ms.options].some((o) => o.value === k.model)) ms.value = k.model;
+  const mo = f.querySelector('[name="modelOther"]'); if (mo && k.modelOther) mo.value = k.modelOther;
+  const box = f.querySelector('.model-other'); if (box && ms) box.hidden = ms.value !== '__other';
+  const key = f.querySelector('[name="key"]'); if (key && k.key) key.value = k.key;
+}
+// Stepper state: 'ok' (green ✓), 'bad' (red !), 'now' (current), '' (still to come)
+function obStepOk(id) {
+  if (!ob) return false;
+  if (id === 'role') return !!ob.role && (ob.role !== 'other' || !!String(ob.businessType || '').trim());
+  if (['biz', 'city', 'services', 'audience'].includes(id)) return !!String(ob[id] || '').trim();
+  return true; // AI key is optional; review has nothing to check
+}
+function obStatus(k, id, at) {
+  if (!ob.bad) ob.bad = {};
+  if (k < at) return obStepOk(id) ? 'ok' : 'bad';
+  if (k === at) return ob.bad[id] && !obStepOk(id) ? 'now bad' : 'now';
+  return ob.seen && ob.seen[id] ? (obStepOk(id) ? 'ok later' : 'bad later') : '';
+}
+const OB_SVG = (d) => `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const OB_STEP_ICONS = {
+  role: OB_SVG('<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>'),
+  biz: OB_SVG('<path d="M4 7V5h16v2M9 19h6M12 5v14"/>'),
+  city: OB_SVG('<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+  services: OB_SVG('<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>'),
+  audience: OB_SVG('<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 4a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6"/>'),
+  ai: OB_SVG('<path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+  review: OB_SVG('<path d="M9 11l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="2"/>'),
+};
+function obTrackHtml(at) {
+  const steps = obSteps(), sts = steps.map((x, k) => obStatus(k, x.id, at));
+  return steps.map((x, k) => {
+    const st = sts[k], next = sts[k + 1] || '';
+    // the line to the next step: red if either end needs fixing, green once this step is done right
+    const line = /\bbad\b/.test(st) || /\bbad\b/.test(next) ? ' line-bad' : /\bok\b/.test(st) ? ' line-ok' : '';
+    const mark = /\bok\b/.test(st) && k !== at ? '✓' : /\bbad\b/.test(st) ? '!' : k + 1;
+    const why = /\bbad\b/.test(st) ? ' — needs an answer' : /\bok\b/.test(st) ? ' — done' : '';
+    const badge = /\bbad\b/.test(st) ? '!' : /\bok\b/.test(st) && k !== at ? '✓' : '→';
+    void mark;
+    return `<li class="${st}${line}"><button type="button" data-ob="goto" data-to="${x.id}" ${k > at && !(ob.seen && ob.seen[x.id]) ? 'disabled' : ''} aria-label="${esc('Step ' + (k + 1) + ': ' + x.label + why)}">
+      <span class="ob-node"><span class="ob-chipico c-${x.id}">${OB_STEP_ICONS[x.id] || ''}<b>${k + 1}</b></span><span class="ob-badge" aria-hidden="true">${badge}</span></span>
+      <span class="ob-lab">${esc(x.label)}</span></button></li>`;
+  }).join('');
+}
+function obPaintTrack() {
+  const t = root.querySelector('.ob-flow'); if (t && ob) t.innerHTML = obTrackHtml(ob.step);
+  const h = root.querySelector('.ob-h'); if (h && ob) h.innerHTML = `Let’s build your team${String(ob.biz || '').trim() ? ` for <span>${esc(ob.biz.trim())}</span>` : ''}.`;
+}
+function obSave(form) {
+  if (!form || !ob) return;
+  form.querySelectorAll('.ob-tag-in').forEach((t) => { const v = t.value.trim(); if (v) { const fld = t.dataset.tagIn; const ta = form.querySelector(`[name="${fld}"]`); const l = obList(ta.value); if (!l.some((x) => x.toLowerCase() === v.toLowerCase())) l.push(v); ta.value = l.join(', '); t.value = ''; setTimeout(() => obSetTags(fld, l), 0); } });
+  for (const k of ['biz', 'city', 'services', 'audience', 'businessType']) { const el = form.querySelector(`[name="${k}"]`); if (el) ob[k] = el.value; }
+  const r = form.querySelector('input[name="role"]:checked'); if (r) ob.role = r.value;
+}
+function obValid(form) {
+  const id = obSteps()[ob.step].id;
+  ob.bad = ob.bad || {};
+  const say = (m, el) => { ob.bad[id] = true; obPaintTrack(); const box = root.querySelector('.ob-msg'); if (box) { box.textContent = m; box.hidden = false; clearTimeout(obSave.t); obSave.t = setTimeout(() => { box.hidden = true; }, 3200); } const f = el && form.querySelector(el); if (f) { f.classList.add('ob-shake'); setTimeout(() => { f.classList.remove('ob-shake'); f.focus(); }, 380); } return false; };
+  if (id === 'role') {
+    if (!ob.role) return say('Pick the kind of business you run.');
+    if (ob.role === 'other' && !ob.businessType.trim()) return say('Type what kind of business it is.', '[name="businessType"]');
+  }
+  if (['biz', 'city', 'services', 'audience'].includes(id) && !String(ob[id] || '').trim()) return say(id === 'services' ? 'Add at least one service.' : id === 'audience' ? 'Add at least one group of customers.' : 'This one is needed to set up your team.', ['services', 'audience'].includes(id) ? `[data-tags="${id}"]` : `[name="${id}"]`);
+  delete ob.bad[id];
+  return true;
+}
+function setupView() {
+  const packs = (state && state.packs) || meta.packs || [];
+  const wa = (state && state.whatsapp) || {};
+  const booked = state && state.setupCall;
+  const call = `<form class="form" data-act="setup-call" style="margin-top:16px"><h2>Book a setup call</h2><p class="small">About 15 minutes with a person. This saves the request in your account. Nothing is emailed.</p>
+    ${booked ? `<p class="small" role="status">Saved for ${esc(booked.name)} · ${esc(booked.phone)} · ${esc(booked.when)}. Nothing was emailed.</p>` : ''}
+    <label>Name<input name="name" required value="${esc((booked && booked.name) || '')}"></label>
+    <label>Phone<input name="phone" required value="${esc((booked && booked.phone) || '')}" placeholder="9198…"></label>
+    <label>A time that suits you<input name="when" required value="${esc((booked && booked.when) || '')}" placeholder="Tuesday 11:00"></label>
+    <label class="wide">Note<input name="note" placeholder="What you want help with"></label>
+    <div><button class="btn" type="submit">Book a setup call</button></div></form>`;
+  if (wiz === 'call') return `<div class="auth"><div class="panel" style="width:min(640px,100%)"><h1>Book a setup call</h1>${call}<p><button class="btn-ghost" type="button" data-act="go" data-screen="setup" data-wiz="1">Back to the 15-minute setup</button></p></div></div>`;
+  const steps = ['Industry', 'Business', 'Import', 'WhatsApp', 'Tone', 'AI key', 'Drafts'];
+  const head = `<p class="small">Step ${wiz} of 7 · about 15 minutes. Nothing is sent.</p><p class="small">${steps.map((s, i) => (i + 1 === Number(wiz) ? '<b>' + s + '</b>' : s)).join(' · ')}</p>`;
+  const provs = (state && state.aiKey && state.aiKey.providers) || [{ id: 'openrouter', name: 'OpenRouter' }, { id: 'openai', name: 'OpenAI' }, { id: 'xai', name: 'xAI Grok' }, { id: 'google', name: 'Google Gemini' }, { id: 'anthropic', name: 'Anthropic' }];
+  let body = '';
+  if (Number(wiz) === 1) wiz = 2;
+  if (Number(wiz) === 2) body = `<h1>Business details</h1>${head}<form class="stack" data-act="setup-details">
+    <label>Business name<input name="biz" required></label><label>City<input name="city" required></label>
+    <label>Services<input name="services" required></label>
+    <label>Who you want to reach<input name="audience" required></label><label>The offer<input name="offer" required></label>
+    <button class="btn" type="submit">Save and continue</button></form>`;
+  else if (Number(wiz) === 3) body = `<h1>Import customers</h1>${head}<p class="sub">CSV, a paste of name and phone, or Eka.care. You can skip this and add people later.</p>
+    <form class="stack" data-act="setup-import"><label>Paste one person per line<input name="paste" placeholder="Asha Rao, 919000000111"></label>
+    <label>CSV file<input name="file" type="file" accept=".csv,text/csv"></label>
+    <div><button class="btn" type="submit">Save import</button> <button class="btn-ghost" type="button" data-act="setup-skip">Skip</button> <button class="btn-ghost" type="button" data-act="sync-eka">Sync Eka.care</button></div></form>
+    <p class="small">Eka.care stays Available, connect with credentials, until the server has keys. The sample business shows Connected (demo). Sync does not email anyone.</p>`;
+  else if (Number(wiz) === 4) body = `<h1>Connect WhatsApp</h1>${head}<p class="sub">${wa.configured ? 'Official WhatsApp (' + esc(wa.provider) + ') is on. Approved drafts can send the template ' + esc(wa.template) + '. Opt-out is honoured.' : 'No provider key is set. Drafts keep a click-to-chat link. Nothing is sent.'}</p>
+    <form class="stack" data-act="setup-wa"><label>Business WhatsApp number<input name="phone" required placeholder="9198…"></label>
+    <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ack" value="yes" style="width:auto" required> I understand nothing goes out until I approve it.</label>
+    <button class="btn" type="submit">Continue</button></form>`;
+  else if (Number(wiz) === 5) body = `<h1>A tone sample</h1>${head}<p class="sub">One message in your voice. Later drafts lean on it.</p>
+    <form class="stack" data-act="setup-tone"><label>How you write<textarea name="tone" rows="4" required placeholder="Hi, just checking in. Want me to hold Thursday?"></textarea></label>
+    <button class="btn" type="submit">Continue</button></form>`;
+  else if (Number(wiz) === 6) body = `<h1>Use your own AI key</h1>${head}
+    <p class="sub">Required. OpenRouter, OpenAI, xAI, Gemini or Anthropic. The key is checked once and stored encrypted. Only the last 4 characters are shown. Every agent call for this business uses that key only. You pay the provider directly.</p>
+    ${(state && state.aiKey && state.aiKey.source === 'own') ? `<p class="small" role="status">Saved ${esc(state.aiKey.name)} key ${esc(state.aiKey.hint)}. Model: ${esc(state.aiKey.model)}. ${esc(state.aiKey.label || '')}</p>` : `<p class="small">Paste a key to continue. Agent calls stay off until it is saved.</p>`}
+    <form class="stack" data-act="setup-key">
+      ${aiKeyFields('setup')}
+      <div><button class="btn" type="submit">Test & save</button></div>
+    </form>
+    ${(state && state.aiKey && state.aiKey.source === 'demo') ? '<p><button class="btn-ghost" type="button" data-act="setup-demo-key">Continue with demo key (demo only)</button></p>' : ''}
+    <p class="small">This step saves the key, then creates the first 3 drafts. Nothing is sent.</p>`;
+  else body = `<h1>The first 3 drafts are waiting</h1>${head}<p class="sub">They are in Approvals. Nothing has been sent.</p>
+    ${(wizDrafts || []).map((d) => `<article class="draft"><b>${esc(d.title)}</b><p>${esc(d.body)}</p></article>`).join('') || '<p class="small">Finish the earlier steps to queue them.</p>'}
+    <p><button class="btn" type="button" data-act="go" data-screen="approvals">Open Approvals</button></p>${call}`;
+  return `<div class="auth"><div class="panel" style="width:min(860px,100%)">${body}<div class="err">${esc(err)}</div></div></div>`;
+}
+function side() {
+  const pending = (state.pending || []).length;
+  const item = (id, label, extra) => `<button type="button" data-act="go" data-screen="${id}" ${screen===id?'aria-current="page"':''}>${esc(label)}${extra||''}</button>`;
+  return `<aside class="side">
+    <div class="brand"><div class="mark">A</div><div><b>AaaS</b><span>${esc(state.biz || '')}</span></div></div>
+    <nav class="nav">
+      ${item('dash','Dashboard')}
+      ${(state.agents||[]).map((a) => item(a.key, a.name)).join('')}
+      ${item('approvals','Approvals', pending?`<span class="badge">${pending}</span>`:'')}
+      ${item('connections','Connections')}
+      ${state.visitKit ? item('visit','Clinic visit') : ''}
+      ${item('pricing','Pricing')}
+      ${item('usage','Usage & cost')}
+      ${item('settings','Settings')}
+      ${item('privacy','Privacy')}
+    </nav>
+    <div class="grow"></div>
+    ${state.industryLocked
+      ? `<div class="small industry-fixed" style="padding:8px">Industry<div class="industry-name" title="Set when this business was onboarded. Create a new account for another business.">${esc(state.roleTitle || '')}</div></div>`
+      : `<label class="small" style="padding:8px">Industry (sample business)
+      <select data-act="pick" aria-label="Industry">${((state.packs)||[]).map((p) => `<option value="${esc(p.id)}" ${state.role===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select>
+    </label>`}
+    <button class="out" type="button" data-act="logout">Sign out</button>
+  </aside>`;
+}
+function kpis() {
+  const s = state.stats || {};
+  const L = state.labels || {};
+  const tiles = [
+    ['Enquiries this week', s.enquiriesWeek, s.enquiriesOpen + ' still open'],
+    [L.booking || 'Bookings this week', s.bookingsWeek, 'Booked or completed'],
+    ['Referral bookings', s.referralBookings, 'From a forwarded link'],
+    [L.noshow || 'No-shows', s.noshows, 'This week'],
+    [L.recall || 'Recalls due', s.recallsDue, 'No ' + (L.visit || 'visit') + ' in 6 months'],
+    ['Reviews requested', s.reviews, 'Drafts on file'],
+    ['Posts scheduled', s.posts, 'On the calendar, not published'],
+    [L.revenue || 'Paid this month', inr(s.revenue), 'Invoices marked paid'],
+    [(L.who || 'Patients') + ' last 2 months', s.patientsLast2Months, s.patientsTotal + ' on file'],
+  ];
+  return `<div class="kpis">${tiles.map(([k,v,h]) => `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="hint">${esc(h)}</div></div>`).join('')}</div>`;
+}
+function banner() {
+  // Sample-data warning banner removed from the owner screens.
+  return '';
+}
+function checklistCard() {
+  const steps = state.checklist || [];
+  if (!steps.length || steps.every((s) => s.done)) return '';
+  const go = { import: 'connections', form: 'connections', approve: 'approvals' };
+  return `<div class="callout"><b>First run</b><p class="small">Three steps, then the team is working from your records.</p><ol>${steps.map((s) => `<li>${s.done?'Done: ':''}<button type="button" class="btn-ghost" data-act="go" data-screen="${go[s.id]||'dash'}">${esc(s.title)}</button> <span class="small">${esc(s.detail)}</span></li>`).join('')}</ol></div>`;
+}
+function recoveredCard() {
+  const r = (state.stats && state.stats.recovered) || { total: 0, bookings: 0, reactivated: 0, referrals: 0, invoices: 0, method: '' };
+  return `<section class="recovered"><div class="k">₹ recovered this month</div><div class="v">${inr(r.total)}</div>
+    <ul><li>Bookings ${inr(r.bookings)}</li><li>Reactivated ${inr(r.reactivated)}</li><li>Referrals ${inr(r.referrals)}</li><li>Paid invoices ${inr(r.invoices)}</li></ul>
+    <p class="small">${esc(r.method || '')}</p>
+    <button class="btn" type="button" data-act="weekly">Draft weekly WhatsApp summary</button></section>`;
+}
+function todayAppts() {
+  const key = dayKey(new Date().toISOString());
+  return (state.appointments || []).filter((a) => a.status === 'booked' && dayKey(a.at) === key);
+}
+function homeDraft(d) {
+  return `<article class="draft"><b>${esc(d.title)}</b> ${pill(d.status)}
+    <p>${esc(String(d.body || '').slice(0, 180))}</p>
+    <div class="row-actions">
+      <button class="btn" type="button" data-act="decide" data-id="${esc(d.approvalId)}" data-decision="approve">Approve</button>
+      <button class="btn-ghost" type="button" data-act="drawer" data-kind="draft" data-id="${esc(d.id)}">Edit</button>
+    </div>
+  </article>`;
+}
+function dash() {
+  const s = state.stats || {};
+  const chief = state.chief || {};
+  const pending = state.pending || [];
+  const today = todayAppts();
+  const unpaid = (state.invoices || []).filter((i) => i.state !== 'paid');
+  const rec = s.recovered || { total: 0, bookings: 0, reactivated: 0, referrals: 0, invoices: 0 };
+  const max = Math.max(rec.bookings || 0, rec.reactivated || 0, rec.referrals || 0, rec.invoices || 0, 1);
+  const bar = (label, n, cls) => `<div><span>${esc(label)}</span><i class="${cls || ''}" style="width:${Math.round((n / max) * 100)}%"></i><b>${inr(n)}</b></div>`;
+  return `${banner()}<h1>Home</h1><p class="sub">${hello()}. ${esc(state.biz)} · ${esc(state.city)}. Key figures are on this page.</p>
+    <div class="kpis">
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="recovered"><div class="k">₹ recovered</div><div class="v">${inr(rec.total)}</div></button>
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="leads"><div class="k">Open enquiries</div><div class="v">${esc(s.enquiriesOpen || 0)}</div></button>
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="approvals"><div class="k">Needs approval</div><div class="v">${esc(pending.length)}</div></button>
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="due"><div class="k">Payments due</div><div class="v">${inr(chief.paymentsDueInr || 0)}</div><div class="hint">${esc(chief.paymentsDue || unpaid.length)} invoices</div></button>
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="today"><div class="k">Today</div><div class="v">${esc(today.length)}</div><div class="hint">Booked visits</div></button>
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="revenue"><div class="k">Revenue</div><div class="v">${inr(s.revenue || 0)}</div><div class="hint">Paid this month</div></button>
+    </div>
+    <div class="home-grid">
+      <section>
+        <h2>Needs approval</h2>
+        ${pending.slice(0, 6).map(homeDraft).join('') || '<p class="small">Nothing is waiting. Approving a draft is the only way it can go out.</p>'}
+        <h2>Today’s appointments</h2>
+        ${today.map((a) => `<button class="draft" type="button" data-act="drawer" data-kind="appt" data-id="${esc(a.id)}" style="width:100%;text-align:left"><b>${esc(when(a.at))}</b><p>${esc(pname(a.patientId))} · ${esc(a.service)} · ${inr(a.fee)}</p></button>`).join('') || '<p class="small">No booked visits today.</p>'}
+      </section>
+      <section class="card" style="padding:16px">
+        <h2 style="margin-top:0">Revenue</h2>
+        <div class="v" style="font-size:28px;font-weight:650">${inr(s.revenue || 0)}</div>
+        <p class="small">Paid invoices this month. Unpaid is ${inr(chief.paymentsDueInr || 0)}.</p>
+        <div class="chart">${bar('Bookings', rec.bookings)}${bar('Reactivated', rec.reactivated, 'g')}${bar('Referrals', rec.referrals)}${bar('Invoices', rec.invoices, 'g')}</div>
+        <p style="margin-top:14px"><button class="btn" type="button" data-act="go" data-screen="setup">15-minute setup</button></p>
+      </section>
+    </div>
+    ${checklistCard()}`;
+}
+function drawerHtml() {
+  if (!drawer) return '';
+  let inner = '';
+  if (drawer.kind === 'draft') {
+    const d = (state.drafts || []).find((x) => String(x.id) === String(drawer.id));
+    if (!d) inner = '<p>That draft is gone.</p>';
+    else inner = `<h2>${esc(d.title)}</h2><form data-act="edit-draft"><input type="hidden" name="id" value="${esc(d.id)}"><textarea name="body" rows="8">${esc(d.body)}</textarea><div class="row-actions" style="margin-top:8px"><button class="btn" type="submit">Save edit</button><button class="btn-ghost" type="button" data-act="decide" data-id="${esc(d.approvalId)}" data-decision="approve">Approve</button></div></form><p class="small">Saving or approving stays in this account. Nothing is sent until you approve.</p>`;
+  } else if (drawer.kind === 'appt') {
+    const a = (state.appointments || []).find((x) => String(x.id) === String(drawer.id));
+    inner = a ? `<h2>${esc(a.service)}</h2><p>${esc(pname(a.patientId))}</p><p>${esc(when(a.at))} · ${inr(a.fee)}</p><p>${pill(a.status)}</p>` : '<p>That visit is not on file.</p>';
+  } else if (drawer.kind === 'kpi') {
+    const titles = { recovered: 'Recovered this month', leads: 'Open enquiries', approvals: 'Needs approval', due: 'Payments due', today: 'Today', revenue: 'Revenue' };
+    inner = `<h2>${esc(titles[drawer.id] || 'Detail')}</h2>${drawer.id === 'approvals' ? (state.pending || []).map(homeDraft).join('') || '<p class="small">Nothing is waiting.</p>' : drawer.id === 'today' ? todayAppts().map((a) => `<p><b>${esc(when(a.at))}</b> ${esc(pname(a.patientId))} · ${esc(a.service)}</p>`).join('') || '<p class="small">No booked visits today.</p>' : drawer.id === 'leads' ? (state.enquiries || []).filter((e) => e.status === 'new').map((e) => `<p><b>${esc(e.name)}</b> ${esc(e.message || '')}</p>`).join('') || '<p class="small">No open enquiries.</p>' : `<p class="small">${esc((state.stats && state.stats.recovered && state.stats.recovered.method) || 'Counted from this account.')}</p>`}`;
+  }
+  return `<div class="drawer-back" data-act="drawer-close"></div><aside class="drawer" role="dialog" aria-label="Detail"><button class="btn-ghost" type="button" data-act="drawer-close">Close</button>${inner}</aside>`;
+}
+function chiefPage() {
+  const opener = (state.chief && state.chief.opener) || 'I’m Chief. Ask me about this business. Nothing is sent until you approve a draft.';
+  if (!chatLog.length) chatLog = [{ r: 'a', t: opener }];
+  return `<section class="chief" aria-label="Chief"><header><b>Chief</b><span>${esc(state.biz || '')}. Answers come from this account’s records. Drafts still need approval.</span> <button class="btn-ghost" type="button" data-act="go" data-screen="dash">Dashboard</button></header>
+    <div class="log">${chatLog.map((m) => `<div class="bubble ${m.r}">${m.r === 'a' ? chatMd(m.t) : esc(m.t)}</div>`).join('')}${chatBusy ? '<div class="small">Checking the records…</div>' : ''}</div>
+    <form data-act="chat"><input id="chatIn" name="message" value="${esc(chatDraft)}" placeholder="Ask about leads, approvals or payments" autocomplete="off"><button class="btn" type="submit">Send</button></form></section>`;
+}
+function softwareCard() {
+  const s = state.stats || {};
+  const rows = s.fromSoftwareNames || [];
+  return `<section class="card" style="padding:14px;margin-bottom:16px"><h2 style="margin-top:0">From connected software</h2>
+    <p class="small">People whose row came from Eka.care or another system you connect. Brought-back rupees are paid invoices this month for those people, after AaaS marked the follow-up.</p>
+    <div class="kpis">
+      <div class="tile"><div class="k">From connected software</div><div class="v">${esc(s.fromSoftware || 0)}</div></div>
+      <div class="tile"><div class="k">Brought back by AaaS</div><div class="v">${inr(s.broughtBackInr || 0)}</div><div class="hint">${(s.broughtBackNames || []).join(', ') || 'No paid return yet'}</div></div>
+    </div>
+    ${rows.length ? `<ul class="src">${rows.map((p) => `<li><b>${esc(p.name)}</b> <span class="pill">${esc(p.source)}</span>${p.broughtBack ? ' <span class="pill paid">Brought back</span>' : ''}</li>`).join('')}</ul>` : '<p class="small">None yet. Connect Eka.care or import a CSV.</p>'}
+  </section>`;
+}
+function forecastCard() {
+  const f = state.forecast || {};
+  return `<section class="card" style="padding:14px;margin-bottom:16px"><h2 style="margin-top:0">Next month</h2>
+    <div class="kpis">
+      <div class="tile"><div class="k">${esc((state.labels&&state.labels.booking)||'Bookings')}</div><div class="v">${esc(f.bookings||0)}</div><div class="hint">${esc(f.bookingsBase||0)} in the last ${esc(f.days||28)} days</div></div>
+      <div class="tile"><div class="k">Revenue</div><div class="v">${inr(f.revenue||0)}</div><div class="hint">Invoices issued, scaled</div></div>
+      <div class="tile"><div class="k">Collections</div><div class="v">${inr(f.collections||0)}</div><div class="hint">Invoices marked paid, scaled</div></div>
+    </div>
+    <p class="small">${esc(f.method||'')}</p>
+  </section>`;
+}
+function rulesBox(agent) {
+  const r = state.rules || {};
+  return `<form class="card rules" data-act="rules" style="padding:12px"><div class="small">Rules</div>
+    <div style="margin:6px 0 8px">Send only between <input name="from" value="${esc(r.from)}" style="width:90px"> and <input name="to" value="${esc(r.to)}" style="width:90px"> · Ask before anything new · Tone: <input name="tone" value="${esc(r.tone)}" style="width:min(360px,100%)"></div>
+    <button class="btn-ghost" type="submit">Save rules</button>
+    <button class="btn-ghost" type="button" data-act="go" data-screen="settings">Reminder settings</button>
+    <button class="btn-ghost" type="button" data-act="pause" data-key="${esc(agent.key)}">${agent.paused?'Resume agent':'Pause agent'}</button>
+  </form>`;
+}
+function agentHead(agent) {
+  return `${banner()}<h1>${esc(agent.name)}</h1><p class="sub">${esc(agent.d)}</p>
+    <div class="kpis agent-kpis">
+      <div class="tile"><div class="k">Done this week</div><div class="v">${agent.done}</div></div>
+      <div class="tile"><div class="k">Waiting for approval</div><div class="v">${agent.waiting}</div></div>
+      <div class="tile"><div class="k">Scheduled</div><div class="v">${agent.scheduled}</div></div>
+    </div>`;
+}
+function draftCard(d) {
+  const link = String(d.waLink || '').startsWith('https://wa.me/') ? d.waLink : '';
+  return `<article class="draft"><b>${esc(d.title)}</b> ${pill(d.status)} ${d.demo?'<span class="pill">DEMO</span>':''}
+    <p>${esc(d.body)}</p>
+    ${d.waStatus?`<p class="small">WhatsApp ${esc(d.waStatus)}${d.waProvider?' · '+esc(d.waProvider):''}. Only an approved draft is handed to the provider.</p>`:''}
+    ${link?`<p><a class="link" href="${esc(link)}" target="_blank" rel="noopener">WhatsApp link</a> <span class="small">${(state.whatsapp&&state.whatsapp.configured)?'Click-to-chat stays available.':'Opens on your phone. AaaS does not send it.'}</span></p>`:''}
+    ${d.status==='pending'?`<form data-act="edit-draft"><input type="hidden" name="id" value="${d.id}"><textarea name="body" rows="3">${esc(d.body)}</textarea><div class="row-actions" style="margin-top:8px"><button class="btn-ghost" type="submit">Save edit</button><button class="btn" type="button" data-act="decide" data-id="${esc(d.approvalId)}" data-decision="approve">Approve</button><button class="btn-danger" type="button" data-act="decide" data-id="${esc(d.approvalId)}" data-decision="reject">Reject</button></div></form>`:''}
+    ${d.result?`<p class="small">${esc(d.result)}</p>`:''}
+  </article>`;
+}
+function front() {
+  const a = state.agents.find((x) => x.key==='front');
+  const opts = (state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  return `${agentHead(a)}
+    <div class="split">
+      <section><h2>Enquiries</h2>
+        <form class="form" data-act="add-enq" style="grid-template-columns:1fr 1fr">
+          <label>Name<input name="name" required></label>
+          <label>Phone<input name="phone" required></label>
+          <label>Channel<select name="channel"><option>Phone</option><option>Website</option><option>Instagram</option><option>Walk-in</option></select></label>
+          <label>Message<input name="message"></label>
+          <div><button class="btn" type="submit">Add enquiry</button></div>
+        </form>
+        <div class="scroll"><table><thead><tr><th>Who</th><th>Channel</th><th>Status</th><th></th></tr></thead><tbody>
+          ${(state.enquiries||[]).map((e) => `<tr><td>${esc(e.name)}${e.demo?' <span class="pill">DEMO</span>':''}<div class="small">${esc(e.message||'')}</div></td><td>${esc(e.channel)}<div class="small">${esc(e.phone)}</div></td><td>${pill(e.status)}</td><td class="row-actions">
+            <button class="btn-ghost" type="button" data-act="enq-status" data-id="${e.id}" data-status="${e.status==='closed'?'new':'closed'}">${e.status==='closed'?'Reopen':'Close'}</button>
+            <button class="btn-danger" type="button" data-act="enq-del" data-id="${e.id}">Delete</button>
+          </td></tr>`).join('') || '<tr><td colspan="4">No enquiries yet.</td></tr>'}
+        </tbody></table></div>
+      </section>
+      <section><h2>Appointments</h2>
+        <form class="form" data-act="add-appt" style="grid-template-columns:1fr 1fr">
+          <label>Person<select name="patientId">${opts}</select></label>
+          <label>When<input name="at" type="datetime-local" required></label>
+          <label>Service<input name="service" value="${esc((state.labels&&state.labels.service)||'Visit')}"></label>
+          <label>Fee<input name="fee" type="number" min="0" value="1500"></label>
+          <div><button class="btn" type="submit">Add appointment</button></div>
+        </form>
+        <div class="scroll"><table><thead><tr><th>When</th><th>Who</th><th>Status</th><th></th></tr></thead><tbody>
+          ${(state.appointments||[]).map((ap) => `<tr><td>${esc(when(ap.at))}<div class="small">${esc(ap.service)} · ${inr(ap.fee)}</div></td><td>${esc(pname(ap.patientId))}${ap.demo?' <span class="pill">DEMO</span>':''}</td><td>${pill(ap.status)}${ap.reminder?`<div class="small">Reminder ${esc(ap.reminder.status)}</div>`:''}</td><td class="row-actions">
+            <button class="btn-ghost" type="button" data-act="appt-status" data-id="${ap.id}" data-status="noshow">Mark missed</button>
+            <button class="btn-ghost" type="button" data-act="remind" data-id="${ap.id}">Queue reminder</button>
+            <button class="btn-danger" type="button" data-act="appt-del" data-id="${ap.id}">Delete</button>
+          </td></tr>`).join('') || '<tr><td colspan="4">No appointments yet.</td></tr>'}
+        </tbody></table></div>
+      </section>
+    </div>${rulesBox(a)}`;
+}
+function peopleTable(list, act) {
+  if (!list.length) return '<p class="small">Nobody in this list.</p>';
+  const visit = (state.labels && state.labels.visit) || 'visit';
+  return `<div class="scroll"><table><thead><tr><th>Name</th><th>Last ${esc(visit)}</th><th>Value</th><th></th></tr></thead><tbody>${list.map((p) => `<tr><td>${esc(p.name)}${p.demo?' <span class="pill">DEMO</span>':''}<div class="small">${esc(p.phone)}</div></td><td>${esc(when(p.lastVisit))}</td><td>${inr(p.value)}</td><td><button class="btn" type="button" data-act="${act}" data-id="${p.id}">Draft follow-up</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function recall() {
+  const a = state.agents.find((x) => x.key==='recall');
+  const now = Date.now(), day = 864e5;
+  const lapsed = (state.patients||[]).filter((p) => p.lastVisit && (now - Date.parse(p.lastVisit) > 180*day));
+  const bar = Number(state.labels && state.labels.highValue) || 20000;
+  const high = (state.patients||[]).filter((p) => Number(p.value) >= bar);
+  const drafts = (state.drafts||[]).filter((d) => d.agent==='recall');
+  return `${agentHead(a)}<div class="split"><section><h2>Lapsed</h2>${peopleTable(lapsed,'recall')}</section><section><h2>High value</h2>${peopleTable(high,'recall')}</section></div>
+    <h2>Follow-up drafts</h2>${drafts.map(draftCard).join('') || '<p class="small">No drafts yet.</p>'}${rulesBox(a)}`;
+}
+function reviews() {
+  const a = state.agents.find((x) => x.key==='reviews');
+  const drafts = (state.drafts||[]).filter((d) => d.kind==='review');
+  const visit = (state.labels && state.labels.visit) || 'visit';
+  const waOn = !!(state.whatsapp && state.whatsapp.configured);
+  return `${agentHead(a)}<h2>Ask after a ${esc(visit)}</h2><p class="sub">${waOn?'Approving a draft sends the WhatsApp template. Opt-out is honoured. Nothing goes out before you approve.':'The draft includes a WhatsApp click-to-chat link. Nothing is sent until a Meta or Gupshup key is set, and only after you approve.'}</p>
+    <div class="scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>WhatsApp</th><th></th></tr></thead><tbody>
+      ${(state.patients||[]).slice(0,12).map((p) => `<tr><td>${esc(p.name)}${p.demo?' <span class="pill">DEMO</span>':''}</td><td>${esc(p.phone)}</td><td>${p.waOpt==='out'?'Opted out':p.waOpt==='in'?'Opted in':'No opt-in'}</td><td class="row-actions"><button class="btn" type="button" data-act="review" data-id="${p.id}">Draft review request</button><button class="btn-ghost" type="button" data-act="wa-opt" data-id="${p.id}" data-status="in">Opt in</button><button class="btn-ghost" type="button" data-act="wa-opt" data-id="${p.id}" data-status="out">Opt out</button></td></tr>`).join('')}
+    </tbody></table></div>
+    <h2>Drafts</h2>${drafts.map(draftCard).join('') || '<p class="small">No review drafts yet.</p>'}${rulesBox(a)}`;
+}
+function social() {
+  const a = state.agents.find((x) => x.key==='social');
+  const start = state.stats.weekStart;
+  const days = [...Array(7)].map((_, i) => { const [y,m,d] = start.split('-').map(Number); const dt = new Date(Date.UTC(y, m-1, d+i)); const key = dt.toISOString().slice(0,10); const label = dt.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', timeZone:'UTC' }); return { key, label }; });
+  void days;
+  return `${agentHead(a)}${festivalCalendar()}
+    <h2>Draft a post</h2>
+    <form class="form" data-act="social"><label class="wide">Topic<input name="topic" required placeholder="${esc((state.labels&&state.labels.example)||'What to say this week')}"></label><label>Put it on<input name="when" type="date"></label><div style="align-self:end"><button class="btn" type="submit">Create draft</button></div></form>
+    <p class="small">The draft is written by the same AI path as the rest of AaaS. Approving it only puts it on this calendar. Nothing is published.</p>
+    <h2>Forwardable referral</h2>
+    <p class="sub">A short message this person can forward on WhatsApp, with their own booking link. It waits in Approvals. Nothing is sent.</p>
+    <form class="form" data-act="referral"><label>Person<select name="patientId">${(state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn" type="submit">Draft referral message</button></div></form>
+    ${(state.drafts||[]).filter((d) => d.agent==='social').map(draftCard).join('')}${rulesBox(a)}`;
+}
+// ---- festival calendar (Google "Holidays in India", or the built-in list) ----
+const todayIST = () => dayKey(new Date().toISOString());
+let festMonth = todayIST().slice(0, 7);
+const festCache = {}, festBusy = {};
+async function loadFest(m) {
+  if (festBusy[m]) return; festBusy[m] = true;
+  try { festCache[m] = await api('/api/clinic/festivals', { month: m }); }
+  catch (e) { festCache[m] = { month: m, source: 'error', events: [], note: e.message }; }
+  finally { festBusy[m] = false; if (screen === 'social') render(); }
+}
+function shiftMonth(m, step) { const [y, mo] = m.split('-').map(Number); const d = new Date(Date.UTC(y, mo - 1 + step, 1)); return d.toISOString().slice(0, 7); }
+function festivalCalendar() {
+  const m = festMonth, fc = festCache[m];
+  if (!fc) loadFest(m);
+  const [y, mo] = m.split('-').map(Number);
+  const first = new Date(Date.UTC(y, mo - 1, 1)), daysIn = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const lead = (first.getUTCDay() + 6) % 7; // Monday first
+  const today = todayIST();
+  const events = (fc && fc.events) || [];
+  const posts = state.posts || [];
+  const drafted = (f) => posts.some((p) => p.festival === f.name && dayKey(p.at) === f.date && p.status !== 'rejected');
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<div class="cal-cell blank" aria-hidden="true"></div>');
+  for (let d = 1; d <= daysIn; d++) {
+    const key = `${m}-${String(d).padStart(2, '0')}`;
+    const fes = events.filter((f) => f.date === key);
+    const ps = posts.filter((p) => dayKey(p.at) === key);
+    cells.push(`<div class="cal-cell${key === today ? ' today' : ''}${fes.length ? ' has-fest' : ''}"><span class="cal-d">${d}</span>
+      ${fes.map((f) => `<button type="button" class="fest ${f.kind === 'public' ? 'pub' : ''}" data-act="fest-draft" data-date="${esc(f.date)}" data-name="${esc(f.name)}" title="${drafted(f) ? 'Posts already drafted for ' : 'Draft festival posts for '}${esc(f.name)}">${esc(f.name)}${drafted(f) ? ' ✓' : ''}</button>`).join('')}
+      ${ps.map((p) => `<div class="post">${pill(p.status)} ${esc(String(p.festival ? p.festival + ' posts' : p.text).slice(0, 70))}</div>`).join('')}</div>`);
+  }
+  const monthName = first.toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const upcoming = events.filter((f) => f.date >= today);
+  const src = !fc ? 'Loading festivals…'
+    : fc.source === 'google' ? 'Festivals from Google Calendar · Holidays in India'
+    : fc.source === 'google-connected' ? 'Festivals from Google Calendar (your connected Google account) · Holidays in India'
+    : (fc.note || 'Built-in festival list');
+  return `<h2>Festival calendar</h2>
+    <div class="cal-head"><button class="btn-ghost" type="button" data-act="fest-month" data-step="-1" aria-label="Previous month">‹</button>
+      <b>${esc(monthName)}</b>
+      <button class="btn-ghost" type="button" data-act="fest-month" data-step="1" aria-label="Next month">›</button>
+      ${m !== today.slice(0, 7) ? '<button class="btn-ghost" type="button" data-act="fest-month" data-step="0">Today</button>' : ''}
+      <span class="small cal-src">${esc(src)}</span></div>
+    <div class="cal" role="grid" aria-label="${esc(monthName)} festival calendar">
+      ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((w) => `<div class="cal-w">${w}</div>`).join('')}${cells.join('')}</div>
+    <p class="small">Click a festival to draft its posts: one version each for Instagram / Facebook, X, LinkedIn and WhatsApp status, in your voice. They wait in Approvals. Approving only puts them on this calendar. Nothing is published.</p>
+    ${upcoming.length ? `<h3 class="fest-h">Coming up in ${esc(monthName)}</h3><div class="fest-list">${upcoming.map((f) => `<div class="fest-row"><div><b>${esc(f.name)}</b><div class="small">${esc(new Date(f.date + 'T00:00:00Z').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }))}${f.kind === 'public' ? ' · public holiday' : ''}</div></div>
+      ${drafted(f) ? '<span class="pill">Drafted</span>' : `<button class="btn" type="button" data-act="fest-draft" data-date="${esc(f.date)}" data-name="${esc(f.name)}">Draft festival posts</button>`}</div>`).join('')}</div>` : ''}`;
+}
+function insights() {
+  const a = state.agents.find((x) => x.key==='insights');
+  return `${agentHead(a)}${kpis()}<h2>Weekly summary</h2><article class="draft"><p>${esc((state.summary&&state.summary.text) || 'No summary yet.')}</p>
+    <button class="btn-ghost" type="button" data-act="refresh">Refresh summary</button></article>${rulesBox(a)}`;
+}
+function billing() {
+  const a = (state.agents||[]).find((x) => x.key==='billing');
+  const opts = (state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const rows = (state.invoices||[]).map((inv) => `<tr><td>${esc(inv.number)}${inv.demo?' <span class="pill">DEMO</span>':''}<div class="small">${esc(pname(inv.patientId))}</div>${inv.payLink?`<div class="small"><a class="link" href="${esc(inv.payLink)}"${String(inv.payLink).startsWith('http')?' target="_blank" rel="noopener"':''}>${inv.payMode==='razorpay'?'Payment link':'UPI link'}</a></div>`:''}</td><td>${inr(inv.total)}</td><td>${pill(inv.state)}</td><td class="row-actions">
+    <button class="btn-ghost" type="button" data-act="paid" data-id="${inv.id}" data-status="${inv.state==='paid'?'unpaid':'paid'}">${inv.state==='paid'?'Mark unpaid':'Mark paid'}</button>
+    ${state.demo && inv.state!=='paid'?`<button class="btn-ghost" type="button" data-act="pay-sim" data-id="${inv.id}">Simulate payment</button>`:''}
+    <button class="btn-ghost" type="button" data-act="remind-inv" data-id="${inv.id}">Queue reminder</button>
+    <button class="btn-ghost" type="button" data-act="print" data-id="${inv.id}">Print</button>
+    <button class="btn-ghost" type="button" data-act="pdf" data-id="${inv.id}" data-number="${esc(inv.number)}">PDF</button>
+  </td></tr>`).join('');
+  return `${agentHead(a)}<p class="sub">Manual invoices. GST stays blank unless you type a percent. There is no GSTIN. Each invoice and its reminder draft includes a payment link: a Razorpay test link when those keys are set, otherwise a UPI link. The sample business can simulate the paid webhook. Nothing is sent, and AaaS does not take the payment itself.</p>
+    <form class="form" data-act="add-inv">
+      <label>Person<select name="patientId">${opts}</select></label>
+      <label>Description<input name="desc" required placeholder="${esc((state.labels&&state.labels.service)||'What this invoice is for')}"></label>
+      <label>Qty<input name="qty" type="number" min="1" value="1"></label>
+      <label>Rate ₹<input name="rate" type="number" min="0" value="1500"></label>
+      <label>GST % (optional)<input name="gst" placeholder="Leave blank"></label>
+      <label>Due<input name="due" type="date"></label>
+      <label>UPI ID<input name="upi" value="${esc((state.profile&&state.profile.upi)||'')}" placeholder="name@upi"></label>
+      <label class="wide">Payment link text<input name="payLink" value="${esc((state.profile&&state.profile.payLink)||'')}" placeholder="upi://pay?pa=name@upi"></label>
+      <div><button class="btn" type="submit">Create invoice</button></div>
+    </form>
+    <div class="scroll"><table><thead><tr><th>Invoice</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="4">No invoices yet.</td></tr>'}</tbody></table></div>${rulesBox(a)}`;
+}
+function pricing() {
+  const plans = state.plans || meta.plans || [];
+  const notes = state.pricing || meta.pricing || {};
+  return `${banner()}<h1>Pricing</h1><p class="sub">${esc(notes.sameFeatures || 'Both plans include the same agents. You approve anything that would go out.')} This app does not take a card payment.</p>
+    <div class="plans">${plans.map((p) => `<article class="tile"><div class="k">${esc(p.name)}</div><div class="v">${inr(p.priceInr)}<span class="small"> / month</span></div><p>${esc(p.blurb)}</p><ul>${(p.includes||[]).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>${p.setupInr ? `<p class="small">One-time setup and install ${inr(p.setupInr)}. Waived on an annual plan.</p>` : '<p class="small">No install.</p>'}</article>`).join('')}</div>
+    <p class="small">${esc(notes.annualNote || '')}</p>
+    <p class="small">${esc(notes.byokNote || '')}</p>`;
+}
+function usage() {
+  const u = state.usage || { tokens: 0, calls: 0, costUsd: 0, costInr: 0, inrPerUsd: 84, note: '', runs: [], byAgent: [] };
+  const rows = (u.runs || []).map((r) => `<tr><td>${esc(r.name)}<div class="small">${esc(when(r.at))}</div></td><td>${esc(r.tokensIn)}</td><td>${esc(r.tokensOut)}</td><td>${inr(r.costInr)}</td><td>${r.source==='sample'?'<span class="pill">Sample run</span>':'<span class="pill approved">Logged</span>'}</td></tr>`).join('');
+  const agents = (u.byAgent || []).map((r) => `<div class="tile"><div class="k">${esc(r.name)}</div><div class="v">${inr(r.costInr)}</div><div class="hint">${esc(r.tokensIn + r.tokensOut)} tokens · ${esc(r.calls)} runs</div></div>`).join('');
+  const line = (u.aiKey && u.aiKey.label) || u.billedTo || '';
+  return `${banner()}<h1>Usage and cost</h1><p class="sub">Token counts per agent run. Logged rows come from the model response. A sample business also shows recorded sample runs. This is not a bill from AaaS.</p>
+    ${line ? `<p class="banner" role="status">${esc(line)}</p>` : ''}
+    <div class="kpis">
+      <div class="tile"><div class="k">Logged model calls</div><div class="v">${esc(u.calls||0)}</div></div>
+      <div class="tile"><div class="k">Tokens in</div><div class="v">${esc(u.tokensIn||0)}</div></div>
+      <div class="tile"><div class="k">Tokens out</div><div class="v">${esc(u.tokensOut||0)}</div></div>
+      <div class="tile"><div class="k">Estimated cost</div><div class="v">${inr(u.costInr||0)}</div><div class="hint">$${Number(u.costUsd||0).toFixed(4)} · ₹${esc(u.inrPerUsd||84)} / USD estimate</div></div>
+    </div>
+    <h2>By agent</h2><div class="kpis">${agents || '<p class="small">No runs yet.</p>'}</div>
+    <h2>Runs</h2><div class="scroll"><table><thead><tr><th>Agent</th><th>In</th><th>Out</th><th>Rupees</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="5">No runs yet.</td></tr>'}</tbody></table></div>
+    <p class="small">${esc(u.note||'')}</p>`;
+}
+function privacy() {
+  return `${banner()}<h1>Your data</h1><p class="sub">This workspace is for the owner of ${esc(state.biz || 'this business')}. Records of ${esc((state.labels&&state.labels.who)||'people')} stay on this account. Another customer cannot read them.</p>
+    <article class="draft"><b>Human approval</b><p>Enquiries, reminders, review requests, posts and payment reminders are drafts. Approve records your OK. Reject skips it. Neither one sends an email, a text, or a post.</p></article>
+    <article class="draft"><b>Export</b><p>Download the records in this account as JSON. The public form token is left out.</p><button class="btn" type="button" data-act="export">Download my data</button></article>
+    <form class="draft stack" data-act="wipe"><b>Delete the records</b><p class="small">Removes this team’s ${esc((state.labels&&state.labels.who)||'people')}, invoices, drafts and form from this account. Your sign-in stays. Type “delete my data”.</p><input name="confirm" placeholder="delete my data"><button class="btn-danger" type="submit">Delete my data</button></form>
+    <form class="draft stack" data-act="wipe-account"><b>Delete the account</b><p class="small">Uses your password. The sample business password is not shown, so use “Delete my data” there. Staff accounts cannot be deleted here.</p><input name="password" type="password" autocomplete="current-password" placeholder="Password"><button class="btn-danger" type="submit">Delete this account</button></form>`;
+}
+function settings() {
+  const r = state.rules || { from: '09:00', to: '20:00', everyDays: 7, cap: 2, tone: '' };
+  const who = (state.labels && state.labels.whoSingular) || 'person';
+  const examples = state.toneExamples || [];
+  const k = state.aiKey || { source: 'platform', providers: [], model: '', name: '', hint: '' };
+  if (!k.providers || !k.providers.length) k.providers = [{ id: 'openrouter', name: 'OpenRouter' }, { id: 'openai', name: 'OpenAI' }, { id: 'xai', name: 'xAI Grok' }, { id: 'google', name: 'Google Gemini' }, { id: 'anthropic', name: 'Anthropic' }];
+  const using = k.source === 'own'
+    ? `Your own ${k.name} key (${k.hint}). Model: ${k.model}. ${k.label || ''}`
+    : `${k.label || 'Save your AI key in Settings. Agent calls stay off until then.'}${k.model && k.source === 'demo' ? ' Model: ' + k.model + '.' : ''}`;
+  const opts = (k.providers || []).map((p) => `<option value="${esc(p.id)}" ${k.provider===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+  return `${banner()}<h1>Settings</h1><p class="sub">Reminder rhythm for this business, the wording you taught the drafts, and the AI key those drafts use.</p>
+    <form class="card stack" data-act="ai-key" style="padding:14px">
+      <b>AI key</b>
+      <p class="small" role="status">${esc(using)}</p>
+      ${aiKeyFields('settings')}
+      <div><button class="btn" type="submit">Test & save</button>${k.source==='own'?' <button class="btn-danger" type="button" data-act="ai-key-del">Remove</button>':''}</div>
+    </form>
+    <form class="card stack" data-act="rules" style="padding:14px">
+      <b>Reminders</b>
+      <p class="small">How often a person can be reminded, the cap in any 7 days, and the send window. Quiet hours are everything outside that window. Drafts still wait for approval. Nothing is sent.</p>
+      <label>How often (days)<input name="everyDays" type="number" min="1" max="30" value="${esc(r.everyDays||7)}"></label>
+      <label>Cap per ${esc(who)} in 7 days<input name="cap" type="number" min="1" max="10" value="${esc(r.cap||2)}"></label>
+      <label>Send window starts<input name="from" value="${esc(r.from||'09:00')}" placeholder="09:00"></label>
+      <label>Send window ends<input name="to" value="${esc(r.to||'20:00')}" placeholder="20:00"></label>
+      <label>Tone<input name="tone" value="${esc(r.tone||'')}"></label>
+      <button class="btn" type="submit">Save reminder settings</button>
+    </form>
+    <article class="draft"><b>Learned tone</b>
+      <p class="small">When you edit a draft in Approvals, the before and after are kept here and used as the wording for the next draft of that agent.</p>
+      ${examples.length ? examples.map((e) => `<p><span class="pill">${esc(e.agent)}</span> <span class="small">${esc(when(e.at))}</span><br><span class="small">Before:</span> ${esc(e.before)}<br><span class="small">After:</span> ${esc(e.after)}</p>`).join('') : '<p class="small">No edits yet. Change a draft in Approvals and it will show up here.</p>'}
+      ${examples.length ? '<button class="btn-danger" type="button" data-act="tone-reset">Reset learned tone</button>' : ''}
+    </article>`;
+}
+function visit() {
+  const kit = state.visit || { questions: [], terms: [], saved: null };
+  const saved = kit.saved && kit.saved.answers ? kit.saved.answers : {};
+  return `${banner()}<h1>Clinic visit kit</h1><p class="sub">Ten questions for the owner, the free-pilot terms, and a place to write what they said. Saving stays in this account. Nothing is emailed.</p>
+    <article class="draft"><b>Free pilot</b><ul class="terms">${(kit.terms||[]).map((t) => `<li>${esc(t)}</li>`).join('')}</ul></article>
+    <form class="draft stack" data-act="visit">
+      <label>Who did you speak with?<input name="who" value="${esc((kit.saved&&kit.saved.who)||'')}" maxlength="80"></label>
+      ${(kit.questions||[]).map((q) => `<label class="visit-q">${esc(q.n)}. ${esc(q.text)}<textarea name="${esc(q.id)}" rows="3" maxlength="2000">${esc(saved[q.id]||'')}</textarea></label>`).join('')}
+      <label>Notes<input name="notes" value="${esc((kit.saved&&kit.saved.notes)||'')}" maxlength="2000"></label>
+      <label style="flex-direction:row;align-items:center;gap:8px;color:inherit"><input type="checkbox" name="accept" value="yes" style="width:auto" ${kit.saved?'checked':''}> The owner heard the free-pilot terms.</label>
+      <button class="btn" type="submit">Save visit notes</button>
+      ${kit.saved?'<p class="small">Last saved '+esc(when(kit.saved.at))+'.</p>':''}
+    </form>`;
+}
+function approvals() {
+  const items = state.pending || [];
+  return `${banner()}<h1>Approvals inbox</h1><p class="sub">Every outbound draft waits here. Approve records your OK. Reject skips it. Nothing is emailed, texted, or posted.</p>
+    ${items.map((d) => draftCard(d)).join('') || '<p class="small">Nothing is waiting.</p>'}`;
+}
+function connState(c) {
+  if (c.status === 'demo') return '<span class="pill booked">Connected (demo)</span>';
+  if (c.status === 'ready') return '<span class="pill approved">' + esc(c.label || 'Ready') + '</span>';
+  if (c.status === 'placeholder') return '<button class="btn-ghost placeholder" type="button" disabled>Coming soon</button>';
+  return '<span class="pill pending">' + esc(c.label || 'Available, connect with credentials') + '</span>';
+}
+function connections() {
+  const place = (state.labels && state.labels.place) || 'business';
+  return `${banner()}<h1>Connections</h1><p class="sub">Eka.care reads from their API when the server has credentials. A sample ${esc(place)} stays on sample rows and shows Connected (demo). Other software can use CSV or a webhook. Nothing is sent back out.</p>
+    ${(state.connections||[]).map((c) => `<div class="draft conn"><div><b>${esc(c.name)}</b><div class="small">${esc(c.detail)}</div>${c.url?`<div class="small"><a class="link" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></div>`:''}${c.docs?`<div class="small"><a class="link" href="${esc(c.docs)}" target="_blank" rel="noopener">API docs</a></div>`:''}</div><div class="actions">${connState(c)}${c.id==='eka' && (c.status==='demo' || c.status==='ready')?'<button class="btn" type="button" data-act="sync-eka">Sync</button>':''}</div></div>`).join('')}
+    <p><button class="btn" type="button" data-act="form-done">I have put the booking form on my site</button></p>
+    <h2>Import a CSV</h2>
+    <p class="small">Columns: type, name, phone, email, last_visit, value, when, service, status, fee. The file uses type patient for a person and appointment for a ${esc((state.labels&&state.labels.visit)||'visit')}. Up to 2000 rows. Nothing is sent.</p>
+    <form class="form" data-act="csv"><label class="full">CSV file<input name="file" type="file" accept=".csv,text/csv"></label><div><button class="btn" type="submit">Import</button></div></form>
+    <pre class="small" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto">type,name,phone,email,last_visit,value,when,service,status,fee
+patient,Demo Import,919000000099,import@example.com,2026-10-01,1800,,,,
+appointment,Demo Import,919000000099,,,,2026-10-28T05:30:00.000Z,${esc((state.labels&&state.labels.service)||'Visit')},booked,900</pre>`;
+}
+function chat() {
+  if (!state || !state.role) return '';
+  const who = (state.labels && state.labels.who) || 'patients';
+  return `<button class="chat-fab" type="button" data-act="chat-toggle">${chatOpen?'Close chat':'Chat'}</button>
+    ${chatOpen?`<section class="chat" aria-label="Ask your team"><header>Ask your team</header><div class="log">${chatLog.map((m) => `<div class="bubble ${m.r}">${m.r==='a'?chatMd(m.t):esc(m.t)}</div>`).join('') || `<div class="small">Try “How many ${esc(who)} in the last 2 months?”</div>`}${chatBusy?'<div class="small">Checking the records…</div>':''}</div>
+      <form data-act="chat"><input id="chatIn" name="message" value="${esc(chatDraft)}" placeholder="How many ${esc(who)} in the last 2 months?" autocomplete="off"><button class="btn" type="submit">Send</button></form></section>`:''}`;
+}
+function botStoreKey() { return 'aaas_advanced:' + ((state && state.account) || ''); }
+function readAdvanced() {
+  try {
+    return localStorage.getItem(botStoreKey()) === '1';
+  } catch (e) { return false; }
+}
+function writeAdvanced(on) { try { localStorage.setItem(botStoreKey(), on ? '1' : '0'); } catch (e) {} }
+function botModeKey() { return 'aaas_bot_mode:' + ((state && state.account) || ''); }
+function readBot() { try { return localStorage.getItem(botModeKey()) === '1'; } catch (e) { return false; } }
+function writeBot(on) { try { localStorage.setItem(botModeKey(), on ? '1' : '0'); } catch (e) {} }
+// Bot Mode shows the main AaaS workplace (http://host/) signed in with this clinic session.
+function botSrc() {
+  const email = (state && state.account) || '';
+  return '/app?bot=1#as_auth=' + encodeURIComponent(token) + '&em=' + encodeURIComponent(email) + '&bot=1';
+}
+// Mini Chief: the workplace Chief of Staff orchestrator (same as Bot Mode) in a small panel.
+// Lives outside #root so re-renders on the dashboard do not reload the conversation.
+const MINI_EXPAND = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>';
+const MINI_SHRINK = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>';
+function setMiniFull(m, on) {
+  m.classList.toggle('full', on);
+  const b = m.querySelector('[data-mini="expand"]');
+  b.innerHTML = on ? MINI_SHRINK : MINI_EXPAND;
+  b.title = on ? 'Exit full screen' : 'Full screen';
+  b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function miniSrc() { return botSrc().replace('/app?bot=1#', '/app?bot=1&mini=1#'); }
+function dropMini() { const m = document.getElementById('chiefMini'); if (m) m.remove(); }
+function miniEl() {
+  let m = document.getElementById('chiefMini');
+  if (m) return m;
+  m = document.createElement('section');
+  m.id = 'chiefMini'; m.className = 'chief-mini'; m.hidden = true;
+  m.setAttribute('role', 'dialog'); m.setAttribute('aria-label', 'Chief orchestrator');
+  m.innerHTML = `<header><span class="ava">${ROBOT}</span><div class="t"><b>Chief</b><span>Orchestrator · runs all your agents</span></div>
+    <button type="button" data-mini="expand" title="Full screen" aria-label="Full screen" aria-pressed="false">${MINI_EXPAND}</button>
+    <button type="button" data-mini="close" title="Close" aria-label="Close Chief"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
+    <iframe title="Chief orchestrator" src="${esc(miniSrc())}"></iframe>`;
+  m.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mini]'); if (!b) return;
+    if (b.dataset.mini === 'close') { setMiniFull(m, false); miniOpen = false; render(); }
+    if (b.dataset.mini === 'expand') setMiniFull(m, !m.classList.contains('full'));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !miniOpen) return;
+    if (m.classList.contains('full')) setMiniFull(m, false); else { miniOpen = false; render(); }
+  });
+  document.body.appendChild(m);
+  return m;
+}
+function syncMini() {
+  const can = !!(token && state && state.role && !botMode && advanced);
+  if (!can) { miniOpen = false; const m = document.getElementById('chiefMini'); if (m) { m.hidden = true; setMiniFull(m, false); } if (!token) dropMini(); return; }
+  if (miniOpen) miniEl().hidden = false;
+  else { const m = document.getElementById('chiefMini'); if (m) m.hidden = true; }
+}
+// "Meet Chief" callout beside the Chief button: shown after onboarding and on first visits until dismissed.
+function chiefTipKey() { return 'aaas_chief_tip:' + ((state && state.account) || ''); }
+function chiefTipShown() {
+  if (!state || !state.role || botMode || miniOpen || !advanced) return false;
+  if (chiefTipNow) return true;
+  try { return localStorage.getItem(chiefTipKey()) !== 'done'; } catch (e) { return false; }
+}
+function chiefTipDone() { chiefTipNow = false; try { localStorage.setItem(chiefTipKey(), 'done'); } catch (e) {} }
+function chiefTip() {
+  if (!chiefTipShown()) return '';
+  const agents = (state.agents || []).map((a) => a.name);
+  return `<div class="chief-tip" role="dialog" aria-labelledby="chiefTipH" aria-describedby="chiefTipP">
+    <button type="button" class="ct-x" data-act="chief-tip-close" aria-label="Close">×</button>
+    <div class="ct-head"><span class="ct-ico">${ROBOT}</span><div><b id="chiefTipH">Meet Chief, your team lead</b><small>${esc(state.roleTitle || 'Your')} team · ${agents.length} agents ready</small></div></div>
+    <p id="chiefTipP">Talk to your team of agents here to get work done. Ask Chief to follow up leads, draft a post, chase an invoice or answer a question about your business, and it hands the job to the right agent.</p>
+    <div class="ct-ex">${['“Who needs a follow-up this week?”', '“Draft a Diwali post”', '“Which invoices are unpaid?”'].map((x) => `<span>${x}</span>`).join('')}</div>
+    <p class="ct-safe">Nothing goes out until you approve it.</p>
+    <div class="ct-acts"><button type="button" class="btn" data-act="chief-tip-open">Talk to Chief</button><button type="button" class="btn-ghost" data-act="chief-tip-close">Got it</button></div>
+  </div>`;
+}
+function applyBot() {
+  const h = viewHint();
+  botMode = h === 'bot' || (h === '' && readBot());
+  if (botMode && state && state.role) { setView('bot'); return; }
+  if (h === 'chat') advanced = false;
+  else if (h === 'advanced') { advanced = true; screen = 'dash'; }
+  else if (SCREENS.includes(h)) { advanced = true; screen = h; }
+  else { advanced = true; if (!SCREENS.includes(screen) || screen === 'chat') screen = 'dash'; }
+  if (state && state.role && !advanced) { screen = 'chat'; setView('chat'); }
+  else if (state && state.role) setView(screen === 'dash' ? 'advanced' : screen);
+}
+function botSwitch() {
+  if (!state || !state.role) return '';
+  return `<button class="bot-sw${botMode ? ' on' : ''}" type="button" data-act="bot-mode" aria-pressed="${botMode ? 'true' : 'false'}"><i></i>Bot Mode</button>`;
+}
+function render() {
+  let body = '';
+  if (!token) body = loginView();
+  else if (!state) body = '<div class="auth"><div class="panel"><p class="sub">Loading…</p></div></div>';
+  else if (state.role && botMode) body = `<div class="bot-on">${botSwitch()}<iframe class="bot-frame" title="Bot Mode" src="${esc(botSrc())}"></iframe></div>`;
+  else if (state.role && !advanced) body = `<div class="bot-on">${botSwitch()}${chiefPage()}</div>`;
+  else if (!state.role) body = screen === 'setup' && wiz === 'call' ? setupView() : profileView();
+  else {
+    const page = { dash, front, recall, reviews, social, insights, billing, approvals, connections, pricing, usage, privacy, visit, settings, setup: setupView, chat: chiefPage }[screen === 'visit' && !state.visitKit ? 'dash' : screen] || dash;
+    body = `<div class="app">${side()}<main class="main" data-screen="${esc(screen)}">${page()}</main></div>${botSwitch()}${drawerHtml()}${chiefTip()}<button class="chat-fab bot${miniOpen ? ' open' : ''}${chiefTipShown() ? ' pulse' : ''}" type="button" data-act="chief-mini" aria-expanded="${miniOpen ? 'true' : 'false'}" aria-controls="chiefMini">${ROBOT}<span>Chief</span></button>`;
+  }
+  if (toast) body += `<div class="toast" role="status">${esc(toast)}</div>`;
+  const navTop = (root.querySelector('.side') || {}).scrollTop || 0;
+  // keep the onboarding AI fields (provider, model, pasted key) across a re-render
+  const obf = root.querySelector('.ob-form');
+  const obKeep = obf ? Object.fromEntries(['provider', 'model', 'modelOther', 'key'].map((n) => { const el = obf.querySelector(`[name="${n}"]`); return [n, el ? el.value : '']; })) : null;
+  root.innerHTML = body;
+  if (obKeep) obRestore(obKeep);
+  const navEl = root.querySelector('.side'); if (navEl) navEl.scrollTop = navTop;
+  if (root.querySelector('select[data-ai-model]')) setTimeout(primeModels, 0);
+  syncMini();
+  const input = document.getElementById('chatIn');
+  if (input && chatOpen) input.focus();
+}
+async function reload() {
+  state = await api('/api/clinic');
+  syncPath();
+  if (!state.role && skipProfile) { state = await api('/api/clinic/role', { role: 'dental' }); syncPath(); } // the sample business opens as a dental clinic; it can switch in the sidebar
+  if (!state.role) screen = 'profile';
+  render();
+}
+async function act(name, el) {
+  try {
+    if (name === 'mode') { mode = el.dataset.mode; err = ''; render(); return; }
+    if (name === 'bot-mode' || name === 'advanced') {
+      botMode = !botMode;
+      writeBot(botMode);
+      if (botMode) { if (SCREENS.includes(screen)) botReturn = screen; setView('bot'); }
+      else { advanced = true; writeAdvanced(true); screen = SCREENS.includes(botReturn) ? botReturn : 'dash'; setView(screen === 'dash' ? 'advanced' : screen); }
+      render(); return;
+    }
+    if (name === 'chief-mini') { if (chiefTipShown()) chiefTipDone(); miniOpen = !miniOpen; render(); return; }
+    if (name === 'chief-tip-close') { chiefTipDone(); render(); return; }
+    if (name === 'chief-tip-open') { chiefTipDone(); miniOpen = true; render(); return; }
+    if (name === 'open-chief') { screen = 'chat'; botMode = false; writeBot(false); advanced = false; writeAdvanced(false); setView('chat'); render(); return; }
+    if (name === 'drawer') { drawer = { kind: el.dataset.kind, id: el.dataset.id }; render(); return; }
+    if (name === 'drawer-close') { drawer = null; render(); return; }
+    if (name === 'go') { if (el.dataset.screen === 'setup') wiz = el.dataset.wiz || 1; botMode = false; advanced = true; writeAdvanced(true); go(el.dataset.screen); return; }
+    if (name === 'chat-toggle') { chatOpen = !chatOpen; render(); return; }
+    if (name === 'logout') { ob = null; try { sessionStorage.removeItem('aaas_view'); sessionStorage.setItem('aaas_link', (state && state.rolePath) || '/clinic'); } catch (e) {} history.replaceState(null, '', (state && state.rolePath) || '/'); document.title = 'AaaS · ' + ((state && state.roleTitle) || 'Sign in'); botMode = false; miniOpen = false; dropMini(); token = ''; sessionStorage.removeItem('aaas_clinic_token'); state = null; screen = 'login'; skipProfile = false; render(); return; }
+    if (name === 'auth') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      const path = mode === 'create' ? '/api/auth/signup' : '/api/auth/login';
+      const d = await api(path, { email:f.email, password:f.password, name:f.name || 'Clinic owner' });
+      token = d.token; sessionStorage.setItem('aaas_clinic_token', token); err = ''; skipProfile = false;
+      await reload(); if (state && state.role) { screen = 'dash'; applyBot(); render(); } return;
+    }
+    if (name === 'demo') {
+      const d = await api('/api/clinic/demo', {});
+      token = d.token; sessionStorage.setItem('aaas_clinic_token', token);
+      skipProfile = true; await reload(); if (state && state.role) { screen = 'dash'; applyBot(); render(); } return;
+    }
+    if (name === 'setup-details') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      state = await api('/api/clinic/profile', f);
+      wiz = 3; screen = 'setup'; flash('Business details saved.'); render(); return;
+    }
+    if (name === 'setup-skip') { wiz = 4; screen = 'setup'; render(); return; }
+    if (name === 'setup-import') {
+      const file = el.querySelector('input[type=file]').files[0];
+      wizPaste = new FormData(el).get('paste') || '';
+      wizCsv = file ? await file.text() : '';
+      wiz = 4; screen = 'setup'; flash(wizPaste || wizCsv ? 'Import saved for the last step.' : 'No rows yet. You can add them later.'); render(); return;
+    }
+    if (name === 'setup-wa') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      if (f.ack !== 'yes') throw new Error('Tick the box. Nothing goes out until you approve it.');
+      wizPhone = f.phone || '';
+      wiz = 5; screen = 'setup'; render(); return;
+    }
+    if (name === 'setup-tone') {
+      wizTone = new FormData(el).get('tone') || '';
+      wiz = 6; screen = 'setup'; render(); return;
+    }
+    if (name === 'setup-key') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      const key = String(f.key || '').trim();
+      if (!key && !(state && state.aiKey && state.aiKey.source === 'own')) throw new Error('Paste your AI key. This step is required.');
+      await saveAiFrom(f);
+      const r = await api('/api/clinic/setup/finish', { tone: wizTone, phone: wizPhone, paste: wizPaste, csv: wizCsv, ack: true });
+      state = r.clinic || state; wizDrafts = r.drafts || []; wiz = 7; screen = 'setup';
+      flash('Three drafts are waiting in Approvals. Nothing was sent.'); render(); return;
+    }
+    if (name === 'setup-demo-key') {
+      if (!(state && state.aiKey && state.aiKey.source === 'demo')) throw new Error('The demo key is not available on this server.');
+      const r = await api('/api/clinic/setup/finish', { tone: wizTone, phone: wizPhone, paste: wizPaste, csv: wizCsv, ack: true, demoKey: true });
+      state = r.clinic || state; wizDrafts = r.drafts || []; wiz = 7; screen = 'setup';
+      flash('Three drafts are waiting in Approvals. Nothing was sent. Demo key, demo only.'); render(); return;
+    }
+    if (name === 'ai-key') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      if (!(await saveAiFrom(f))) throw new Error('Paste an API key, or change the model of the saved key.');
+      flash('Saved. Key checked and saved. Only the last 4 characters are shown. Agent calls use this key only.');
+      await reload(); screen = 'settings'; render(); return;
+    }
+    if (name === 'ai-key-del') {
+      await api('/api/ai/key/delete', {});
+      flash('Key removed.');
+      await reload(); screen = 'settings'; render(); return;
+    }
+    if (name === 'setup-call') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      const r = await api('/api/clinic/setup/call', f);
+      if (state) state.setupCall = r.setupCall; else state = { setupCall: r.setupCall };
+      flash('Setup call saved. Nothing was emailed.'); render(); return;
+    }
+    if (name === 'profile') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      const ai = { provider: f.provider, model: f.model, modelOther: f.modelOther, key: f.key };
+      const pickRole = f.role || ''; delete f.role;
+      if (ob) { obSave(el); const firstBad = obSteps().findIndex((x) => !obStepOk(x.id)); if (firstBad >= 0) { ob.bad = { ...(ob.bad || {}), [obSteps()[firstBad].id]: true }; obShow(firstBad); throw new Error('One answer still needs filling in. It is marked in red.'); } }
+      if (!(state && state.role) && !pickRole) throw new Error('Choose your type of business.');
+      if (pickRole === 'other' && !String(f.businessType || '').trim()) throw new Error('Type what kind of business it is.');
+      if (pickRole !== 'other') delete f.businessType;
+      delete f.provider; delete f.model; delete f.modelOther; delete f.key;
+      const building = (!state || !state.role) && pickRole ? obBuildStart(f.biz, ((obPacks().find((x) => x.id === pickRole) || {}).agents) || []) : null;
+      try {
+      const aiSaved = await saveAiFrom(ai);
+      state = { ...(state||{}), ...(await api('/api/clinic/profile', f)), packs: (state&&state.packs)||meta.packs, plans: (state&&state.plans)||meta.plans };
+      if (!state.packs) state.packs = meta.packs;
+      if (aiSaved) { try { const kk = await api('/api/ai/key'); state.aiKey = { ...(state.aiKey || {}), source: kk.source, model: kk.model, provider: kk.byok ? kk.byok.provider : (state.aiKey || {}).provider, name: kk.byok ? kk.byok.name : '', hint: kk.byok ? kk.byok.hint : '', region: kk.byok ? kk.byok.region || '' : '', providers: kk.providers || aiProviders() }; } catch (e) {} flash('AI key checked and saved.'); }
+      if (!state.role && pickRole) {
+        state = await api('/api/clinic/role', { role: pickRole }); syncPath(); ob = null;
+        advanced = true; botMode = false; screen = 'dash'; setView('advanced'); chiefTipNow = true;
+        flash((state.roleTitle || 'Team') + ' team is ready.');
+      }
+      } catch (e) { if (building) building.fail(); throw e; }
+      if (building) await building.done();
+      render(); return;
+    }
+    if (name === 'plan') { await api('/api/clinic/plan', { plan: el.dataset.plan }); flash('Plan saved. No card was charged.'); await reload(); return; }
+    if (name === 'pick') {
+      const role = el.dataset.role || el.value;
+      if (!role || role === (state && state.role)) return;
+      if (state && state.industryLocked) throw new Error('This business is set up as ' + (state.roleTitle || state.role) + '. The industry can’t be changed.');
+      state = await api('/api/clinic/role', { role });
+      syncPath();
+      if (screen === 'role' || screen === 'login' || screen === 'profile') screen = wanted();
+      flash((state.roleTitle || 'Team') + ' is ready.');
+      render(); return;
+    }
+    if (name === 'add-enq') { const f = Object.fromEntries(new FormData(el).entries()); await api('/api/clinic/enquiries', f); flash('Enquiry added.'); }
+    else if (name === 'enq-status') await api('/api/clinic/enquiries/update', { id:Number(el.dataset.id), status:el.dataset.status });
+    else if (name === 'enq-del') { if (!confirm('Delete this enquiry?')) return; await api('/api/clinic/enquiries/delete', { id:Number(el.dataset.id) }); }
+    else if (name === 'add-appt') { const f = Object.fromEntries(new FormData(el).entries()); if (f.at) f.at = new Date(f.at).toISOString(); f.patientId = Number(f.patientId); f.fee = Number(f.fee||0); await api('/api/clinic/appointments', f); flash('Appointment added.'); }
+    else if (name === 'appt-status') await api('/api/clinic/appointments/update', { id:Number(el.dataset.id), status:el.dataset.status });
+    else if (name === 'appt-del') { if (!confirm('Delete this appointment?')) return; await api('/api/clinic/appointments/delete', { id:Number(el.dataset.id) }); }
+    else if (name === 'remind') { await api('/api/clinic/reminders', { appointmentId:Number(el.dataset.id) }); flash('Reminder queued for approval. Nothing was sent.'); }
+    else if (name === 'recall') { await api('/api/clinic/recall/draft', { patientId:Number(el.dataset.id) }); flash('Follow-up drafted. It is waiting in Approvals.'); }
+    else if (name === 'review') { await api('/api/clinic/reviews/draft', { patientId:Number(el.dataset.id) }); flash('Review request drafted with a WhatsApp link.'); }
+    else if (name === 'wa-opt') { await api('/api/clinic/whatsapp/opt', { patientId:Number(el.dataset.id), status:el.dataset.status }); flash(el.dataset.status==='out'?'Opt-out recorded. WhatsApp will not be sent.':'Opt-in recorded. Nothing was sent.'); }
+    else if (name === 'fest-month') { const step = Number(el.dataset.step); festMonth = step ? shiftMonth(festMonth, step) : todayIST().slice(0, 7); render(); return; }
+    else if (name === 'fest-draft') {
+      const already = (state.posts || []).some((p) => p.festival === el.dataset.name && dayKey(p.at) === el.dataset.date && p.status !== 'rejected');
+      if (already) { flash(el.dataset.name + ' posts are already drafted. They are in Approvals.'); render(); return; }
+      el.disabled = true; flash('Drafting ' + el.dataset.name + ' posts…'); render();
+      const r = await api('/api/clinic/social/festival', { date: el.dataset.date, name: el.dataset.name });
+      flash(r.existing ? el.dataset.name + ' posts were already drafted.' : el.dataset.name + ' posts drafted for 4 platforms. They wait in Approvals. Nothing is published.');
+    }
+    else if (name === 'social') { const f = Object.fromEntries(new FormData(el).entries()); if (f.when) f.when = new Date(f.when + 'T09:00:00+05:30').toISOString(); await api('/api/clinic/social/draft', f); flash('Post drafted. It waits for approval.'); }
+    else if (name === 'referral') { const f = Object.fromEntries(new FormData(el).entries()); await api('/api/clinic/referrals/draft', { patientId: Number(f.patientId) }); flash('Referral message drafted. It waits in Approvals. Nothing was sent.'); }
+    else if (name === 'refresh') { await api('/api/clinic/insights/refresh', {}); flash('Summary refreshed from the records.'); }
+    else if (name === 'weekly') { await api('/api/clinic/summary/weekly', {}); flash('Weekly summary drafted. It is waiting in Approvals. Nothing was sent.'); }
+    else if (name === 'rules') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      if (f.everyDays) f.everyDays = Number(f.everyDays);
+      if (f.cap) f.cap = Number(f.cap);
+      await api('/api/clinic/rules', f); flash('Reminder settings saved. Nothing is sent.');
+    }
+    else if (name === 'tone-reset') { await api('/api/clinic/tone/reset', {}); flash('Learned tone cleared. Later drafts use the standard wording.'); }
+    else if (name === 'pause') { const a = state.agents.find((x) => x.key===el.dataset.key); await api('/api/clinic/agent', { key:el.dataset.key, paused:!a.paused }); }
+    else if (name === 'edit-draft') { const f = Object.fromEntries(new FormData(el).entries()); await api('/api/clinic/drafts/edit', { id:Number(f.id), body:f.body }); flash('Draft updated.'); }
+    else if (name === 'decide') {
+      const r = await api('/api/clinic/decide', { id:el.dataset.id, decision:el.dataset.decision });
+      const result = (r.approval && r.approval.result) || '';
+      flash(el.dataset.decision==='reject' ? 'Rejected. Nothing was sent.' : (/Sent on WhatsApp/.test(result) ? result : 'Approved. Nothing was sent.'));
+    }
+    else if (name === 'form-done') { await api('/api/clinic/checklist', { id: 'form' }); flash('Booking form marked as connected.'); }
+    else if (name === 'sync-eka') {
+      const r = await api('/api/clinic/connectors/sync', { provider: 'eka' });
+      flash(r.mode === 'demo' ? 'Connected (demo). Sample rows only. Eka.care was not called.' : 'Synced from Eka.care. Nothing was sent back.');
+    }
+    else if (name === 'visit') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      const answers = {};
+      for (const q of ((state.visit && state.visit.questions) || [])) answers[q.id] = f[q.id] || '';
+      await api('/api/clinic/visit', { who: f.who || '', notes: f.notes || '', accept: f.accept === 'yes', answers });
+      flash('Visit notes saved in this account.');
+    }
+    else if (name === 'add-inv') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      await api('/api/clinic/invoices', { patientId: Number(f.patientId), items: [{ desc: f.desc, qty: Number(f.qty||1), rate: Number(f.rate||0) }], gst: f.gst, due: f.due ? new Date(f.due + 'T18:00:00+05:30').toISOString() : '', upi: f.upi, payLink: f.payLink });
+      flash('Invoice saved. Nothing was collected.');
+    }
+    else if (name === 'paid') { await api('/api/clinic/invoices/update', { id: Number(el.dataset.id), status: el.dataset.status }); flash(el.dataset.status==='paid' ? 'Marked paid. The dashboard uses paid invoices.' : 'Marked unpaid.'); }
+    else if (name === 'remind-inv') { await api('/api/clinic/invoices/remind', { id: Number(el.dataset.id) }); flash('Payment reminder queued. Nothing was sent.'); }
+    else if (name === 'pay-sim') { await api('/api/clinic/payments/simulate', { id: Number(el.dataset.id) }); flash('Simulated the paid webhook. The invoice is marked paid. Razorpay was not called.'); }
+    else if (name === 'print' || name === 'pdf') {
+      const r = await fetch('/api/clinic/invoices/' + el.dataset.id + (name==='pdf'?'/pdf':'/print'), { headers: { authorization: 'Bearer ' + token } });
+      if (!r.ok) throw new Error('That invoice did not open.');
+      const blob = await r.blob(); const url = URL.createObjectURL(blob);
+      if (name === 'print') window.open(url, '_blank', 'noopener');
+      else { const a = document.createElement('a'); a.href = url; a.download = (el.dataset.number || 'invoice') + '.pdf'; a.click(); }
+      return;
+    }
+    else if (name === 'export') {
+      const r = await fetch('/api/clinic/export', { headers: { authorization: 'Bearer ' + token } });
+      if (!r.ok) throw new Error('Export did not download.');
+      const blob = await r.blob(); const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'aaas-clinic-export.json'; a.click();
+      return;
+    }
+    else if (name === 'wipe') {
+      const confirm = new FormData(el).get('confirm');
+      await api('/api/clinic/data/delete', { confirm });
+      flash('Records deleted. Your sign-in is still here.');
+      skipProfile = false; await reload(); return;
+    }
+    else if (name === 'wipe-account') {
+      const password = new FormData(el).get('password');
+      await api('/api/auth/delete', { password });
+      token = ''; sessionStorage.removeItem('aaas_clinic_token'); state = null; screen = 'login';
+      flash('Account deleted.'); render(); return;
+    }
+    else if (name === 'csv') {
+      const file = el.querySelector('input[type=file]').files[0]; if (!file) throw new Error('Choose a CSV file.');
+      const csv = await file.text(); const r = await api('/api/clinic/import', { csv });
+      const who = (state.labels && state.labels.who) || 'people';
+      const visitWord = (state.labels && state.labels.visit) || 'visit';
+      const visits = /class$/.test(visitWord) ? visitWord + 'es' : visitWord + 's';
+      flash(`Imported ${r.patients} ${who} and ${r.appointments} ${visits}.` + (r.errors.length?` ${r.errors.length} rows skipped.` : ''));
+    }
+    else if (name === 'chat') {
+      const message = (new FormData(el).get('message') || '').trim();
+      if (!message) return;
+      chatDraft = ''; chatLog.push({ r:'u', t:message }); chatBusy = true; render();
+      const hist = chatLog.slice(0, -1).slice(-6);
+      const d = await api('/api/clinic/chat', { message, history: hist });
+      chatLog.push({ r:'a', t:d.answer }); chatBusy = false; await reload(); return;
+    }
+    if (token) await reload();
+  } catch (e) { err = e.message; toast = e.message; chatBusy = false; render(); }
+}
+// ---- onboarding interactions ----
+root.addEventListener('click', (e) => {
+  const form = e.target.closest && e.target.closest('.ob-form'); const shell = e.target.closest && e.target.closest('.ob');
+  if (!shell || !ob) return;
+  const chip = e.target.closest('[data-ob-chip]');
+  if (chip && form) {
+    const f = chip.dataset.obChip, el = form.querySelector(`[name="${f}"]`); if (!el) return;
+    const v = chip.dataset.v, cur = el.value.trim();
+    if (f === 'services' || f === 'audience') { chip.classList.add('used'); obSetTags(f, [...obList(ob[f]), v]); return; }
+    if (f === 'city') el.value = v;
+    else if (!cur.toLowerCase().split(',').map((x) => x.trim()).includes(v.toLowerCase())) el.value = cur ? cur.replace(/,\s*$/, '') + ', ' + v : v;
+    chip.classList.add('used'); obSave(form); obPaintTrack(); obPaintPreview(); el.focus(); return;
+  }
+  const del = e.target.closest('[data-tag-del]');
+  if (del) { const fld = del.dataset.tagDel, list = obList(ob[fld]); list.splice(Number(del.dataset.i), 1); obSetTags(fld, list); return; }
+  const box = e.target.closest('.ob-tags'); if (box && !e.target.closest('button')) { const i = box.querySelector('.ob-tag-in'); if (i) i.focus(); }
+  const b = e.target.closest('[data-ob]'); if (!b) return;
+  const f = shell.querySelector('.ob-form'); obSave(f);
+  const steps = obSteps();
+  if (b.dataset.ob === 'next') { if (obValid(f)) obShow(ob.step + 1); }
+  else if (b.dataset.ob === 'back') obShow(ob.step - 1);
+  else if (b.dataset.ob === 'skip') { const k = f.querySelector('[name="key"]'); if (k) k.value = ''; obShow(ob.step + 1); }
+  else if (b.dataset.ob === 'goto') {
+    const t = steps.findIndex((x) => x.id === b.dataset.to);
+    if (t < 0) return;
+    if (t <= ob.step || (ob.seen && ob.seen[b.dataset.to] && steps.slice(ob.step, t).every((x) => obStepOk(x.id)))) obShow(t);
+  }
+});
+root.addEventListener('change', (e) => {
+  const r = e.target; if (!r || r.name !== 'role' || r.type !== 'radio' || !r.closest('.ob-form') || !ob) return;
+  ob.role = r.value; obPaintTrack(); obPaintPreview();
+  r.closest('.ob-cards').querySelectorAll('.ob-card').forEach((c) => c.classList.toggle('sel', c.contains(r)));
+  const o = r.form.querySelector('.ob-other'); if (o) o.hidden = r.value !== 'other';
+  const pk = obPack(), brand = root.querySelector('.ob-brand span'); if (brand && pk) brand.textContent = pk.title;
+  if (r.value === 'other') setTimeout(() => o && o.querySelector('input').focus(), 30);
+  else setTimeout(() => { if (ob && obSteps()[ob.step].id === 'role' && ob.role === r.value) obShow(ob.step + 1); }, 320); // Typeform-style: a pick moves on
+});
+root.addEventListener('paste', (e) => {
+  const t = e.target; if (!(t && t.classList && t.classList.contains('ob-tag-in'))) return;
+  const txt = (e.clipboardData && e.clipboardData.getData('text')) || ''; if (!txt.includes(',')) return;
+  e.preventDefault(); obSetTags(t.dataset.tagIn, [...obList(ob[t.dataset.tagIn]), ...obList(txt)]);
+});
+root.addEventListener('input', (e) => { const f = e.target && e.target.closest && e.target.closest('.ob-form'); if (f && !(e.target.classList && e.target.classList.contains('ob-tag-in'))) { obSave(f); obPaintTrack(); obPaintPreview(); } });
+document.addEventListener('keydown', (e) => {
+  const f = root.querySelector('.ob-form'); if (!f || !ob || e.isComposing) return;
+  const id = obSteps()[ob.step].id, t = e.target;
+  if (t && t.classList && t.classList.contains('ob-tag-in')) {
+    const fld = t.dataset.tagIn, v = t.value.trim();
+    if ((e.key === 'Enter' || e.key === ',' || e.key === 'Tab' && v) && v) { e.preventDefault(); obSetTags(fld, [...obList(ob[fld]), v]); return; }
+    if (e.key === 'Backspace' && !t.value && obList(ob[fld]).length) { e.preventDefault(); const l = obList(ob[fld]); l.pop(); obSetTags(fld, l); return; }
+  }
+  if (e.key === 'Enter' && !e.shiftKey && id !== 'review' && !(t && t.tagName === 'BUTTON')) {
+    if (t && t.tagName === 'SELECT') return;
+    e.preventDefault(); obSave(f); if (obValid(f)) obShow(ob.step + 1); return;
+  }
+  // A–H picks a business card, like a Typeform choice
+  if (id === 'role' && /^[a-z]$/i.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && !(t && (t.tagName === 'INPUT' && t.type !== 'radio' || t.tagName === 'TEXTAREA'))) {
+    const radios = [...f.querySelectorAll('input[name="role"]')], k = e.key.toUpperCase().charCodeAt(0) - 65;
+    if (radios[k]) { e.preventDefault(); radios[k].checked = true; radios[k].dispatchEvent(new Event('change', { bubbles: true })); radios[k].focus(); }
+  }
+});
+root.addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (!b || b.closest('form[data-act]') && b.type === 'submit') return; if (b.dataset.act === 'mode' || b.type === 'button' || b.classList.contains('tile') || b.classList.contains('chat-fab') || b.classList.contains('out') || b.classList.contains('drawer-back')) { e.preventDefault(); act(b.dataset.act, b); } });
+root.addEventListener('change', (e) => {
+  if (e.target && e.target.dataset && e.target.dataset.act === 'pick') act('pick', e.target);
+  const sel = e.target && e.target.closest && e.target.closest('select[data-ai-provider]');
+  if (sel && sel.form) {
+    const p = aiProviders().find((x) => x.id === sel.value) || {};
+    const ms = sel.form.querySelector('select[data-ai-model]'); if (ms) ms.innerHTML = modelOptions(p, '');
+    const rg = sel.form.querySelector('.ai-region'); if (rg) { rg.hidden = !p.regions; const rs = rg.querySelector('select'); if (rs && p.regions) rs.innerHTML = regionOptions(p, ''); }
+    const o = sel.form.querySelector('.model-other'); if (o) { o.hidden = true; o.querySelector('input').value = ''; }
+    const msg = sel.form.querySelector('.ai-load-msg'); if (msg) msg.hidden = true;
+    autoLoadModels(sel.form);
+  }
+  const rgs = e.target && e.target.closest && e.target.closest('select[data-ai-region]');
+  if (rgs && rgs.form) autoLoadModels(rgs.form);
+  const bs = e.target && e.target.closest && e.target.closest('select[data-business]');
+  if (bs && bs.form) { const o = bs.form.querySelector('.biz-other'); if (o) { o.hidden = bs.value !== 'other'; const i = o.querySelector('input'); i.required = bs.value === 'other'; if (!o.hidden) i.focus(); } }
+  const ms = e.target && e.target.closest && e.target.closest('select[data-ai-model]');
+  if (ms && ms.form) { const o = ms.form.querySelector('.model-other'); if (o) { o.hidden = ms.value !== '__other'; if (!o.hidden) o.querySelector('input').focus(); } }
+});
+// The model dropdown fills itself with the provider's live list (pasted key, else the saved key).
+const modelTried = {};
+async function autoLoadModels(f) {
+  if (!f) return;
+  const ps = f.querySelector('select[data-ai-provider]'), ms = f.querySelector('select[data-ai-model]');
+  if (!ps || !ms) return;
+  const provider = ps.value, keyEl = f.querySelector('input[name="key"]'), key = (keyEl && keyEl.value || '').trim(), rgEl = f.querySelector('select[data-ai-region]'), region = provider === 'bedrock' && rgEl ? rgEl.value : '';
+  if (key && key.length < 20) return;
+  const tag = provider + ':' + region + ':' + (key ? key.slice(-6) : 'saved');
+  if (modelTried[tag]) return;
+  modelTried[tag] = true;
+  const msg = f.querySelector('.ai-load-msg');
+  ms.setAttribute('aria-busy', 'true');
+  try {
+    const d = await api('/api/ai/models', { provider, key, region });
+    if (!d.live || !d.models || !d.models.length) return;
+    liveModels[provider] = d.models;
+    if (ps.value !== provider) return; // provider changed while loading
+    const p = aiProviders().find((x) => x.id === provider) || {};
+    const keep = ms.value === '__other' ? '__other' : ms.value;
+    ms.innerHTML = modelOptions(p, keep === '__other' ? '' : (d.models.includes(keep) ? keep : ''));
+    if (keep === '__other') ms.value = '__other';
+    if (msg) msg.hidden = true;
+  } catch (err) {
+    if (/didn’t accept|didn't accept|look like an API key/.test(err.message || '') && msg) { msg.hidden = false; msg.textContent = err.message; }
+    if (/didn’t accept|didn't accept|look like an API key/.test(err.message || '')) delete modelTried[tag];
+  } finally { ms.removeAttribute('aria-busy'); }
+}
+function primeModels() { root.querySelectorAll('form select[data-ai-model]').forEach((ms) => autoLoadModels(ms.form)); }
+root.addEventListener('change', (e) => { if (e.target && e.target.name === 'key' && e.target.form && e.target.form.querySelector('select[data-ai-model]')) autoLoadModels(e.target.form); });
+root.addEventListener('paste', (e) => { if (e.target && e.target.name === 'key' && e.target.form && e.target.form.querySelector('select[data-ai-model]')) setTimeout(() => autoLoadModels(e.target.form), 0); });
+root.addEventListener('submit', (e) => { const f = e.target.closest('form[data-act]'); if (!f) return; e.preventDefault(); act(f.dataset.act, f); });
+root.addEventListener('input', (e) => { if (e.target.id === 'chatIn') chatDraft = e.target.value; });
+(async () => {
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (hash.get('as_auth')) { token = hash.get('as_auth'); sessionStorage.setItem('aaas_clinic_token', token); history.replaceState(null, '', location.pathname); }
+  if (hash.get('as_autherr')) { err = hash.get('as_autherr'); toast = err; history.replaceState(null, '', location.pathname); }
+  if (location.hash === '#signup') { mode = 'create'; history.replaceState(null, '', location.pathname); }
+  if (!token) {
+    if (location.pathname === '/') { try { const su = await (await fetch('/api/setup')).json(); if (su && su.needed) { location.href = '/setup'; return; } } catch { /* offline */ } }
+  }
+  try { meta = await (await fetch('/api/clinic/meta')).json(); } catch { /* offline */ }
+  if (!token) { const ep = entryPack(); if (ep) { if (location.pathname !== ep.path || location.hash) history.replaceState(null, '', ep.path); document.title = 'AaaS · ' + ep.title; } else toRoot(); }
+  window.addEventListener('message', (e) => {
+    const mini = document.querySelector('#chiefMini iframe');
+    if (e.origin === location.origin && e.data && e.data.type === 'aaas-mini' && mini && e.source === mini.contentWindow) {
+      const m = document.getElementById('chiefMini'); if (m && !m.hidden && e.data.full) setMiniFull(m, true); return;
+    }
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'aaas-bot' || e.data.on !== false) return;
+    botMode = false; writeBot(false); advanced = true; writeAdvanced(true); screen = 'dash'; setView('advanced'); render();
+  });
+  if (token) { try { await reload(); if (state && state.role) { applyBot(); render(); } } catch { token = ''; screen = 'login'; toRoot(); render(); } }
+  else render();
+})();
+</script>
+</body>
+</html>
