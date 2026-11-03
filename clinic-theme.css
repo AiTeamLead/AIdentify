@@ -77,7 +77,17 @@ body.bot-mode .btn.dk,
 body.bot-mode .go,
 body.bot-mode .wp-av,
 body.bot-mode .wp-orb,
-body.bot-mode .wp-chiefav { background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important; box-shadow: none !important; }
+body.bot-mode .wp-chiefav {
+  background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important; box-shadow: none !important;
+}
+/* The workplace stylesheet draws Chief at 58px. In the 28px row that covers the label. */
+body.bot-mode .wp-chiefav {
+  width: 28px !important; height: 28px !important; min-width: 28px; max-width: 28px;
+  border-radius: 8px !important; display: grid; place-items: center; overflow: hidden;
+}
+body.bot-mode .wp-chiefav svg { width: 16px; height: 16px; }
+body.bot-mode .wp-pin .wp-ring { flex: none; width: 28px; height: 28px; overflow: hidden; }
+body.bot-mode .wp-pin b { position: static; line-height: 1.2; margin: 0; }
 body.bot-mode .wp-face { background: transparent !important; color: var(--primary) !important; }
 body.bot-mode .wp-pins { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px 8px 8px; }
 body.bot-mode .wp-pin { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; max-width: none; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; }
@@ -115,6 +125,17 @@ body.bot-mode .wp-tag { display: none; }
 .chief-mini header button:hover { background: var(--soft); }
 .bot-sw.on { background: var(--primary); color: #fff; border-color: var(--primary); }
 .chat-fab, .chat-fab.bot { background: var(--primary); color: #fff; }
+button.is-busy, .btn.is-busy, a.btn.is-busy { position: relative; color: transparent !important; pointer-events: none; }
+button.is-busy::after, .btn.is-busy::after {
+  content: ""; position: absolute; width: 16px; height: 16px; left: 50%; top: 50%; margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%;
+  animation: aaas-spin .7s linear infinite;
+}
+.btn-ghost.is-busy::after, button.out.is-busy::after {
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  border-top-color: var(--primary);
+}
+@keyframes aaas-spin { to { transform: rotate(360deg); } }
 @media (max-width: 800px) {
   .side { width: 100%; height: auto; position: relative; }
   .app { flex-direction: column; }

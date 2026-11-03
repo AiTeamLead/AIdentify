@@ -450,10 +450,9 @@ let toast = '';
 let advanced = true; // the dashboard is home; the full-page Chief opens only when asked for
 let chiefTipNow = false;
 let botMode = false;
-// Domain-specific URL: the page is served at every industry path (/clinic, /Realestate, …).
-const START_PATH = (location.pathname.replace(/\.html$/i, '').replace(/\/+$/, '').replace(/^\/index$/, '') || '/clinic');
-// "/" lists every industry; each industry path (/clinic, /Realestate, …) has its own sign-in for that industry.
-const ON_ROOT = /^\/(index(\.html)?)?$/.test(location.pathname);
+// / and /clinic are the shared sign-in. Industry paths (/Agency, /Dental, /Realestate) set the pack.
+const START_PATH = (location.pathname.replace(/\.html$/i, '').replace(/\/+$/, '').replace(/^\/index$/, '') || '/');
+const ON_ROOT = /^\/(index(\.html)?|clinic(\.html)?)?$/.test(location.pathname);
 try { if (!ON_ROOT) sessionStorage.setItem('aaas_link', START_PATH); else sessionStorage.removeItem('aaas_link'); } catch (e) {}
 function toRoot() { if (location.pathname !== '/' || location.hash) history.replaceState(null, '', '/'); }
 // the industry of the link this tab came in on (signed-out sign-in page, and "For this link" on the industry picker)
@@ -506,20 +505,23 @@ function planCards() {
   return `<div class="plans">${plans.map((p) => `<div class="tile"><div class="k">${esc(p.name)}</div><div class="v">${inr(p.priceInr)}<span class="small"> / month</span></div><div class="hint">${esc(p.blurb)}</div></div>`).join('')}</div>
     <p class="small">${esc(notes.annualNote || '')}</p><p class="small">${esc(notes.byokNote || '')}</p>`;
 }
+function featuredPack() { return ((state && state.packs) || meta.packs || []).find((p) => p.featured) || null; }
 function domainsCard(cur) {
   const packs = meta.packs || [];
   if (!packs.length) return '';
   return `<section class="domains" aria-label="Industries"><b>${cur ? 'Other industries' : 'Choose your industry'}</b>
     <div class="dom-grid">${packs.filter((p) => !cur || p.id !== cur.id).map((p) => `<a class="dom" href="${esc(p.path)}"><span>${esc(p.title)}${p.featured ? ' · Featured' : ''}</span><code>${esc(p.path)}</code></a>`).join('')}</div>
-    ${cur ? '<a class="small" href="/">All industries</a>' : ''}</section>`;
+    ${cur ? '<a class="small" href="/clinic">All industries</a>' : ''}</section>`;
 }
 function loginView() {
   const hero = meta.hero || "A small team's work, without hiring one";
   const cur = entryPack();
+  const feat = featuredPack();
   return `<div class="landing"><section class="hero">
-    <div class="brand"><div class="mark">A</div><div><b>AaaS</b><span>${cur ? esc(cur.title) : 'For the owner'}</span></div></div>
+    <div class="brand"><div class="mark">A</div><div><b>AaaS</b><span>${cur ? esc(cur.title) : 'For any business'}</span></div></div>
     <h1>${esc(hero)}</h1>
-    <p class="sub">${cur ? esc(cur.blurb) + ' ' : ''}An AI team for the industry you pick at signup. Digital marketing is the featured pack. Clinics and other trades use the same screens with their own labels. You approve anything that would go out. Customer records stay in AaaS.</p>
+    <p class="sub">${cur ? esc(cur.blurb) + ' ' : ''}Pick an industry at signup. ${feat ? esc(feat.title) + ' is the featured default. ' : ''}Every pack uses the same screens. You approve anything that would go out. Customer records stay in AaaS.</p>
+    ${!cur && feat ? `<p><a class="btn" href="${esc(feat.path)}">Start with ${esc(feat.title)}</a></p>` : ''}
     <p class="small">By creating an account you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
     ${domainsCard(cur)}
     ${planCards()}
@@ -600,7 +602,8 @@ function obInit() {
   if (ob) return ob;
   const p = (state && state.profile) || {};
   const ep = entryPack();
-  ob = { step: 0, role: (state && state.role) || (ep && ep.id) || '', businessType: p.businessType || '', biz: (state && state.biz) || '', city: (state && state.city) || '', services: p.services || '', audience: p.audience || '' };
+  const feat = featuredPack();
+  ob = { step: 0, role: (state && state.role) || (ep && ep.id) || (feat && feat.id) || '', businessType: p.businessType || '', biz: (state && state.biz) || '', city: (state && state.city) || '', services: p.services || '', audience: p.audience || '' };
   return ob;
 }
 function obSteps() {
@@ -1452,7 +1455,26 @@ async function reload() {
   if (!state.role) screen = 'profile';
   render();
 }
+const INSTANT_ACT = new Set(['mode', 'bot-mode', 'advanced', 'chief-mini', 'chief-tip-close', 'chief-tip-open', 'open-chief', 'drawer', 'drawer-close', 'go', 'chat-toggle', 'logout', 'fest-month']);
+function busyTarget(el) {
+  if (!el || !el.classList) return null;
+  if (el.matches('button, a.btn, a.btn-ghost')) return el;
+  return el.querySelector('button[type="submit"], button.btn, button.btn-ghost, button');
+}
+function markBusy(el) {
+  const btn = busyTarget(el);
+  if (!btn) return null;
+  btn.classList.add('is-busy');
+  btn.setAttribute('aria-busy', 'true');
+  return btn;
+}
+function clearBusy(btn) {
+  if (!btn || !btn.isConnected) return;
+  btn.classList.remove('is-busy');
+  btn.removeAttribute('aria-busy');
+}
 async function act(name, el) {
+  const busy = INSTANT_ACT.has(name) ? null : markBusy(el);
   try {
     if (name === 'mode') { mode = el.dataset.mode; err = ''; render(); return; }
     if (name === 'bot-mode' || name === 'advanced') {
@@ -1673,6 +1695,7 @@ async function act(name, el) {
     }
     if (token) await reload();
   } catch (e) { err = e.message; toast = e.message; chatBusy = false; render(); }
+  finally { clearBusy(busy); }
 }
 // ---- onboarding interactions ----
 root.addEventListener('click', (e) => {
@@ -1787,6 +1810,9 @@ root.addEventListener('change', (e) => { if (e.target && e.target.name === 'key'
 root.addEventListener('paste', (e) => { if (e.target && e.target.name === 'key' && e.target.form && e.target.form.querySelector('select[data-ai-model]')) setTimeout(() => autoLoadModels(e.target.form), 0); });
 root.addEventListener('submit', (e) => { const f = e.target.closest('form[data-act]'); if (!f) return; e.preventDefault(); act(f.dataset.act, f); });
 root.addEventListener('input', (e) => { if (e.target.id === 'chatIn') chatDraft = e.target.value; });
+function warmApi() { fetch('/api/health', { cache: 'no-store' }).catch(() => {}); }
+warmApi();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') warmApi(); });
 (async () => {
   const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
   if (hash.get('as_auth')) { token = hash.get('as_auth'); sessionStorage.setItem('aaas_clinic_token', token); history.replaceState(null, '', location.pathname); }

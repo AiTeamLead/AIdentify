@@ -12,6 +12,8 @@ test('design tokens are the only palette for Bot Mode and the CRM', () => {
   assert.match(theme, /--primary:\s*#2f2a86/i);
   assert.match(theme, /body\.bot-mode \.wp-side[\s\S]*background:\s*var\(--card\)/);
   assert.match(theme, /body\.bot-mode \.go[\s\S]*background:\s*var\(--primary\)/);
+  assert.match(theme, /body\.bot-mode \.wp-chiefav \{[^}]*width:\s*28px/);
+  assert.match(theme, /button\.is-busy/);
   assert.doesNotMatch(theme, /body\.bot-mode[\s\S]{0,400}#050505/);
   const crm = read('assets/crm.js');
   assert.match(crm, /class="field"/);

@@ -7,28 +7,41 @@ import { PACK_IDS, PACK_PATHS, packForPath, publicPacks } from '../lib/clinic-pa
 
 const PW = 'Clinic-pass-123!';
 
-test('every pack has a unique path; dental stays /clinic, real estate is /Realestate', () => {
-  assert.equal(PACK_PATHS.dental, '/clinic');
+test('every pack has a unique path; /clinic is the shared sign-in, dental is /Dental', () => {
+  assert.equal(PACK_PATHS.dental, '/Dental');
+  assert.equal(PACK_PATHS.agency, '/Agency');
   assert.equal(PACK_PATHS.realestate, '/Realestate');
   assert.equal(new Set(Object.values(PACK_PATHS)).size, PACK_IDS.length);
   for (const id of PACK_IDS) assert.equal(packForPath(PACK_PATHS[id]), id);
+  assert.equal(packForPath('/clinic'), '');
+  assert.equal(packForPath('/clinic.html'), '');
+  assert.equal(packForPath('/'), '');
+  assert.equal(packForPath('/dental'), 'dental');
   assert.equal(packForPath('/realestate'), 'realestate');
   assert.equal(packForPath('/Realestate/'), 'realestate');
   assert.equal(packForPath('/api'), '');
   assert.ok(publicPacks().every((p) => p.path === PACK_PATHS[p.id]));
+  assert.equal(publicPacks().find((p) => p.featured).id, 'agency');
 });
 
-test('the sign-in at / lists every industry link; each industry path has its own sign-in', () => {
+test('the sign-in at / and /clinic is industry-neutral and features the agency pack', () => {
   const src = fs.readFileSync(new URL('../clinic.html', import.meta.url), 'utf8');
   assert.match(src, /Choose your industry/);
   assert.match(src, /<a class="dom" href="\$\{esc\(p\.path\)\}">/);
   assert.match(src, /function entryPack\(\)/);
+  assert.match(src, /For any business/);
+  assert.match(src, /Start with \$\{esc\(feat\.title\)\}/);
+  assert.match(src, /\/\(index\(\\\.html\)\?\|clinic\(\\\.html\)\?\)\?\$/);
+  assert.match(src, /function warmApi\(\)/);
+  assert.match(src, /\/api\/health/);
+  assert.match(src, /is-busy/);
+  assert.doesNotMatch(src, /Dental clinic/);
 });
 
 test('each pack path serves the app and the account reports its own path', async () => {
   const s = await startServer({ RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on', CLINIC_DEMO_PLATFORM_KEY: '1', CLINIC_DEMO: '1' });
   try {
-    for (const p of [...Object.values(PACK_PATHS), '/realestate', '/clinic.html']) {
+    for (const p of [...Object.values(PACK_PATHS), '/realestate', '/clinic', '/clinic.html']) {
       const r = await fetch(s.base + p); assert.equal(r.status, 200, p);
       assert.match(await r.text(), /function homePath\(\)/, p);
     }
