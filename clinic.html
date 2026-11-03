@@ -450,11 +450,12 @@ let toast = '';
 let advanced = true; // the dashboard is home; the full-page Chief opens only when asked for
 let chiefTipNow = false;
 let botMode = false;
-// / and /clinic are the shared sign-in. Industry paths (/Agency, /Dental, /Realestate) set the pack.
+// / and /workspace are the shared sign-in. /clinic redirects to /workspace. Industry paths (/Agency, /Dental) set the pack.
 const START_PATH = (location.pathname.replace(/\.html$/i, '').replace(/\/+$/, '').replace(/^\/index$/, '') || '/');
-const ON_ROOT = /^\/(index(\.html)?|clinic(\.html)?)?$/.test(location.pathname);
+const ON_ROOT = /^\/(index(\.html)?|workspace(\.html)?|clinic(\.html)?)?$/.test(location.pathname);
 try { if (!ON_ROOT) sessionStorage.setItem('aaas_link', START_PATH); else sessionStorage.removeItem('aaas_link'); } catch (e) {}
-function toRoot() { if (location.pathname !== '/' || location.hash) history.replaceState(null, '', '/'); }
+function shellHome() { return /^\/workspace(\.html)?$/.test(location.pathname) ? '/workspace' : '/'; }
+function toRoot() { const home = shellHome(); if (location.pathname !== home || location.hash) history.replaceState(null, '', home); }
 // the industry of the link this tab came in on (signed-out sign-in page, and "For this link" on the industry picker)
 function entryPack() { let l = ''; try { l = (sessionStorage.getItem('aaas_link') || '').toLowerCase(); } catch (e) {} return l ? ((state && state.packs) || meta.packs || []).find((p) => p.path && p.path.toLowerCase() === l) : null; }
 function homePath() { return (state && state.role && state.rolePath) || (token ? START_PATH : '/'); }
@@ -511,7 +512,7 @@ function domainsCard(cur) {
   if (!packs.length) return '';
   return `<section class="domains" aria-label="Industries"><b>${cur ? 'Other industries' : 'Choose your industry'}</b>
     <div class="dom-grid">${packs.filter((p) => !cur || p.id !== cur.id).map((p) => `<a class="dom" href="${esc(p.path)}"><span>${esc(p.title)}${p.featured ? ' · Featured' : ''}</span><code>${esc(p.path)}</code></a>`).join('')}</div>
-    ${cur ? '<a class="small" href="/clinic">All industries</a>' : ''}</section>`;
+    ${cur ? '<a class="small" href="/workspace">All industries</a>' : ''}</section>`;
 }
 function loginView() {
   const hero = meta.hero || "A small team's work, without hiring one";
@@ -536,7 +537,7 @@ function loginView() {
     <label>Password<input name="password" type="password" autocomplete="${mode==='create'?'new-password':'current-password'}" required minlength="8"></label>
     <div class="err">${esc(err)}</div>
     <button class="btn" type="submit">${mode==='create'?'Create account':'Sign in'}</button>
-    ${meta.google?'<a class="btn-ghost" href="/api/auth/google/start?next=clinic" style="text-align:center;text-decoration:none">Continue with Google</a>':''}
+    ${meta.google?'<a class="btn-ghost" href="/api/auth/google/start?next=workspace" style="text-align:center;text-decoration:none">Continue with Google</a>':''}
     ${meta.demoLogin?'<button class="btn-ghost" type="button" data-act="demo">Explore the sample business</button><p class="small">Local or staging only. Opens a sample owner account. No password is shown.</p>':''}
   </form></div>`;
 }
@@ -1342,7 +1343,7 @@ function writeAdvanced(on) { try { localStorage.setItem(botStoreKey(), on ? '1' 
 function botModeKey() { return 'aaas_bot_mode:' + ((state && state.account) || ''); }
 function readBot() { try { return localStorage.getItem(botModeKey()) === '1'; } catch (e) { return false; } }
 function writeBot(on) { try { localStorage.setItem(botModeKey(), on ? '1' : '0'); } catch (e) {} }
-// Bot Mode shows the main AaaS workplace (http://host/) signed in with this clinic session.
+// Bot Mode shows the main AaaS workplace (http://host/app) signed in with this workspace session.
 function botSrc() {
   const email = (state && state.account) || '';
   return '/app?bot=1#as_auth=' + encodeURIComponent(token) + '&em=' + encodeURIComponent(email) + '&bot=1';
@@ -1492,7 +1493,7 @@ async function act(name, el) {
     if (name === 'drawer-close') { drawer = null; render(); return; }
     if (name === 'go') { if (el.dataset.screen === 'setup') wiz = el.dataset.wiz || 1; botMode = false; advanced = true; writeAdvanced(true); go(el.dataset.screen); return; }
     if (name === 'chat-toggle') { chatOpen = !chatOpen; render(); return; }
-    if (name === 'logout') { ob = null; try { sessionStorage.removeItem('aaas_view'); sessionStorage.setItem('aaas_link', (state && state.rolePath) || '/clinic'); } catch (e) {} history.replaceState(null, '', (state && state.rolePath) || '/'); document.title = 'AaaS · ' + ((state && state.roleTitle) || 'Sign in'); botMode = false; miniOpen = false; dropMini(); token = ''; sessionStorage.removeItem('aaas_clinic_token'); state = null; screen = 'login'; skipProfile = false; render(); return; }
+    if (name === 'logout') { ob = null; try { sessionStorage.removeItem('aaas_view'); sessionStorage.setItem('aaas_link', (state && state.rolePath) || '/workspace'); } catch (e) {} history.replaceState(null, '', (state && state.rolePath) || '/workspace'); document.title = 'AaaS · ' + ((state && state.roleTitle) || 'Sign in'); botMode = false; miniOpen = false; dropMini(); token = ''; sessionStorage.removeItem('aaas_clinic_token'); state = null; screen = 'login'; skipProfile = false; render(); return; }
     if (name === 'auth') {
       const f = Object.fromEntries(new FormData(el).entries());
       const path = mode === 'create' ? '/api/auth/signup' : '/api/auth/login';
@@ -1662,7 +1663,7 @@ async function act(name, el) {
       const r = await fetch('/api/clinic/export', { headers: { authorization: 'Bearer ' + token } });
       if (!r.ok) throw new Error('Export did not download.');
       const blob = await r.blob(); const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'aaas-clinic-export.json'; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = 'aaas-workspace-export.json'; a.click();
       return;
     }
     else if (name === 'wipe') {
@@ -1818,9 +1819,6 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
   if (hash.get('as_auth')) { token = hash.get('as_auth'); sessionStorage.setItem('aaas_clinic_token', token); history.replaceState(null, '', location.pathname); }
   if (hash.get('as_autherr')) { err = hash.get('as_autherr'); toast = err; history.replaceState(null, '', location.pathname); }
   if (location.hash === '#signup') { mode = 'create'; history.replaceState(null, '', location.pathname); }
-  if (!token) {
-    if (location.pathname === '/') { try { const su = await (await fetch('/api/setup')).json(); if (su && su.needed) { location.href = '/setup'; return; } } catch { /* offline */ } }
-  }
   try { meta = await (await fetch('/api/clinic/meta')).json(); } catch { /* offline */ }
   if (!token) { const ep = entryPack(); if (ep) { if (location.pathname !== ep.path || location.hash) history.replaceState(null, '', ep.path); document.title = 'AaaS · ' + ep.title; } else toRoot(); }
   window.addEventListener('message', (e) => {

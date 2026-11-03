@@ -86,7 +86,13 @@ test('server serves /v2 and /white-label and leaves / on the app', async (t) => 
   assert.equal(v2.status, 200);
   assert.match(v2.headers.get('content-type'), /text\/html/);
   const html = await v2.text();
-  assert.match(html, /Hire an AI team/);
+  assert.match(html, /The follow-up waits until someone is free/);
+  assert.match(html, /href="\/app#signup"/);
+  assert.match(html, /\/assets\/upi-qr\.png/);
+  assert.match(html, /\+91 63023 81884/);
+  assert.match(html, /There is no free trial/);
+  assert.match(html, /href="\/privacy"/);
+  assert.match(html, /href="\/deletion"/);
   assert.match(html, /₹4,999/);
   assert.match(html, /₹9,999/);
   assert.doesNotMatch(html, /\{\{SELF_INR\}\}/);
@@ -104,7 +110,7 @@ test('server serves /v2 and /white-label and leaves / on the app', async (t) => 
   const home = await fetch(s.base + '/');
   const homeHtml = await home.text();
   assert.equal(home.status, 200);
-  assert.doesNotMatch(homeHtml, /Hire an AI team/);
+  assert.doesNotMatch(homeHtml, /The follow-up waits until someone is free/);
   const v1 = await fetch(s.base + '/v1');
   assert.equal(v1.status, 200);
   assert.match(await v1.text(), /Never miss a lead again/);
@@ -132,10 +138,11 @@ test('landing site serves v2 at / and v1 at /v1', async (t) => {
   const home = await fetch(s.base + '/');
   assert.equal(home.status, 200);
   const homeHtml = await home.text();
-  assert.match(homeHtml, /Hire an AI team/);
+  assert.match(homeHtml, /The follow-up waits until someone is free/);
+  assert.match(homeHtml, /href="\/app#signup"/);
   assert.match(homeHtml, /href="\/white-label"/);
   const v2 = await fetch(s.base + '/v2');
-  assert.match(await v2.text(), /Hire an AI team/);
+  assert.match(await v2.text(), /The follow-up waits until someone is free/);
   const v1 = await fetch(s.base + '/v1');
   const v1Html = await v1.text();
   assert.match(v1Html, /Never miss a lead again/);

@@ -1345,6 +1345,7 @@ const SYNC=(()=>{
 const ST={get:k=>SYNCED(k)?SYNC.get(k):LS.get(k),set:(k,v,local=true)=>SYNCED(k)?SYNC.set(k,v):LS.set(k,v,local),del:k=>SYNCED(k)?SYNC.del(k):LS.del(k)};
 let users={};try{users=JSON.parse(ST.get('as_users')||'{}')||{}}catch(e){users={}}
 let user=null,mode='in',step=1,loginAs='user',adminUser=null;
+const ADMIN_ENTRY = /\/admin\/?$/.test(location.pathname);
 const saveUsers=()=>ST.set('as_users',JSON.stringify(users));
 const initials=n=>n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()||'?';
 async function sha(t){
@@ -1388,7 +1389,7 @@ function enter(u,welcome){
   else if(welcome)showIntro(u.name);
   setTimeout(wpInboxStart,1500);setTimeout(ffStart,2000);
 }
-function showAuth(){document.body.classList.add('locked');$('#auth').classList.remove('hide');loginAs='user';setMode('in');$('#aEmail').focus()}
+function showAuth(){document.body.classList.add('locked');$('#auth').classList.remove('hide');loginAs=ADMIN_ENTRY?'admin':'user';setMode(ADMIN_ENTRY?'in':'in');$('#aEmail').focus()}
 function signOut(){
   const tok=SYNC.token;
   if(tok)fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:'{}'}).catch(()=>{});
@@ -1403,9 +1404,9 @@ function setMode(m){
   setStep(1);
 }
 function setSeg(){
-  const up=mode==='up';$('#roleSeg').classList.toggle('hide',up);
+  const up=mode==='up';
   document.querySelectorAll('#roleSeg button').forEach(b=>b.classList.toggle('on',b.dataset.r===loginAs));
-  const fp=mode==='fp';$('#roleSeg').classList.toggle('hide',up||fp);
+  const fp=mode==='fp';$('#roleSeg').classList.toggle('hide',!ADMIN_ENTRY||up||fp);
   $('#aTitle').textContent=up?'Create account':fp?'Reset your password':(loginAs==='admin'?'Admin sign in':'Sign in');
   $('#aSwapLine').style.display=(!up&&loginAs==='admin')?'none':'';
   altShow();
@@ -1535,7 +1536,7 @@ $('#authForm').onsubmit=async e=>{
   await 0;
   if(await SYNC.mode()==='broken'){showAuth();$('#aBtn').disabled=true;err('The server isn’t set up yet: '+SYNC_ERR);return}
   if(await SYNC.mode()==='server'){
-    if(!botMode){try{const su=await fetch('/api/setup').then(r=>r.json());if(su&&su.needed){location.href='/setup';return}}catch(x){}}
+    if(ADMIN_ENTRY){try{const su=await fetch('/api/setup').then(r=>r.json());if(su&&su.needed){location.href='/setup';return}}catch(x){}}
     const hp=new URLSearchParams(location.hash.slice(1));
     if(/^#(signup|forgot)$/.test(location.hash)&&!LS.get('as_tok')){const m=location.hash==='#signup'?'up':'fp';history.replaceState(null,'',location.pathname+location.search);showAuth();setMode(m);return}
     if(hp.get('as_reset')){resetTok=hp.get('as_reset');history.replaceState(null,'',location.pathname+location.search);LS.del('as_tok');showAuth();setStep(5);return}
@@ -2484,36 +2485,41 @@ function ensureAgent(kind){
   norm(a);agents.push(a);seeded=[...new Set([...seeded,kind])];return a;
 }
 function needsOnboard(){return !!(user&&!isStaff()&&!user.imp&&!(wp&&wp.profile&&wp.profile.business))}
-function showOnboard(){
+async function showOnboard(){
   let el=document.getElementById('onboard');if(!el){el=document.createElement('div');el.id='onboard';document.body.appendChild(el)}
-  const opts=Object.entries(VERTICALS).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('');
+  let packs=[];
+  try{const m=await fetch('/api/clinic/meta').then(r=>r.json());packs=Array.isArray(m.packs)?m.packs:[];}catch(e){}
+  if(!packs.length)packs=[{id:'agency',title:'Digital marketing agency',featured:true,path:'/Agency'}];
+  const featured=(packs.find(p=>p.featured)||packs[0]).id;
+  const opts=packs.map(p=>`<option value="${esc(p.id)}"${p.id===featured?' selected':''}>${esc(p.title)}${p.featured?' · Featured':''}</option>`).join('');
   el.className='ov';
-  el.innerHTML=`<form class="modal onboard" id="obForm"><h2 style="margin:0 0 6px">Tell Chief of Staff about the business</h2><p class="muted" style="margin:0 0 12px">One hosted workspace. Customers get a link. They do not install anything.</p>
-   <label>What kind of business?<select name="vertical" id="obVertical" required><option value="" selected disabled>Select your business type</option>${opts}</select></label>
-   <label>Business name<input name="business" required maxlength="80" placeholder="e.g. Glow Skin Clinic, Banjara Hills"></label>
-   <label>City<input name="city" required maxlength="60" placeholder="e.g. Bengaluru"></label>
-   <label>Phone or WhatsApp<input name="phone" maxlength="40" placeholder="Optional"></label>
-   <label>Website<input name="website" maxlength="160" placeholder="Optional"></label>
-   <label>What should we help with first?<textarea name="help" rows="3" placeholder="e.g. reply to new patient enquiries the same day"></textarea></label>
-   <details class="hide" id="obAi"><summary><b>Use your own AI key (optional)</b> — test as much as you like on your own credit</summary><div style="margin-top:8px">${aiKeyFields('ob')}</div><small class="muted">Leave this empty to start on the shared demo key (a free daily allowance). You can add or change a key later from the user menu → AI key.</small></details>
+  el.innerHTML=`<form class="modal onboard" id="obForm"><h2 style="margin:0 0 6px">Tell Chief of Staff about the business</h2><p class="muted" style="margin:0 0 12px">Pick your industry, add your own AI key, and Chief opens in your workspace. Nothing is sent until you approve it. There is no free trial and no admin step.</p>
+   <label>Industry<select name="pack" id="obPack" required>${opts}</select></label>
+   <label>Business name<input name="business" required maxlength="80" placeholder="e.g. Northstar Digital"></label>
+   <label>City<input name="city" required maxlength="60" placeholder="e.g. Hyderabad"></label>
+   <label>What should we help with first?<textarea name="help" rows="3" placeholder="e.g. follow up new leads the same day"></textarea></label>
+   <div id="obAi"><b>Your AI key</b><p class="muted" style="margin:4px 0 8px">Required. Drafts use this key only. AaaS does not keep a free trial key for new accounts.</p>${aiKeyFields('ob')}</div>
    <p class="err hide" id="obErr" role="alert"></p>
-   <div class="acts"><button class="btn dk" type="submit">Start working</button></div></form>`;
-  SYNC.mode().then(m=>{if(m==='server'){const d=el.querySelector('#obAi');d&&d.classList.remove('hide')}});
+   <div class="acts"><button class="btn dk" type="submit">Open Chief</button></div></form>`;
   el.querySelector('#obForm').onsubmit=async e=>{
-    e.preventDefault();const f=new FormData(e.target),business=String(f.get('business')||'').trim(),city=String(f.get('city')||'').trim(),vertical=String(f.get('vertical')||'');
-    if(!business||!city||!VERTICALS[vertical])return;
+    e.preventDefault();const f=new FormData(e.target),business=String(f.get('business')||'').trim(),city=String(f.get('city')||'').trim(),pack=String(f.get('pack')||'').trim();
     const okey=String(f.get('obkey')||'').trim(),oe=el.querySelector('#obErr'),ob=el.querySelector('#obForm button[type=submit]');
-    if(okey){ob.disabled=true;ob.textContent='Checking your key…';oe.classList.add('hide');
-      try{const r=await aiKeySave(String(f.get('obprov')||'openrouter'),okey,String(f.get('obregion')||''));say('Your '+r.byok.name+' key is saved. Chats use your own credit.')}
-      catch(x){ob.disabled=false;ob.textContent='Start working';oe.textContent=(x.message||'That key didn’t work.')+' Fix it, or clear the key field to use the shared demo key.';oe.classList.remove('hide');return}}
-    wp.profile={vertical,verticalLabel:VERTICALS[vertical].label,business,city,phone:String(f.get('phone')||'').trim(),website:String(f.get('website')||'').trim(),help:String(f.get('help')||'').trim(),at:Date.now()};
-    (VERTICALS[vertical]||VERTICALS.other).kinds.forEach(ensureAgent);
-    const ff=agents.find(a=>a.kind==='formfirst');
-    if(ff&&!(ff.forms||[]).length)appDo(ff,'create_form',{title:business+' enquiry',fields:['Name','Email','Phone','How can we help?'],biz:business});
-    if(ff)ff.biz=business;
-    saveData();el.remove();tab='My Workplace';renderStatic();refresh();
-    const link=ff&&ff.forms&&ff.forms[0]?pubLink('f',ff.forms[0].token):'';
-    setTimeout(()=>{if(typeof wpSend==='function')wpSend('We just set up '+business+' in '+city+'. '+(wp.profile.help||'Help me run the first week.')+(link?' The customer enquiry link is '+link+'.':''))},400);
+    const fail=m=>{ob.disabled=false;ob.textContent='Open Chief';oe.textContent=m;oe.classList.remove('hide')};
+    if(!business||!city||!pack)return fail('Add the business name, city and industry.');
+    if(!okey)return fail('Paste your own AI key. There is no free trial.');
+    ob.disabled=true;ob.textContent='Checking your key…';oe.classList.add('hide');
+    try{await aiKeySave(String(f.get('obprov')||'openrouter'),okey,String(f.get('obregion')||''));}
+    catch(x){return fail(x.message||'That key didn’t work.');}
+    try{
+      await SYNC.api('/api/clinic/profile',{biz:business,city,services:String(f.get('help')||'Client work').trim()||'Client work',audience:'Customers',offer:String(f.get('help')||'').trim(),prices:''});
+      await SYNC.api('/api/clinic/role',{role:pack});
+    }catch(x){return fail(x.message||'Could not save the business.');}
+    const vert=pack==='agency'?'agency':(VERTICALS[pack]?pack:'other');
+    wp.profile={vertical:vert,verticalLabel:(packs.find(p=>p.id===pack)||{}).title||business,business,city,help:String(f.get('help')||'').trim(),pack,at:Date.now()};
+    (VERTICALS[vert]||VERTICALS.other).kinds.forEach(ensureAgent);
+    saveData();
+    try{sessionStorage.setItem('aaas_clinic_token',SYNC.token||LS.get('as_tok')||'');}catch(err){}
+    location.replace('/workspace#chat');
   };
 }
 function shareAgent(id){

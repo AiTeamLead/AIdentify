@@ -1,20 +1,20 @@
-/* Landing v2. Light paper, one green stamp. v1 (waitlist.html) is untouched. */
+/* Landing v2. Same tokens and Inter as the workspace (clinic-theme.css). v1 (waitlist.html) is untouched. */
 :root {
-  --page: #f3efe6;
-  --bg: #fffdf8;
-  --ink: #1c1915;
-  --mute: #4a453c;
-  --faint: #5c564c;
-  --line: #e4dccf;
-  --bd: #d4cbbd;
-  --soft: #f7f3eb;
-  --accent: #0c5c4a;
-  --accent-ink: #f3fbf7;
-  --hl: rgba(12, 92, 74, .1);
-  --err: #9f1239;
-  --shadow: 0 30px 70px rgba(28, 25, 21, .08);
-  --sans: 'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --serif: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  --page: #f5f6fb;
+  --bg: #ffffff;
+  --ink: #17182b;
+  --mute: #5e6478;
+  --faint: #5e6478;
+  --line: #e4e7f2;
+  --bd: #e4e7f2;
+  --soft: #eef0fb;
+  --accent: #2f2a86;
+  --accent-ink: #ffffff;
+  --hl: rgba(47, 42, 134, .1);
+  --err: #b42318;
+  --shadow: 0 10px 28px rgba(23, 24, 43, .06);
+  --sans: Inter, "Segoe UI", system-ui, sans-serif;
+  --serif: Inter, "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -26,9 +26,9 @@
   --line: rgba(246, 241, 231, .12);
   --bd: rgba(246, 241, 231, .2);
   --soft: #26231e;
-  --accent: #7ddec0;
-  --accent-ink: #06281f;
-  --hl: rgba(125, 222, 192, .12);
+  --accent: #c5c2f2;
+  --accent-ink: #17182b;
+  --hl: rgba(197, 194, 242, .14);
   --err: #fda4af;
   --shadow: 0 30px 70px rgba(0, 0, 0, .4);
   color-scheme: dark;
@@ -53,13 +53,13 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(880px 460px at 100% -8%, rgba(12, 92, 74, .16), transparent 60%),
-    radial-gradient(640px 380px at -8% 16%, rgba(154, 78, 32, .09), transparent 58%);
+    radial-gradient(880px 460px at 100% -8%, rgba(47, 42, 134, .12), transparent 60%),
+    radial-gradient(640px 380px at -8% 16%, rgba(47, 42, 134, .06), transparent 58%);
 }
 :root[data-theme="dark"] body::before {
   background:
-    radial-gradient(880px 460px at 100% -8%, rgba(125, 222, 192, .12), transparent 60%),
-    radial-gradient(640px 380px at -8% 16%, rgba(240, 163, 106, .06), transparent 58%);
+    radial-gradient(880px 460px at 100% -8%, rgba(197, 194, 242, .14), transparent 60%),
+    radial-gradient(640px 380px at -8% 16%, rgba(47, 42, 134, .2), transparent 58%);
 }
 img, svg { max-width: 100%; }
 a { color: inherit; }
@@ -169,7 +169,10 @@ h1, h2 { font-family: var(--serif); font-weight: 560; letter-spacing: -.03em; li
   border-bottom: 1px solid var(--line);
 }
 .preview-foot { border-bottom: 0; border-top: 1px solid var(--line); }
-.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: 6px; box-shadow: 0 0 0 0 rgba(12, 92, 74, .45); animation: pulse 2.4s infinite; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: 6px; box-shadow: 0 0 0 0 rgba(47, 42, 134, .35); animation: pulse 2.4s infinite; }
+.upi { display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: center; margin-top: 18px; }
+.upi img { width: 180px; height: auto; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
+@media (max-width: 700px) { .upi { grid-template-columns: 1fr; } }
 @keyframes pulse { 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
 .goal { margin: 14px 16px; padding: 12px 14px; background: var(--soft); border-radius: 16px; }
 .goal b { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); font-weight: 600; margin-bottom: 4px; }

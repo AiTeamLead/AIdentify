@@ -42,7 +42,7 @@ Optional, still only in `/etc/aaas.env`:
 | `CLINIC_DEMO` | `1` shows **Explore the sample clinic**. Leave unset or `0` on a clinic’s own server. |
 | `CLINIC_DEMO_PLATFORM_KEY` | Leave unset on a client’s server. `1` is only for a staging sample, labelled Demo key, demo only. |
 | `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | Server key for that demo flag. A client’s agent calls use the key they save in Settings. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in. Redirect is `/clinic`. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in. The customer app is `/workspace`. |
 | `EKA_CLIENT_ID` / `EKA_CLIENT_SECRET` | Live Eka.care sync. See developer.eka.care. Never commit these. |
 | `EKA_BASE_URL` | Default `https://api.eka.care`. |
 | `EKA_CLINIC_ID` | Optional filter on the appointment list. |
@@ -73,7 +73,7 @@ sudo certbot --nginx -d clinic.example.com
 
 Certbot renews on its own timer. After TLS works, `curl -fsS https://clinic.example.com/api/health`.
 
-Open `https://clinic.example.com/clinic` and create the owner account. Admin setup, if you need it, is `/setup` once, using the one-time code in `docker compose logs`.
+Open `https://clinic.example.com/app#signup` and create the owner account. `/clinic` redirects to `/workspace`. Admin setup, if you need it, is `/setup` once, using the one-time code in `docker compose logs`.
 
 ## 5. Backups
 

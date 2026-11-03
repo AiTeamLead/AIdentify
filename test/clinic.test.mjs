@@ -72,7 +72,7 @@ test('dental team: seeded numbers, CRUD, approvals, import, form, and chat', asy
     const demo = await s.api('/api/clinic/demo', {});
     assert.equal(demo.status, 200, JSON.stringify(demo.d));
     const token = demo.d.token;
-    const page = await fetch(s.base + '/clinic');
+    const page = await fetch(s.base + '/workspace');
     assert.equal(page.status, 200);
     assert.match(await page.text(), /AaaS/);
 

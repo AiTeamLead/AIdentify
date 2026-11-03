@@ -18,10 +18,10 @@ if (fs.existsSync('assets/upi-qr.png')) fs.copyFileSync('assets/upi-qr.png', `${
 if (fs.existsSync('assets/crm.js')) fs.copyFileSync('assets/crm.js', `${OUT}/assets/crm.js`);
 // one clinic page per industry (/Realestate, /Institute, …), generated from the packs so new packs get a URL too
 const { PACK_PATHS } = await import('../lib/clinic-packs.js');
-for (const p of Object.values(PACK_PATHS)) if (p !== '/clinic') { fs.mkdirSync(`${OUT}${p}`, { recursive: true }); fs.copyFileSync('clinic.html', `${OUT}${p}/index.html`); }
+for (const p of Object.values(PACK_PATHS)) if (p !== '/clinic' && p !== '/workspace') { fs.mkdirSync(`${OUT}${p}`, { recursive: true }); fs.copyFileSync('clinic.html', `${OUT}${p}/index.html`); }
 for (const d of ['logos']) if (fs.existsSync(d)) fs.cpSync(d, `${OUT}/${d}`, { recursive: true, filter: (s) => !/README\.md$/.test(s) });
 if (fs.existsSync('zips')) { fs.mkdirSync(`${OUT}/zips`); for (const z of fs.readdirSync('zips')) if (/^[a-z-]+\.zip\.txt$/.test(z)) fs.copyFileSync(`zips/${z}`, `${OUT}/zips/${z}`); }
-// "/" is the owner sign-in (clinic app); the workplace app moves to /app (Bot Mode frames /app?bot=1).
+// "/" is the owner sign-in. /workspace is the same page (vercel.json rewrites it here). /clinic redirects to /workspace. The workplace app is /app.
 fs.writeFileSync(`${OUT}/app.html`, fs.readFileSync('index.html'));
 fs.writeFileSync(`${OUT}/index.html`, fs.readFileSync('clinic.html'));
 // Landing project (aidentify.vercel.app): v2 is the home page. v1 stays at /v1 (waitlist.html).

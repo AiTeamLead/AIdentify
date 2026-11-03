@@ -47,9 +47,14 @@ async function serve(req, res) {
   const url = new URL(req.url, 'http://x');
   const ip = req.socket.remoteAddress || 'local';
   try {
-    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/app' || url.pathname === '/app.html')) {
-      // "/" is the owner sign-in (clinic app). The workplace app lives at /app; Bot Mode frames it with ?bot=1.
-      const workplace = url.pathname.startsWith('/app') || url.searchParams.get('bot') === '1';
+    if ((req.method === 'GET' || req.method === 'HEAD') && (url.pathname === '/clinic' || url.pathname === '/clinic/' || url.pathname === '/clinic.html')) {
+      // Old app shell. Browsers keep the fragment when Location has none, so /clinic?x=1#signup lands on /workspace?x=1#signup.
+      res.writeHead(301, { Location: '/workspace' + url.search, 'Cache-Control': 'public, max-age=86400' });
+      return res.end();
+    }
+    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/app' || url.pathname === '/app.html' || url.pathname === '/admin' || url.pathname === '/admin.html')) {
+      // "/" is the owner sign-in. Customers sign up at /app (Syed's page). Staff sign in at /admin. Bot Mode frames /app?bot=1.
+      const workplace = url.pathname.startsWith('/app') || url.pathname === '/admin' || url.pathname === '/admin.html' || url.searchParams.get('bot') === '1';
       const home = process.env.AIDENTIFY_SITE === 'landing' && !workplace ? 'landing-v2.html' : workplace ? 'index.html' : 'clinic.html';
       let html = await fs.readFile(path.join(dir, home), 'utf8');
       if (home === 'landing-v2.html') html = applyPriceTokens(html);
@@ -93,7 +98,7 @@ async function serve(req, res) {
     if (req.method === 'GET' && url.pathname === '/board.html') { // groups + task boards (shown inside the Groups tab)
       return send(res, 200, await fs.readFile(path.join(dir, 'board.html')), 'text/html; charset=utf-8');
     }
-    if (req.method === 'GET' && (url.pathname === '/clinic' || url.pathname === '/clinic.html' || packForPath(url.pathname))) { // one page per industry: /clinic, /Realestate, …
+    if (req.method === 'GET' && (url.pathname === '/workspace' || url.pathname === '/workspace.html' || packForPath(url.pathname))) { // one page per industry: /workspace, /Agency, /Dental, …
       return send(res, 200, await fs.readFile(path.join(dir, 'clinic.html')), 'text/html; charset=utf-8');
     }
     if (req.method === 'GET' && /^\/zips\/[a-z-]+\.zip\.txt$/.test(url.pathname)) {

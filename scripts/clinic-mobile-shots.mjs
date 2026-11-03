@@ -48,7 +48,7 @@ try {
     const page = await browser.newPage({ viewport: { width, height: 812 }, deviceScaleFactor: 1 });
     const tag = 'mobile_' + width;
 
-    await page.goto(server.base + '/clinic', { waitUntil: 'networkidle' });
+    await page.goto(server.base + '/workspace', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Create account' }).click();
     await shot(page, tag + '_signup');
 

@@ -16,6 +16,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/admin",
+      "destination": "/app.html"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index.js"
     },
@@ -36,7 +40,7 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/clinic",
+      "source": "/workspace",
       "destination": "/clinic.html"
     },
     {
@@ -158,6 +162,16 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/clinic",
+      "destination": "/workspace",
+      "permanent": true
+    },
+    {
+      "source": "/clinic.html",
+      "destination": "/workspace",
+      "permanent": true
+    },
     {
       "source": "/login",
       "destination": "/",

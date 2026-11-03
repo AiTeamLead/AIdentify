@@ -1,10 +1,10 @@
 # Clinic visit kit
 
-Use this on a visit to a clinic owner. The same script, terms and form are in the app under **Clinic visit** (`/clinic#visit`). Saving the form writes the answers into that owner’s account. It does not email, text, or charge anyone.
+Use this on a visit to a clinic owner. The same script, terms and form are in the app under **Clinic visit** (`/workspace#visit`). Saving the form writes the answers into that owner’s account. It does not email, text, or charge anyone.
 
 ## How to run it
 
-1. On your laptop, `npm start`, then open http://localhost:3000/clinic.
+1. On your laptop, `npm start`, then open http://localhost:3000/workspace.
 2. Sign in as the sample clinic, or as the owner’s own account if they already created one.
 3. Open **Clinic visit**.
 4. Read the ten questions. Write what they actually said.

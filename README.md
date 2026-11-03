@@ -90,7 +90,7 @@ One command, then the owner’s team:
 npm start
 ```
 
-Open http://localhost:3000/clinic. The pitch is **A small team's work, without hiring one**. Create an account (or **Continue with Google** when Google sign-in is configured), add the business profile, and pick an industry. On this computer you can also choose **Explore the sample business** (that button stays off on a hosted deploy unless `CLINIC_DEMO=1`). Switching industry on that sample business switches the sample name and the sample rows.
+Open http://localhost:3000/workspace. Old links to `/clinic` redirect there. Customers create an account at http://localhost:3000/app#signup. The pitch is **A small team's work, without hiring one**. Create an account (or **Continue with Google** when Google sign-in is configured), add the business profile, and pick an industry. On this computer you can also choose **Explore the sample business** (that button stays off on a hosted deploy unless `CLINIC_DEMO=1`). Switching industry on that sample business switches the sample name and the sample rows.
 
 Industries, same screens: Dental, Skin/Hair/Aesthetic, Coach/Consultant, Real estate, Salon/Gym/Studio, Interior design/Home services, Coaching institute.
 
@@ -109,7 +109,7 @@ What you can click through. Sample rows are marked DEMO.
 - **Approvals** approves or rejects every outbound draft. Approving records the decision and still sends nothing.
 - **Connections** imports a CSV and hosts `/book/<token>` (also `POST /api/clinic/form/<token>`). **Eka.care** syncs from their public API when `EKA_CLIENT_ID` and `EKA_CLIENT_SECRET` are set on the server. The sample business shows **Connected (demo)** and does not call Eka.care. A new account shows **Available, connect with credentials** until those env vars are set. Other clinic software can use the same CSV or `POST /api/clinic/connectors/webhook/<form token>` once `CLINIC_CONNECTOR_WEBHOOK_SECRET` is set. Google Calendar is still coming soon.
 - The dashboard lists which people came from the connected software and the paid amount AaaS brought back from them this month.
-- **Clinic visit** (`/clinic#visit`, and `docs/clinic-visit-kit.md`) is the 10-question interview, the free-pilot terms, and a form that saves the answers in the account.
+- **Clinic visit** (`/workspace#visit`, and `docs/clinic-visit-kit.md`) is the 10-question interview, the free-pilot terms, and a form that saves the answers in the account.
 - **Pricing** shows two plans from `lib/pricing.js`. Self-hosted is ₹2,999/month for updates and support, plus a one-time setup and install of ₹9,999 that is waived on an annual plan. Hosted is ₹4,999/month: we run it, with backups, uptime and updates, and no install. Both plans include the same agents. AI usage is paid by the client to their provider. The app does not charge a card.
 - **Usage & cost** shows token counts per agent run, logged from the model response, and a rupee estimate at ₹84 per US dollar. The line reads “Usage on your &lt;provider&gt; key, paid to your provider”. The sample clinic also shows recorded sample runs. It is not a bill from AaaS.
 - **Next month** on the dashboard scales the last 28 days of bookings, invoices issued, and invoices marked paid up to 30 days. The card states that method. It is not a promise.
@@ -124,7 +124,7 @@ Check it with `npm run test:clinic`.
 
 #### Vercel staging
 
-Use a **new** Vercel project. Do not link or deploy `aidentify` or `aidentify-demo`. `vercel.json` already serves `/clinic` and routes `/api` and `/book` to the serverless function. Data on Vercel needs Postgres. Set `CLINIC_DEMO=1` and `CLINIC_DEMO_PLATFORM_KEY=1` so the sample business runs without asking for a key. A real account still has to save its own key before agent calls run.
+Use a **new** Vercel project. Do not link or deploy `aidentify` or `aidentify-demo`. `vercel.json` already serves `/workspace` (`/clinic` redirects there) and routes `/api` and `/book` to the serverless function. Data on Vercel needs Postgres. Set `CLINIC_DEMO=1` and `CLINIC_DEMO_PLATFORM_KEY=1` so the sample business runs without asking for a key. A real account still has to save its own key before agent calls run.
 
 Set these on that project (values stay in Vercel, not in git):
 

@@ -29,13 +29,13 @@ small{color:var(--mute)}button{margin-top:18px;width:100%;padding:10px;border:0;
 </form>
 <script>
 const $=s=>document.querySelector(s),msg=(t,c)=>{$('#msg').className=c||'';$('#msg').textContent=t};
-fetch('/api/setup').then(r=>r.json()).then(d=>{if(!d.needed){msg('This server already has an admin. Taking you to sign in…','ok');setTimeout(()=>location.href='/app',1200)}}).catch(()=>{});
+fetch('/api/setup').then(r=>r.json()).then(d=>{if(!d.needed){msg('This server already has an admin. Taking you to the admin sign-in…','ok');setTimeout(()=>location.href='/admin',1200)}}).catch(()=>{});
 $('#f').onsubmit=async e=>{e.preventDefault();
   if($('#pw').value!==$('#pw2').value)return msg('The passwords do not match.','bad');
   msg('Creating…');
   try{const r=await fetch('/api/setup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:$('#code').value,email:$('#email').value,name:$('#name').value,password:$('#pw').value})});
     const d=await r.json();if(!r.ok)return msg(d.message||d.error||'Could not create the admin.','bad');
-    msg('Admin created. Sign in with Admin on the next screen.','ok');setTimeout(()=>location.href='/app',1500)}
+    msg('Admin created. Sign in on the admin screen.','ok');setTimeout(()=>location.href='/admin',1500)}
   catch(x){msg('Could not reach the server.','bad')}};
 </script>
 </body>

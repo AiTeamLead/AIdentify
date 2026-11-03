@@ -19,6 +19,9 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - Sign-in at `/` and `/clinic` does not assume a dental clinic. Digital marketing agency is the featured starting point. Dental is at `/Dental`.
 - Buttons show a spinner while a click is waiting, and the page pings `/api/health` so the first click is less likely to sit on a cold start.
 - The Chief of Staff mark in Bot Mode is the same size as the other sidebar rows, so it no longer covers its label.
+- The app shell is at `/workspace`. `/clinic` and `/clinic.html` redirect there with a 301 and keep the query string. Browsers keep the hash.
+- Customers sign up at `/app` (create account at `/app#signup`). That page is the customer sign-in Syed added in `b6fe84b`. Admin setup stays at `/setup`. Staff sign in at `/admin`. A new account picks an industry, pastes its own AI key, and opens Chief at `/workspace#chat`.
+- The public landing states the problem first, then the benefit and the advantage. Digital marketing agency is the featured pack. Plans are Self-hosted ₹2,999 a month plus ₹9,999 setup (waived on an annual plan) and Hosted ₹4,999 a month. Pay the UPI QR, then WhatsApp +91 63023 81884. There is no free trial.
 
 ### Changed
 - The sample business opens as a digital marketing agency. A dental sample is still one click away in the industry list.
