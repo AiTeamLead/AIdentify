@@ -56,7 +56,7 @@
       <div>
         <p class="eyebrow">Agents as a Service · early access</p>
         <h1>Hire an AI team. You keep the last word.</h1>
-        <p class="lead">For clinics, coaches, brokers, studios and home businesses. Tell a Chief of Staff the goal in plain words. It plans the work and hands it to a front desk, a follow-up agent and a quote tracker — on WhatsApp, email, Google Calendar and your website chat.</p>
+        <p class="lead">For the industry you pick at signup. Digital marketing agencies are the featured pack: lead capture, follow-up, client reports, content and invoices. Clinics, coaches, brokers and studios use the same product with their own labels. Tell a Chief of Staff the goal in plain words. Nothing goes out until you approve it.</p>
         <div class="heroacts">
           <a class="btn solid" href="#join" data-join>Join the waitlist</a>
           <a class="btn line" href="#team">Meet the team</a>
@@ -65,7 +65,7 @@
       </div>
       <div class="preview">
         <div class="preview-bar"><span><span class="pulse" aria-hidden="true"></span>Product preview · not a live account</span><span>Today</span></div>
-        <div class="goal"><b>You, in plain words</b><p>“Reply to today’s skin-clinic enquiries, draft the two follow-ups, and hold anything that sends.”</p></div>
+        <div class="goal"><b>You, in plain words</b><p>“Log today’s new leads, draft the two follow-ups, and hold anything that sends.”</p></div>
         <ol class="feed">
           <li><span class="av">CoS</span><div><b>Chief of Staff</b><p>Split it into four tasks. Front desk takes the new WhatsApps. Follow-up drafts the nudges. The quote stays in Approvals.</p></div><span class="tag">Planning</span></li>
           <li><span class="av">Desk</span><div><b>Front desk</b><p>WhatsApp · “Tue 11:30 or Wed 4:00?” Draft is ready. The visitor does not see it until you approve.</p></div><span class="tag">Needs OK</span></li>
@@ -132,14 +132,24 @@
       </div>
 
       <div class="tablist" role="tablist" aria-label="Industries">
-        <button role="tab" id="tab-clinic" aria-controls="ind-clinic" aria-selected="true" type="button">Clinics</button>
+        <button role="tab" id="tab-agency" aria-controls="ind-agency" aria-selected="true" type="button">Agencies</button>
+        <button role="tab" id="tab-clinic" aria-controls="ind-clinic" aria-selected="false" type="button">Clinics</button>
         <button role="tab" id="tab-coach" aria-controls="ind-coach" aria-selected="false" type="button">Coaches</button>
         <button role="tab" id="tab-realty" aria-controls="ind-realty" aria-selected="false" type="button">Real estate</button>
         <button role="tab" id="tab-home" aria-controls="ind-home" aria-selected="false" type="button">Interiors &amp; home</button>
         <button role="tab" id="tab-class" aria-controls="ind-class" aria-selected="false" type="button">Institutes</button>
         <button role="tab" id="tab-salon" aria-controls="ind-salon" aria-selected="false" type="button">Salons &amp; studios</button>
       </div>
-      <div role="tabpanel" id="ind-clinic" aria-labelledby="tab-clinic" class="panel">
+      <div role="tabpanel" id="ind-agency" aria-labelledby="tab-agency" class="panel">
+        <h3>Digital marketing agencies</h3>
+        <p>The featured pack. Leads from WhatsApp and the site become CRM contacts. Follow-ups, content, client reports, onboarding notes and invoice reminders are drafts. You approve each one. Records stay in AaaS. There is no Salesforce sync.</p>
+        <ul>
+          <li>A pipeline you can rename, as a board or a list, with tags and a timeline on each contact.</li>
+          <li>CSV import and export, so the data you brought in can leave with you.</li>
+          <li>Bulk and cold WhatsApp blasts are blocked. One approved recipient at a time.</li>
+        </ul>
+      </div>
+      <div role="tabpanel" id="ind-clinic" aria-labelledby="tab-clinic" class="panel" hidden>
         <h3>Skin, aesthetic, hair and dental</h3>
         <p>Enquiries and appointments only. The desk can answer timings, fees and location from the FAQs you wrote, offer up to three open times, and hold the slot when that reply is actually sent.</p>
         <ul>
@@ -220,7 +230,7 @@
         </div>
         <div class="stack">
           <article class="card"><h3>DPDP-aware, not a certificate</h3><p>The waitlist asks before we message you. Customer opt-out words stop further sends. Tracking skips opted-out contacts. Purpose stays narrow: run the inbox, the booking and the follow-up you approved. This is not a legal opinion and not a compliance badge. Clinics should check their own duties with an adviser.</p></article>
-          <article class="card"><h3>Clinics: enquiries and appointments only</h3><p>Timings, fees, location, slots. Not diagnosis, medicines, reports or complaints. Those are handed to a person, and the desk does not answer them.</p></article>
+          <article class="card"><h3>Your industry, your labels</h3><p>Agencies, clinics, coaches and the other packs share one product. Clinics stay on enquiries and appointments: timings, fees, location, slots. Not diagnosis or medicines. Those chats are handed to a person.</p></article>
         </div>
       </div>
     </div>
@@ -311,7 +321,7 @@
         <form id="join-form" data-source="landing-v2" novalidate>
           <div class="formgrid">
             <label class="fld"><span>Your name</span><input class="in" name="name" autocomplete="name" maxlength="80" placeholder="Asha Rao" required><span class="err" data-for="name"></span></label>
-            <label class="fld"><span>Work email</span><input class="in" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="you@clinic.com" required><span class="err" data-for="email"></span></label>
+            <label class="fld"><span>Work email</span><input class="in" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="you@agency.com" required><span class="err" data-for="email"></span></label>
             <label class="fld"><span>WhatsApp number</span><input class="in" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="98765 43210" required><span class="err" data-for="whatsapp"></span></label>
             <label class="fld"><span>City</span><input class="in" name="city" autocomplete="address-level2" maxlength="60" placeholder="Pune" required><span class="err" data-for="city"></span></label>
             <label class="fld full"><span>Business type</span><select class="in" name="businessType" required><option value="" selected>Choose one</option></select><span class="err" data-for="businessType"></span></label>
@@ -334,7 +344,7 @@
     </div>
   </section>
 </main>
-<footer><div class="wrap"><span>© 2026 AaaS · Agents as a Service, made in India</span><span><a href="https://aidentify-demo.vercel.app" target="_blank" rel="noopener">Live demo</a> · <a href="/white-label">White Label</a> · <a href="#faq">FAQ</a> · <a href="/v1">Version 1</a></span></div></footer>
+<footer><div class="wrap"><span>© 2026 AaaS · Agents as a Service, made in India</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/deletion">Delete my data</a> · <a href="https://aidentify-demo.vercel.app" target="_blank" rel="noopener">Live demo</a> · <a href="/white-label">White Label</a> · <a href="#faq">FAQ</a> · <a href="/v1">Version 1</a></span></div></footer>
 <script src="/landing-v2.js"></script>
 </body>
 </html>

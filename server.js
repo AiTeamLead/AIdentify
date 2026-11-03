@@ -75,6 +75,16 @@ async function serve(req, res) {
     if (req.method === 'GET' && url.pathname === '/clinic-theme.css') {
       return send(res, 200, await fs.readFile(path.join(dir, 'clinic-theme.css')), 'text/css; charset=utf-8');
     }
+    if (req.method === 'GET' && (url.pathname === '/privacy' || url.pathname === '/terms' || url.pathname === '/deletion')) {
+      const file = url.pathname.slice(1) + '.html';
+      return send(res, 200, await fs.readFile(path.join(dir, file)), 'text/html; charset=utf-8');
+    }
+    if (req.method === 'GET' && url.pathname === '/assets/upi-qr.png') {
+      return send(res, 200, await fs.readFile(path.join(dir, 'assets', 'upi-qr.png')), 'image/png');
+    }
+    if (req.method === 'GET' && url.pathname === '/assets/crm.js') {
+      return send(res, 200, await fs.readFile(path.join(dir, 'assets', 'crm.js')), 'text/javascript; charset=utf-8');
+    }
     if (req.method === 'GET' && (url.pathname === '/landing-v2.css' || url.pathname === '/landing-v2.js')) {
       const file = url.pathname.slice(1);
       const type = file.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8';

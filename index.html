@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AaaS</title>
+<link rel="stylesheet" href="/clinic-theme.css">
+<script>if(/[?&]bot=1/.test(location.search))document.documentElement.classList.add('aaas-unified')</script>
 </head>
 <body>
 
@@ -1330,7 +1332,7 @@ const SYNC=(()=>{
   async function auth(t){
     tok=t;be=httpBe;dead=false;
     try{const items=await be.load();const ch=[];items.forEach(it=>{if(apply(it,true))ch.push(it.k)});loaded=true;readyRes(true);
-      clearInterval(poll);poll=setInterval(async()=>{if(document.hidden||!tok)return;try{const c2=[];(await be.load()).forEach(it=>{if(apply(it,false))c2.push(it.k)});if(c2.length)onChange(c2)}catch(e){}},15000);
+      clearTimeout(poll);let pollWait=15000;const pollTick=async()=>{if(document.hidden||!tok){poll=setTimeout(pollTick,pollWait);return}try{const c2=[];(await be.load()).forEach(it=>{if(apply(it,false))c2.push(it.k)});if(c2.length){onChange(c2);pollWait=15000}else pollWait=Math.min(120000,Math.round(pollWait*1.4))}catch(e){pollWait=Math.min(120000,pollWait*2)}poll=setTimeout(pollTick,pollWait)};poll=setTimeout(pollTick,pollWait);
       return ch}
     catch(e){tok=null;be=null;if(e&&(e.status===401||e.status===403))return false;throw e}
   }
@@ -3513,8 +3515,6 @@ const WP_CONN=[
  ['teams','Microsoft Teams','Microsoft','Communication','users','#5059c9','Chats and channels','Read chats and channels','read your chats and channels','Read chats and post to channels.'],
  ['whatsapp','WhatsApp Business','Meta','Communication','chat','#25a244','Message customers','Message customers','message your customers','Send messages to customers and receive their replies.'],
  ['twilio','Twilio','Twilio','Communication','chat','#f22f46','SMS and voice','Send SMS and calls','send SMS and voice notifications','Send SMS and voice notifications.'],
- ['hubspot','HubSpot','HubSpot','CRM & sales','target','#ff5c35','Contacts, deals and tickets','Look up your CRM','look up contacts, deals and tickets','CRM context for every answer, insight and action.'],
- ['salesforce','Salesforce','Salesforce','CRM & sales','target','#0b8ed6','Accounts and opportunities','Look up your CRM','look up accounts and opportunities','Accounts, opportunities and cases from your org.'],
  ['zendesk','Zendesk','Zendesk','CRM & sales','users','#03363d','Support tickets','Read support tickets','read and update support tickets','Read and update support tickets.'],
  ['intercom','Intercom','Intercom','CRM & sales','chat','#1f8ded','Customer conversations','Read conversations','read customer conversations','Customer conversations and help-centre content.'],
  ['mailchimp','Mailchimp','Intuit','CRM & sales','megaphone','#b58900','Audiences and campaigns','See campaigns','see audiences and campaigns','Audiences, campaigns and email reports.'],
@@ -3617,7 +3617,8 @@ function wpAppsOpen(){if(miniMode){try{parent.postMessage({type:'aaas-mini',full
 async function wpApLoad(more){if(!SYNC.token){wpAp.on=false;wpApPaint();return}const my=++wpAp.seq;if(more&&(wpAp.busy||wpAp.next==null))return;wpAp.busy=true;if(more)wpApPaintMore();
   const u=new URLSearchParams({q:wpAp.q,category:wpAp.cat,sort:wpAp.sort,tab:wpAp.tab,offset:more?wpAp.next:0,limit:48});
   try{const r=await SYNC.api('/api/connectors/apps?'+u);if(my!==wpAp.seq&&!more)return;
-    Object.assign(wpAp,{on:r.on,account:r.account||{on:false},total:r.total,count:r.count,cats:r.categories||[],popular:r.popular||[],instant:r.instant||[],instantCount:r.instantCount||0,connected:r.connected||0,next:r.next,err:'',items:more?wpAp.items.concat(r.items||[]):(r.items||[])})}
+    const dropCrm=(list)=>(list||[]).filter((a)=>!/^(salesforce|hubspot|zoho|pipedrive|close|freshsales|dynamics365)$/i.test(a.slug||''));
+    Object.assign(wpAp,{on:r.on,account:r.account||{on:false},total:r.total,count:r.count,cats:r.categories||[],popular:dropCrm(r.popular),instant:dropCrm(r.instant),instantCount:r.instantCount||0,connected:r.connected||0,next:r.next,err:'',items:dropCrm(more?wpAp.items.concat(r.items||[]):(r.items||[]))})}
   catch(e){wpAp.err=e.message||'Couldn’t load apps.'}
   wpAp.busy=false;wpApPaint()}
 function wpApPaintMore(){const m=$('#apMore');if(m)m.textContent='Loading more…'}

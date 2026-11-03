@@ -31,4 +31,6 @@ data.bak-*/
 public/
 .vercel
 .env*
+!.env.example
 backups/
+eval/last-report.json

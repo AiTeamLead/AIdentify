@@ -327,7 +327,9 @@ test('every industry pack creates the same six screens with its own labels', asy
     assert.deepEqual(meta.plans.map((p) => p.priceInr), [2999, 4999]);
     assert.match(meta.pricing.annualNote, /9,999/);
     const ids = meta.packs.map((p) => p.id);
-    assert.deepEqual(ids, ['dental', 'aesthetic', 'coach', 'realestate', 'studio', 'home', 'institute', 'other']);
+    assert.deepEqual(ids, ['agency', 'dental', 'aesthetic', 'coach', 'realestate', 'studio', 'home', 'institute', 'other']);
+    assert.equal(meta.packs[0].featured, true);
+    assert.equal(meta.featuredPack, 'agency');
     for (const pack of meta.packs) {
       const email = pack.id + '-owner@example.com';
       const signed = await s.api('/api/auth/signup', { email, name: pack.title, password: PW });
@@ -354,6 +356,7 @@ test('every industry pack creates the same six screens with its own labels', asy
       assert.equal(clinic.d.connections.find((c) => c.id === 'eka').status, 'needs_credentials');
       assert.equal(clinic.d.connections.find((c) => c.id === 'eka').label, 'Available, connect with credentials');
       const word = {
+        agency: ['clients', 'Strategy call', 'agency', /campaign/],
         dental: ['patients', 'Check-up', 'clinic', /cleaning/],
         aesthetic: ['clients', 'Skin consult', 'clinic', /glow/],
         coach: ['clients', 'Discovery call', 'practice', /discovery/],

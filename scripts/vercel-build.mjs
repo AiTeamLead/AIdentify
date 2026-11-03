@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import { applyPriceTokens } from '../lib/pricing.js';
 const OUT = 'public';
-const PAGES = ['index.html', 'setup.html', 'settings.html', 'board.html', 'waitlist.html', 'landing-v2.html', 'white-label.html', 'clinic.html'];
+const PAGES = ['index.html', 'setup.html', 'settings.html', 'board.html', 'waitlist.html', 'landing-v2.html', 'white-label.html', 'clinic.html', 'privacy.html', 'terms.html', 'deletion.html'];
 const ASSETS = ['landing-v2.css', 'landing-v2.js', 'clinic-theme.css'];
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
@@ -13,6 +13,9 @@ for (const p of PAGES) {
   fs.writeFileSync(`${OUT}/${p}`, body);
 }
 for (const p of ASSETS) fs.copyFileSync(p, `${OUT}/${p}`);
+fs.mkdirSync(`${OUT}/assets`, { recursive: true });
+if (fs.existsSync('assets/upi-qr.png')) fs.copyFileSync('assets/upi-qr.png', `${OUT}/assets/upi-qr.png`);
+if (fs.existsSync('assets/crm.js')) fs.copyFileSync('assets/crm.js', `${OUT}/assets/crm.js`);
 // one clinic page per industry (/Realestate, /Institute, …), generated from the packs so new packs get a URL too
 const { PACK_PATHS } = await import('../lib/clinic-packs.js');
 for (const p of Object.values(PACK_PATHS)) if (p !== '/clinic') { fs.mkdirSync(`${OUT}${p}`, { recursive: true }); fs.copyFileSync('clinic.html', `${OUT}${p}/index.html`); }

@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AaaS · Clinic team</title>
 <link rel="stylesheet" href="/clinic-theme.css">
+<script src="/assets/crm.js"></script>
 <style>
 * { box-sizing:border-box; }
 html,body { margin:0; height:100%; }
-body { font:15px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; color:var(--ink); background:var(--bg); }
+body { font:15px/1.45 var(--font); color:var(--ink); background:var(--bg); }
 button,input,select,textarea { font:inherit; color:inherit; }
 button { cursor:pointer; }
 :focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
@@ -436,7 +437,7 @@ const dayKey = (iso) => { const t = Date.parse(iso); if (!t) return ''; return n
 const hello = () => { const h = Number(new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Kolkata', hour:'numeric', hourCycle:'h23' }).format(new Date())); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 const PILL = { new:'New', booked:'Booked', closed:'Closed', completed:'Completed', noshow:'No-show', cancelled:'Cancelled', pending:'Waiting', approved:'Approved', rejected:'Skipped', scheduled:'On calendar', draft:'Draft', queued:'Queued', paid:'Paid', unpaid:'Unpaid', overdue:'Overdue' };
 const pill = (s) => `<span class="pill ${esc(s)}">${esc(PILL[s] || s || '')}</span>`;
-const SCREENS = ['dash','front','recall','reviews','social','insights','billing','approvals','connections','pricing','usage','privacy','visit','settings','setup'];
+const SCREENS = ['dash','front','recall','reviews','social','insights','billing','crm','approvals','connections','pricing','usage','privacy','visit','settings','setup'];
 
 let token = sessionStorage.getItem('aaas_clinic_token') || '';
 let meta = { demoLogin:false };
@@ -509,7 +510,7 @@ function domainsCard(cur) {
   const packs = meta.packs || [];
   if (!packs.length) return '';
   return `<section class="domains" aria-label="Industries"><b>${cur ? 'Other industries' : 'Choose your industry'}</b>
-    <div class="dom-grid">${packs.filter((p) => !cur || p.id !== cur.id).map((p) => `<a class="dom" href="${esc(p.path)}"><span>${esc(p.title)}</span><code>${esc(p.path)}</code></a>`).join('')}</div>
+    <div class="dom-grid">${packs.filter((p) => !cur || p.id !== cur.id).map((p) => `<a class="dom" href="${esc(p.path)}"><span>${esc(p.title)}${p.featured ? ' · Featured' : ''}</span><code>${esc(p.path)}</code></a>`).join('')}</div>
     ${cur ? '<a class="small" href="/">All industries</a>' : ''}</section>`;
 }
 function loginView() {
@@ -518,7 +519,8 @@ function loginView() {
   return `<div class="landing"><section class="hero">
     <div class="brand"><div class="mark">A</div><div><b>AaaS</b><span>${cur ? esc(cur.title) : 'For the owner'}</span></div></div>
     <h1>${esc(hero)}</h1>
-    <p class="sub">${cur ? esc(cur.blurb) + ' ' : ''}A personal AI team for a small business: daily sales, follow-up, marketing and billing. Not an enterprise suite. You approve anything that would leave the building.</p>
+    <p class="sub">${cur ? esc(cur.blurb) + ' ' : ''}An AI team for the industry you pick at signup. Digital marketing is the featured pack. Clinics and other trades use the same screens with their own labels. You approve anything that would go out. Customer records stay in AaaS.</p>
+    <p class="small">By creating an account you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
     ${domainsCard(cur)}
     ${planCards()}
     <p class="small">Nothing is charged on this page. WhatsApp is a link you open. No SMS.</p>
@@ -591,7 +593,7 @@ async function saveAiFrom(f) {
 // ---------- Onboarding: one question at a time (Typeform-style), fits the screen ----------
 // All steps live in one <form data-act="profile">, so the submit handler, the AI-key fields and the model
 // auto-load keep working. Moving between steps only toggles classes; typed values are kept in `ob`.
-const OB_ICONS = { dental: '🦷', aesthetic: '✨', coach: '🧭', realestate: '🏠', studio: '💪', home: '🛋️', institute: '🎓', other: '➕' };
+const OB_ICONS = { agency: '📣', dental: '🦷', aesthetic: '✨', coach: '🧭', realestate: '🏠', studio: '💪', home: '🛋️', institute: '🎓', other: '➕' };
 const OB_CITIES = ['Hyderabad', 'Bengaluru', 'Mumbai', 'Delhi', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad'];
 let ob = null;
 function obInit() {
@@ -887,6 +889,7 @@ function side() {
     <nav class="nav">
       ${item('dash','Dashboard')}
       ${(state.agents||[]).map((a) => item(a.key, a.name)).join('')}
+      ${item('crm','CRM')}
       ${item('approvals','Approvals', pending?`<span class="badge">${pending}</span>`:'')}
       ${item('connections','Connections')}
       ${state.visitKit ? item('visit','Clinic visit') : ''}
@@ -901,6 +904,7 @@ function side() {
       : `<label class="small" style="padding:8px">Industry (sample business)
       <select data-act="pick" aria-label="Industry">${((state.packs)||[]).map((p) => `<option value="${esc(p.id)}" ${state.role===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select>
     </label>`}
+    <p class="small" style="padding:8px 10px"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/deletion">Delete data</a></p>
     <button class="out" type="button" data-act="logout">Sign out</button>
   </aside>`;
 }
@@ -965,15 +969,15 @@ function dash() {
       <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="leads"><div class="k">Open enquiries</div><div class="v">${esc(s.enquiriesOpen || 0)}</div></button>
       <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="approvals"><div class="k">Needs approval</div><div class="v">${esc(pending.length)}</div></button>
       <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="due"><div class="k">Payments due</div><div class="v">${inr(chief.paymentsDueInr || 0)}</div><div class="hint">${esc(chief.paymentsDue || unpaid.length)} invoices</div></button>
-      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="today"><div class="k">Today</div><div class="v">${esc(today.length)}</div><div class="hint">Booked visits</div></button>
+      <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="today"><div class="k">Today</div><div class="v">${esc(today.length)}</div><div class="hint">Booked ${(state.labels && state.labels.visit) || 'visits'}</div></button>
       <button class="tile" type="button" data-act="drawer" data-kind="kpi" data-id="revenue"><div class="k">Revenue</div><div class="v">${inr(s.revenue || 0)}</div><div class="hint">Paid this month</div></button>
     </div>
     <div class="home-grid">
       <section>
         <h2>Needs approval</h2>
         ${pending.slice(0, 6).map(homeDraft).join('') || '<p class="small">Nothing is waiting. Approving a draft is the only way it can go out.</p>'}
-        <h2>Today’s appointments</h2>
-        ${today.map((a) => `<button class="draft" type="button" data-act="drawer" data-kind="appt" data-id="${esc(a.id)}" style="width:100%;text-align:left"><b>${esc(when(a.at))}</b><p>${esc(pname(a.patientId))} · ${esc(a.service)} · ${inr(a.fee)}</p></button>`).join('') || '<p class="small">No booked visits today.</p>'}
+        <h2>Today</h2>
+        ${today.map((a) => `<button class="draft" type="button" data-act="drawer" data-kind="appt" data-id="${esc(a.id)}" style="width:100%;text-align:left"><b>${esc(when(a.at))}</b><p>${esc(pname(a.patientId))} · ${esc(a.service)} · ${inr(a.fee)}</p></button>`).join('') || `<p class="small">Nothing booked today.</p>`}
       </section>
       <section class="card" style="padding:16px">
         <h2 style="margin-top:0">Revenue</h2>
@@ -1118,7 +1122,7 @@ function reviews() {
   const waOn = !!(state.whatsapp && state.whatsapp.configured);
   return `${agentHead(a)}<h2>Ask after a ${esc(visit)}</h2><p class="sub">${waOn?'Approving a draft sends the WhatsApp template. Opt-out is honoured. Nothing goes out before you approve.':'The draft includes a WhatsApp click-to-chat link. Nothing is sent until a Meta or Gupshup key is set, and only after you approve.'}</p>
     <div class="scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>WhatsApp</th><th></th></tr></thead><tbody>
-      ${(state.patients||[]).slice(0,12).map((p) => `<tr><td>${esc(p.name)}${p.demo?' <span class="pill">DEMO</span>':''}</td><td>${esc(p.phone)}</td><td>${p.waOpt==='out'?'Opted out':p.waOpt==='in'?'Opted in':'No opt-in'}</td><td class="row-actions"><button class="btn" type="button" data-act="review" data-id="${p.id}">Draft review request</button><button class="btn-ghost" type="button" data-act="wa-opt" data-id="${p.id}" data-status="in">Opt in</button><button class="btn-ghost" type="button" data-act="wa-opt" data-id="${p.id}" data-status="out">Opt out</button></td></tr>`).join('')}
+      ${(state.patients||[]).slice(0,12).map((p) => `<tr><td>${esc(p.name)}${p.demo?' <span class="pill">DEMO</span>':''}</td><td>${esc(p.phone)}</td><td>${p.waOpt==='out'?'Opted out':p.waOpt==='in'?'Opted in':'No opt-in'}</td><td class="row-actions"><button class="btn" type="button" data-act="review" data-id="${p.id}">${/onboard/i.test(a.name) ? 'Draft onboarding note' : 'Draft review request'}</button><button class="btn-ghost" type="button" data-act="wa-opt" data-id="${p.id}" data-status="in">Opt in</button><button class="btn-ghost" type="button" data-act="wa-opt" data-id="${p.id}" data-status="out">Opt out</button></td></tr>`).join('')}
     </tbody></table></div>
     <h2>Drafts</h2>${drafts.map(draftCard).join('') || '<p class="small">No review drafts yet.</p>'}${rulesBox(a)}`;
 }
@@ -1217,8 +1221,10 @@ function billing() {
 function pricing() {
   const plans = state.plans || meta.plans || [];
   const notes = state.pricing || meta.pricing || {};
-  return `${banner()}<h1>Pricing</h1><p class="sub">${esc(notes.sameFeatures || 'Both plans include the same agents. You approve anything that would go out.')} This app does not take a card payment.</p>
+  const upi = state.upi || {};
+  return `${banner()}<h1>Pricing</h1><p class="sub">${esc(notes.sameFeatures || 'Both plans include the same agents. You approve anything that would go out.')} Pay by UPI. This app does not take a card and does not use Razorpay for these plans.</p>
     <div class="plans">${plans.map((p) => `<article class="tile"><div class="k">${esc(p.name)}</div><div class="v">${inr(p.priceInr)}<span class="small"> / month</span></div><p>${esc(p.blurb)}</p><ul>${(p.includes||[]).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>${p.setupInr ? `<p class="small">One-time setup and install ${inr(p.setupInr)}. Waived on an annual plan.</p>` : '<p class="small">No install.</p>'}</article>`).join('')}</div>
+    <section class="card" style="padding:16px;margin-top:16px"><h2 style="margin-top:0">Pay by UPI</h2><p>UPI ID <b>${esc(upi.upiId || '')}</b> · ${esc(upi.payee || '')}</p><img src="${esc(upi.qr || '/assets/upi-qr.png')}" alt="UPI QR" width="220" height="260"><p class="small">${esc(upi.paidNote || '')}</p><p><a class="btn" href="${esc(upi.whatsapp || '#')}">I’ve paid, message us</a></p></section>
     <p class="small">${esc(notes.annualNote || '')}</p>
     <p class="small">${esc(notes.byokNote || '')}</p>`;
 }
@@ -1306,8 +1312,8 @@ function connState(c) {
 }
 function connections() {
   const place = (state.labels && state.labels.place) || 'business';
-  return `${banner()}<h1>Connections</h1><p class="sub">Eka.care reads from their API when the server has credentials. A sample ${esc(place)} stays on sample rows and shows Connected (demo). Other software can use CSV or a webhook. Nothing is sent back out.</p>
-    ${(state.connections||[]).map((c) => `<div class="draft conn"><div><b>${esc(c.name)}</b><div class="small">${esc(c.detail)}</div>${c.url?`<div class="small"><a class="link" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></div>`:''}${c.docs?`<div class="small"><a class="link" href="${esc(c.docs)}" target="_blank" rel="noopener">API docs</a></div>`:''}</div><div class="actions">${connState(c)}${c.id==='eka' && (c.status==='demo' || c.status==='ready')?'<button class="btn" type="button" data-act="sync-eka">Sync</button>':''}</div></div>`).join('')}
+  return `${banner()}<h1>Connect apps</h1><p class="sub">One step for the tools this ${esc(place)} uses. Customer records stay in the AaaS CRM. There is no Salesforce or other external CRM sync. CSV import and export are on the CRM screen.</p>
+    ${(state.connections||[]).filter((c) => c.id !== 'eka').map((c) => `<div class="draft conn"><div><b>${esc(c.name)}</b><div class="small">${esc(c.detail)}</div>${c.url?`<div class="small"><a class="link" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></div>`:''}${c.docs?`<div class="small"><a class="link" href="${esc(c.docs)}" target="_blank" rel="noopener">API docs</a></div>`:''}</div><div class="actions">${connState(c)}</div></div>`).join('')}
     <p><button class="btn" type="button" data-act="form-done">I have put the booking form on my site</button></p>
     <h2>Import a CSV</h2>
     <p class="small">Columns: type, name, phone, email, last_visit, value, when, service, status, fee. The file uses type patient for a person and appointment for a ${esc((state.labels&&state.labels.visit)||'visit')}. Up to 2000 rows. Nothing is sent.</p>
@@ -1419,7 +1425,8 @@ function render() {
   if (!token) body = loginView();
   else if (!state) body = '<div class="auth"><div class="panel"><p class="sub">Loading…</p></div></div>';
   else if (state.role && botMode) body = `<div class="bot-on">${botSwitch()}<iframe class="bot-frame" title="Bot Mode" src="${esc(botSrc())}"></iframe></div>`;
-  else if (state.role && !advanced) body = `<div class="bot-on">${botSwitch()}${chiefPage()}</div>`;
+    else if (state.role && screen === 'crm') body = `<div class="app">${side()}<main class="main" data-screen="crm">${crmPage()}</main></div>${botSwitch()}`;
+    else if (state.role && !advanced) body = `<div class="bot-on">${botSwitch()}${chiefPage()}</div>`;
   else if (!state.role) body = screen === 'setup' && wiz === 'call' ? setupView() : profileView();
   else {
     const page = { dash, front, recall, reviews, social, insights, billing, approvals, connections, pricing, usage, privacy, visit, settings, setup: setupView, chat: chiefPage }[screen === 'visit' && !state.visitKit ? 'dash' : screen] || dash;
@@ -1441,7 +1448,7 @@ function render() {
 async function reload() {
   state = await api('/api/clinic');
   syncPath();
-  if (!state.role && skipProfile) { state = await api('/api/clinic/role', { role: 'dental' }); syncPath(); } // the sample business opens as a dental clinic; it can switch in the sidebar
+  if (!state.role && skipProfile) { const featured = (state.featuredPack || (state.packs || []).find((p) => p.featured) || {}).id || (state.featuredPack) || 'agency'; state = await api('/api/clinic/role', { role: typeof featured === 'string' ? featured : 'agency' }); syncPath(); }
   if (!state.role) screen = 'profile';
   render();
 }

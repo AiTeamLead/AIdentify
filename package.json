@@ -1,6 +1,6 @@
 {
   "name": "aidentify",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "private": true,
   "description": "AaaS: open-source Agents as a Service platform. Create AI agent workers, connect tools and build connectors.",
   "type": "module",
@@ -14,7 +14,10 @@
     "test:clinic": "node --test test/clinic.test.mjs",
     "db:migrate-from-file": "node scripts/db-migrate.mjs from-file",
     "db:export-to-file": "node scripts/db-migrate.mjs to-file",
-    "e2e": "node test/e2e/run.mjs"
+    "e2e": "node test/e2e/run.mjs",
+    "eval:clinic": "node scripts/eval-clinic.mjs",
+    "load": "node scripts/load.mjs",
+    "worker": "node worker.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
@@ -33,11 +36,11 @@
   "productName": "AaaS",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aidendify/AaaS.git"
+    "url": "git+https://github.com/AiTeamLead/AIdentify.git"
   },
-  "homepage": "https://github.com/aidendify/AaaS#readme",
+  "homepage": "https://github.com/AiTeamLead/AIdentify#readme",
   "bugs": {
-    "url": "https://github.com/aidendify/AaaS/issues"
+    "url": "https://github.com/AiTeamLead/AIdentify/issues"
   },
   "license": "UNLICENSED"
 }

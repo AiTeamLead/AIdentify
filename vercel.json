@@ -40,6 +40,18 @@
       "destination": "/clinic.html"
     },
     {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/deletion",
+      "destination": "/deletion.html"
+    },
+    {
       "source": "/setup",
       "destination": "/setup.html"
     },

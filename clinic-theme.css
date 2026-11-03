@@ -42,3 +42,17 @@ h1, h2, h3, b, button, input, select, textarea { font-family: var(--font); }
 .chart div { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
 .chart i { display: block; height: 8px; border-radius: 99px; background: var(--primary); opacity: .85; }
 .chart i.g { background: var(--accent); }
+.legal { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+.legal h1 { font-size: 32px; letter-spacing: -.03em; }
+.legal h2 { font-size: 18px; }
+.kanban { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+.kanban-col { flex: 1 0 200px; background: var(--soft); border-radius: var(--radius); padding: 10px; }
+.kanban-col header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.deal { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+html.aaas-unified { --font: Inter, "Segoe UI", system-ui, sans-serif; --ink: #17182b; --bg: #f5f6fb; --page: #f5f6fb; --mute: #5e6478; --sans: Inter, "Segoe UI", system-ui, sans-serif; --serif: Inter, "Segoe UI", system-ui, sans-serif; --accent: #2f2a86; --dark: #2f2a86; --line: #e4e7f2; --soft: #eef0fb; --navy: #17182b; }
+@media (max-width: 800px) {
+  .side { width: 100%; height: auto; position: relative; }
+  .app { flex-direction: column; }
+  .main { padding: 16px; }
+  .form { grid-template-columns: 1fr; }
+}

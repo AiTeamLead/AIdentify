@@ -1,4 +1,5 @@
 # docker compose up -d   then open http://localhost:3000
+# The worker keeps the WhatsApp QR socket. The web service does not.
 services:
   aidentify:
     build: .
@@ -18,5 +19,15 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+  worker:
+    build: .
+    image: aidentify:latest
+    restart: unless-stopped
+    command: ["node", "worker.js"]
+    env_file: .env
+    environment:
+      WHATSAPP_QR: "on"
+    volumes:
+      - aidentify-data:/app/data
 volumes:
   aidentify-data:

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete my data · AaaS</title>
+<link rel="stylesheet" href="/clinic-theme.css">
+</head>
+<body>
+<main class="legal">
+<p class="banner"><b>Review by a lawyer.</b> This request flow is a product draft for the DPDP Act, 2023.</p>
+<h1>Ask us to delete your data</h1>
+<p>Sign in and submit this form, or use Privacy inside the app. We record the request against your account. Deleting the whole account (password required) removes the workspace. A request alone does not instantly erase backups, which follow the retention note in the <a href="/privacy">Privacy Policy</a>.</p>
+<form id="f" class="stack">
+<label>What should we delete?<textarea name="note" rows="4" required placeholder="CRM records, the whole account, or a person’s phone number"></textarea></label>
+<button class="btn" type="submit">Submit deletion request</button>
+<p id="msg" class="small" role="status"></p>
+</form>
+<p>Grievance officer: Phanindra Malladi, +91 63023 81884.</p>
+<p><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
+</main>
+<script>
+document.getElementById('f').onsubmit = async (e) => {
+  e.preventDefault();
+  const token = sessionStorage.getItem('aaas_clinic_token') || localStorage.getItem('as_tok') || '';
+  const note = new FormData(e.target).get('note');
+  const msg = document.getElementById('msg');
+  if (!token) { msg.textContent = 'Sign in first, then come back to this page.'; return; }
+  const r = await fetch('/api/legal/deletion', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ note }) });
+  const d = await r.json().catch(() => ({}));
+  msg.textContent = r.ok ? 'Request received. We will reply to the email on the account.' : (d.message || 'Could not save the request.');
+};
+</script>
+</body>
+</html>

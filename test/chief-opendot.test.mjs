@@ -107,8 +107,11 @@ test('Chief: rules decide allow / ask / never; Always allow adds a rule; options
     assert.match(used.d.answer, /Greet by name/);
 
     // 8. connect card for an app that is not connected; already-connected apps continue
-    const cx = await chat('[[mock:app_connect {"app":"hubspot","reason":"To add the lead to your CRM"}]]');
-    assert.deepEqual(cx.d.connect, { id: 'hubspot', slug: 'hubspot', name: 'Hubspot', why: 'To add the lead to your CRM' });
+    const cx = await chat('[[mock:app_connect {"app":"notion","reason":"To save the brief"}]]');
+    assert.deepEqual(cx.d.connect, { id: 'notion', slug: 'notion', name: 'Notion', why: 'To save the brief' });
+    const noCrm = await chat('[[mock:app_connect {"app":"hubspot","reason":"To add the lead to your CRM"}]]');
+    assert.equal(noCrm.d.connect, null);
+    assert.match(noCrm.d.answer, /stay in AaaS/);
     const already = await chat('[[mock:app_connect {"app":"clickup"}]]');
     assert.equal(already.d.connect, null);
     assert.match(already.d.answer, /already connected/);

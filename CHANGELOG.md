@@ -5,6 +5,21 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-11-03
+
+### Added
+- **Industry is chosen at signup.** Digital marketing agency is the featured pack: lead capture, follow-up, client reporting, content and social, client onboarding, and invoicing. The other packs, including dental, are still there.
+- **CRM in AaaS.** Contacts, companies, deals on a board or a list, tags, a timeline, tasks, search, and a pipeline total. CSV import and export. Agents can add a contact or a task. A message still waits for approval. Records are not synced to Salesforce, HubSpot, or any other CRM.
+- **UPI for the plans.** The pricing page shows the plans, a UPI ID, and the PhonePe QR. “I’ve paid” opens WhatsApp. An admin marks the account active. Card checkout is not used for these plans.
+- **WhatsApp QR for the clinic or agency**, on a worker that stays running (`node worker.js` or Docker). Vercel cannot hold the socket. Inbound messages land in the CRM. Outbound needs approval, one person at a time, with a pause and a cap. Bulk sends are blocked. The Cloud API remains optional.
+- **Privacy, terms, and a deletion request**, marked for a lawyer to review, with a grievance officer. Linked from the footer and signup.
+- **Per-item copies** of approvals, rules, and skills, so a list is not one blob. The old key is still written.
+- A shared theme for Chief and the dashboards, a cost estimate, and an eval script for 30 scenarios.
+
+### Changed
+- The sample business opens as a digital marketing agency. A dental sample is still one click away in the industry list.
+- Owner rules match on words first. The model is only a fallback. If nothing matches, the answer is ask.
+
 ## [2.7.0] - 2026-10-28
 
 ### Added
