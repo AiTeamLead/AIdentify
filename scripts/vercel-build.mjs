@@ -15,6 +15,7 @@ for (const p of PAGES) {
 for (const p of ASSETS) fs.copyFileSync(p, `${OUT}/${p}`);
 fs.mkdirSync(`${OUT}/assets`, { recursive: true });
 if (fs.existsSync('assets/upi-qr.png')) fs.copyFileSync('assets/upi-qr.png', `${OUT}/assets/upi-qr.png`);
+if (fs.existsSync('assets/landing')) fs.cpSync('assets/landing', `${OUT}/assets/landing`, { recursive: true });
 if (fs.existsSync('assets/crm.js')) fs.copyFileSync('assets/crm.js', `${OUT}/assets/crm.js`);
 // one clinic page per industry (/Realestate, /Institute, …), generated from the packs so new packs get a URL too
 const { PACK_PATHS } = await import('../lib/clinic-packs.js');

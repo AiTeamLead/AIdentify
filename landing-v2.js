@@ -14,7 +14,7 @@ function paintTheme() {
     btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
   }
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? '#12110f' : '#f3efe6';
+  if (meta) meta.content = dark ? '#17182b' : '#f5f6fb';
 }
 paintTheme();
 const themeBtn = $('#themeBtn');

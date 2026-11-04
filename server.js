@@ -80,9 +80,16 @@ async function serve(req, res) {
     if (req.method === 'GET' && url.pathname === '/clinic-theme.css') {
       return send(res, 200, await fs.readFile(path.join(dir, 'clinic-theme.css')), 'text/css; charset=utf-8');
     }
+    if (req.method === 'GET' && url.pathname === '/data-deletion') {
+      res.writeHead(301, { Location: '/deletion', 'Cache-Control': 'public, max-age=86400' });
+      return res.end();
+    }
     if (req.method === 'GET' && (url.pathname === '/privacy' || url.pathname === '/terms' || url.pathname === '/deletion')) {
       const file = url.pathname.slice(1) + '.html';
       return send(res, 200, await fs.readFile(path.join(dir, file)), 'text/html; charset=utf-8');
+    }
+    if (req.method === 'GET' && /^\/assets\/landing\/[a-z0-9-]+\.png$/.test(url.pathname)) {
+      return send(res, 200, await fs.readFile(path.join(dir, url.pathname.slice(1))), 'image/png');
     }
     if (req.method === 'GET' && url.pathname === '/assets/upi-qr.png') {
       return send(res, 200, await fs.readFile(path.join(dir, 'assets', 'upi-qr.png')), 'image/png');

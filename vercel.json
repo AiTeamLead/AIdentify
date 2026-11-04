@@ -163,6 +163,11 @@
   ],
   "redirects": [
     {
+      "source": "/data-deletion",
+      "destination": "/deletion",
+      "permanent": true
+    },
+    {
       "source": "/clinic",
       "destination": "/workspace",
       "permanent": true
