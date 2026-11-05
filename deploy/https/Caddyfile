@@ -1,0 +1,10 @@
+# HTTPS in front of AaaS. Caddy gets and renews a free Let's Encrypt certificate by itself.
+# DOMAIN: your own (app.example.com, pointed at this server) or, with no domain, <your-ip>.sslip.io
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy {$UPSTREAM:127.0.0.1:3000} {
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-Host {host}
+		flush_interval -1
+	}
+}
