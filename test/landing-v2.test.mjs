@@ -24,6 +24,16 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   const wl = read('white-label.html');
   const productHome = read('home.html');
   assert.match(productHome, /aria-label="AIdentify home"[^>]*>[\s\S]*?AIdentify<\/a>/);
+  assert.match(productHome, /Less admin\. More time for your customers\./);
+  assert.match(productHome, /You started a business to serve people—not chase admin\./);
+  assert.match(productHome, /Your day-to-day, under one roof\./);
+  assert.match(productHome, /Get Started Free/);
+  assert.equal([...productHome.matchAll(/role="tab" id="tab-/g)].length, 7, 'show all industries as tabs');
+  assert.match(productHome, /role="tablist" aria-label="Industries"/);
+  const homeCss = read('home.css');
+  assert.match(homeCss, /\.tabs\s*\{\s*display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
+  assert.match(homeCss, /@media \(max-width: 900px\)[\s\S]*?\.tabs\s*\{\s*grid-template-columns:\s*repeat\(3,/);
+  assert.match(homeCss, /@media \(max-width: 560px\)[\s\S]*?\.tabs\s*\{\s*grid-template-columns:\s*repeat\(2,/);
   const onboarding = productHome.match(/<div class="setup-gallery"[^>]*>([\s\S]*?)<\/div>\s*<\/section>/)?.[1] || '';
   assert.doesNotMatch(productHome, /assets\/landing\/onboarding\.png/);
   assert.equal([...onboarding.matchAll(/class="setup-shot"/g)].length, 1, 'show one large screenshot at a time');
