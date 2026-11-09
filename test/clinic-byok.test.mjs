@@ -3,13 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { ROOT, startServer } from './helpers.mjs';
 import { mockLLM } from './mocks.mjs';
 
 const PW = 'Clinic-pass-123!';
 const PLATFORM = 'sk-or-v1-platform-' + 'p'.repeat(30);
 const MINE = 'sk-or-v1-clinic-' + 'c'.repeat(30) + 'wxyz';
-const html = () => fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'clinic.html'), 'utf8');
+const html = () => fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
 
 test('clinic settings, the wizard and pricing mention the owner key', () => {
   const src = html();

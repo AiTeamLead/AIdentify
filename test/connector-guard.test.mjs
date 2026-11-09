@@ -4,18 +4,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { startServer } from './helpers.mjs';
+import { ROOT, startServer } from './helpers.mjs';
 
 const PW = 'Clinic-pass-123!';
-const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 
 test('Chief + menu and the sidebar open the Apps page', () => {
-  const src = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert.match(src, /data-act="wpCnMenu"/);
   assert.match(src, /act==='wpCnMenu'\)\{wpRmClose\(\);wpAppsOpen\(\)\}/);
   assert.match(src, /data-act="wpApps"/);
   assert.match(src, /function wpAppsOpen\(\)\{if\(miniMode\)\{try\{parent\.postMessage\(\{type:'aaas-mini',full:true\}/);
-  assert.match(fs.readFileSync(path.join(root, 'clinic.html'), 'utf8'), /e\.data\.type === 'aaas-mini'/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8'), /e\.data\.type === 'aaas-mini'/);
 });
 
 test('OAuth callback needs the starting browser cookie and works once', async () => {

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { ROOT, startServer } from './helpers.mjs';
 import { waMe, parseCsv, buildSeed, forecastOf, trialOf, assertWritable, recoveredOf, weeklySummaryText } from '../lib/clinic.js';
 
 const PW = 'Clinic-pass-123!';
@@ -46,7 +46,7 @@ test('recovered this month counts bookings, referrals, reactivated customers and
 });
 
 test('corner chat renders markdown without raw stars', () => {
-  const src = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'clinic.html'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
   const chatMd = new Function(src.match(/function chatMd\(raw\) \{[\s\S]*?\n\}/)[0] + '\nreturn chatMd;')();
   assert.equal(chatMd('See **bold** and <script>'), 'See <strong>bold</strong> and &lt;script&gt;');
   assert.equal(chatMd('use `wa.me` only'), 'use <code>wa.me</code> only');

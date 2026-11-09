@@ -79,8 +79,8 @@ async function serve(req, res) {
       const file = url.pathname.slice(1);
       return send(res, 200, await fs.readFile(path.join(dir, file)), file.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8');
     }
-    if (req.method === 'GET' && /^\/assets\/landing\/[a-z0-9-]+\.png$/.test(url.pathname)) {
-      try { return send(res, 200, await fs.readFile(path.join(dir, url.pathname)), 'image/png'); } catch { /* falls through to 404 */ }
+    if (req.method === 'GET' && /^\/assets\/landing\/[a-z0-9-]+\.(?:png|webp)$/.test(url.pathname)) {
+      try { return send(res, 200, await fs.readFile(path.join(dir, url.pathname)), url.pathname.endsWith('.webp') ? 'image/webp' : 'image/png'); } catch { /* falls through to 404 */ }
     }
     if (req.method === 'GET' && (url.pathname === '/landing-v2.css' || url.pathname === '/landing-v2.js')) {
       const file = url.pathname.slice(1);

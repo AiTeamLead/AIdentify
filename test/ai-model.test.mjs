@@ -3,13 +3,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { ROOT, startServer } from './helpers.mjs';
 
 const PW = 'Clinic-pass-123!';
-const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 
 test('profile page offers provider, model and API key', () => {
-  const src = fs.readFileSync(path.join(root, 'clinic.html'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
   assert.match(src, /Connect your AI/);
   assert.match(src, /data-ob="skip"/);
   assert.match(src, /\$\{aiKeyFields\('profile'\)\}/);

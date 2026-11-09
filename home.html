@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AaaS — A small business gets a team of AI agents.</title>
+<title>AIdentify — A small business gets a team of AI agents.</title>
 <meta name="description" content="AaaS drafts sales replies, follow-ups and billing reminders for the industry you pick. You add your own AI key. Nothing is sent until you approve it. Records stay in AaaS.">
 <meta name="theme-color" content="#f5f6fb">
-<meta property="og:title" content="AaaS — A small business gets a team of AI agents.">
+<meta property="og:title" content="AIdentify — A small business gets a team of AI agents.">
 <meta property="og:description" content="Sales, follow-ups and billing, drafted for you. You approve anything that would go out.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
@@ -29,7 +29,7 @@ try{const t=localStorage.getItem('as_theme');if(t==='light'||t==='dark')document
 <a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="/" aria-label="AaaS home"><span class="mark" aria-hidden="true">A</span> AaaS</a>
+    <a class="brand" href="/" aria-label="AIdentify home"><span class="mark" aria-hidden="true">A</span> AIdentify</a>
     <nav class="nav" aria-label="Page">
       <a href="#problem">Problem</a>
       <a href="#benefits">Benefits</a>
@@ -127,10 +127,33 @@ try{const t=localStorage.getItem('as_theme');if(t==='light'||t==='dark')document
         <article class="card step"><em>4</em><div><h3>Land in Chief</h3><p>Chief opens on this business. Ask about leads, approvals or payments. The answer is from this account’s records.</p></div></article>
         <article class="card step"><em>5</em><div><h3>Approve the drafts</h3><p>Follow-ups, posts, reports and invoice reminders wait in Approvals. Approve records your OK. Nothing is emailed, texted or posted until then.</p></div></article>
       </div>
-      <figure class="shot" style="margin-top:28px">
-        <figcaption><span>Onboarding</span><span>Industry, business, your key</span></figcaption>
-        <img src="/assets/landing/onboarding.png" width="1280" height="800" alt="Setup step Business details: step 1 of 7 (Industry, Business, Import, WhatsApp, Tone, AI key, Drafts) with fields for business name, city, services, who you want to reach and the offer." loading="lazy">
-      </figure>
+      <section class="setup-flow" aria-labelledby="setup-flow-title">
+        <div class="setup-flow-head">
+          <div><p class="eyebrow">Onboarding</p><h3 id="setup-flow-title">Explore all seven setup screens</h3></div>
+          <p>Steps 1–7 plus the team-creation screen.</p>
+        </div>
+        <div class="setup-gallery" role="group" aria-roledescription="carousel" aria-label="Onboarding screenshots">
+          <figure class="setup-shot">
+            <img class="setup-slide-image" src="/assets/landing/onboarding-user-step-1.webp" width="1200" height="548" alt="Step 1 of 7: choose the business industry.">
+            <figcaption class="setup-slide-caption" aria-live="polite" aria-atomic="true"><span>Step 1 of 7</span><b>Choose your industry</b></figcaption>
+          </figure>
+          <div class="setup-controls">
+            <button class="setup-arrow" type="button" data-setup-prev aria-label="Previous onboarding step"><span aria-hidden="true">‹</span></button>
+            <div class="setup-steps" aria-label="Choose an onboarding step">
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-1.webp" data-width="1200" data-height="548" data-alt="Step 1 of 7: choose the business industry." data-caption="Step 1 of 7" data-title="Choose your industry" aria-label="Show step 1: Choose your industry" aria-current="step">1</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-2.webp" data-width="1200" data-height="540" data-alt="Step 2 of 7: enter business details and see a live team preview." data-caption="Step 2 of 7" data-title="Business details" aria-label="Show step 2: Business details">2</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-3.webp" data-width="1200" data-height="556" data-alt="Step 3 of 7: select the business city." data-caption="Step 3 of 7" data-title="Business location" aria-label="Show step 3: Business location">3</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-4.webp" data-width="1200" data-height="553" data-alt="Step 4 of 7: add the services the business offers." data-caption="Step 4 of 7" data-title="Services" aria-label="Show step 4: Services">4</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-5.webp" data-width="1200" data-height="551" data-alt="Step 5 of 7: choose the customer groups to reach." data-caption="Step 5 of 7" data-title="Customers to reach" aria-label="Show step 5: Customers to reach">5</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-6.webp" data-width="1200" data-height="563" data-alt="Step 6 of 7: connect an AI provider and enter an API key, or skip for now." data-caption="Step 6 of 7" data-title="Connect your AI" aria-label="Show step 6: Connect your AI">6</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-step-7.webp" data-width="1200" data-height="551" data-alt="Step 7 of 7: review the business details and create the team." data-caption="Step 7 of 7" data-title="Review and create" aria-label="Show step 7: Review and create">7</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-user-ready.webp" data-width="1200" data-height="545" data-alt="Team creation progress screen showing the AI teammates being set up." data-caption="Step 8" data-title="Setting up your team" aria-label="Show step 8: Setting up your team">8</button>
+              <button type="button" data-setup-step data-src="/assets/landing/onboarding-ready-cropped.webp" data-width="1200" data-height="527" data-alt="Your team is ready, with all six AI teammates set up." data-caption="Complete" data-title="Your team is ready" aria-label="Show completed setup: Your team is ready">✓</button>
+            </div>
+            <button class="setup-arrow" type="button" data-setup-next aria-label="Next onboarding step"><span aria-hidden="true">›</span></button>
+          </div>
+        </div>
+      </section>
     </div>
   </section>
 

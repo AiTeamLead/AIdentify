@@ -3,10 +3,36 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startServer } from './helpers.mjs';
+import path from 'node:path';
+import { ROOT, startServer } from './helpers.mjs';
 
 const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', process.env.BROWSER_EXECUTABLE].find((p) => p && fs.existsSync(p));
 let pw = null; try { pw = await import('playwright'); } catch { /* not installed */ }
+
+test('sign-in password has an accessible show/hide control', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
+  assert.match(src, /<b>AIdentify<\/b>/);
+  assert.doesNotMatch(src, /<b>AaaS<\/b>/);
+  assert.match(src, /class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"/);
+  assert.match(src, /input\.type = visible \? 'text' : 'password'/);
+  assert.match(src, /toggle\.setAttribute\('aria-label', visible \? 'Hide password' : 'Show password'\)/);
+});
+
+test('Google sign-in stays below the email sign-in button and uses the existing OAuth route', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
+  const primary = src.indexOf('<button class="btn" type="submit">${mode===\'create\'?\'Create account\':\'Sign in\'}</button>');
+  const google = src.indexOf('href="/api/auth/google/start?next=clinic"');
+  assert.ok(primary >= 0 && google > primary);
+  assert.match(src, /<a class="btn-ghost google-signin" href="\/api\/auth\/google\/start\?next=clinic"><span class="google-mark" aria-hidden="true">G<\/span>Continue with Google<\/a>/);
+  assert.doesNotMatch(src, /meta\.google\?'<div class="auth-divider"/);
+});
+
+test('sign-in page omits pricing while keeping the in-app Pricing screen', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
+  const login = src.slice(src.indexOf('function loginView() {'), src.indexOf('const AI_PROVIDERS_FALLBACK'));
+  assert.doesNotMatch(login, /planCards|Nothing is charged on this page|annualNote|byokNote/);
+  assert.match(src, /function pricing\(\)/);
+});
 
 test('Sign in from the landing page (/app links) lands on the AaaS sign-in page, with forgot and reset password', { skip: (!EXE || !pw) && 'no browser' }, async () => {
   const s = await startServer({ RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on' });
@@ -20,6 +46,15 @@ test('Sign in from the landing page (/app links) lands on the AaaS sign-in page,
     await page.goto(s.base + '/'); await page.locator('.topacts a', { hasText: 'Sign in' }).click();
     await page.waitForSelector('form[data-act="auth"]'); assert.equal(new URL(page.url()).pathname, '/Aesthetic');
     assert.match(await page.locator('.landing').innerText(), /Skin, hair and aesthetic clinic/);
+    const password = page.locator('form[data-act="auth"] input[name="password"]');
+    await password.fill('typed-password');
+    await page.locator('[data-password-toggle]').click();
+    assert.equal(await password.getAttribute('type'), 'text');
+    assert.equal(await password.inputValue(), 'typed-password');
+    assert.equal(await page.locator('[data-password-toggle]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-password-toggle]').click();
+    assert.equal(await password.getAttribute('type'), 'password');
+    assert.equal(await password.inputValue(), 'typed-password');
     // old links to /app also land on the sign-in (not the black workplace sign-in, not /setup)
     await page.goto(s.base + '/app'); await page.waitForURL((u) => new URL(u).pathname !== '/app', { timeout: 10000 });
     await page.waitForSelector('form[data-act="auth"]');

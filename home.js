@@ -46,3 +46,34 @@ tabs.forEach((tab, i) => {
 });
 
 document.querySelectorAll('.mob a').forEach((a) => a.addEventListener('click', () => { const d = a.closest('details'); if (d) d.open = false; }));
+
+const setupGallery = $('.setup-gallery');
+if (setupGallery) {
+  const image = $('.setup-slide-image', setupGallery);
+  const caption = $('.setup-slide-caption', setupGallery);
+  const captionStep = $('span', caption);
+  const captionTitle = $('b', caption);
+  const steps = [...setupGallery.querySelectorAll('[data-setup-step]')];
+  let current = 0;
+  const showStep = (index) => {
+    current = (index + steps.length) % steps.length;
+    const step = steps[current];
+    image.src = step.dataset.src;
+    image.width = Number(step.dataset.width);
+    image.height = Number(step.dataset.height);
+    image.alt = step.dataset.alt;
+    captionStep.textContent = step.dataset.caption;
+    captionTitle.textContent = step.dataset.title;
+    steps.forEach((button, i) => {
+      if (i === current) button.setAttribute('aria-current', 'step');
+      else button.removeAttribute('aria-current');
+    });
+  };
+  steps.forEach((button, index) => button.addEventListener('click', () => showStep(index)));
+  $('[data-setup-prev]', setupGallery).addEventListener('click', () => showStep(current - 1));
+  $('[data-setup-next]', setupGallery).addEventListener('click', () => showStep(current + 1));
+  setupGallery.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') { event.preventDefault(); showStep(current - 1); }
+    if (event.key === 'ArrowRight') { event.preventDefault(); showStep(current + 1); }
+  });
+}

@@ -3,12 +3,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { ROOT, startServer } from './helpers.mjs';
 import { buildSeed, chiefBrief } from '../lib/clinic.js';
 
 const PW = 'Clinic-pass-123!';
-const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
-const read = (name) => fs.readFileSync(path.join(root, name), 'utf8');
+const read = (name) => fs.readFileSync(path.join(ROOT, name), 'utf8');
 
 test('chat is the default and Bot Mode opens the main workplace', () => {
   const clinic = read('clinic.html');

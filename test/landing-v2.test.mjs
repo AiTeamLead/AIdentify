@@ -22,6 +22,21 @@ test('landing v2 reuses the waitlist business types, with no default on the main
 
   const main = read('landing-v2.html');
   const wl = read('white-label.html');
+  const productHome = read('home.html');
+  assert.match(productHome, /aria-label="AIdentify home"[^>]*>[\s\S]*?AIdentify<\/a>/);
+  const onboarding = productHome.match(/<div class="setup-gallery"[^>]*>([\s\S]*?)<\/div>\s*<\/section>/)?.[1] || '';
+  assert.doesNotMatch(productHome, /assets\/landing\/onboarding\.png/);
+  assert.equal([...onboarding.matchAll(/class="setup-shot"/g)].length, 1, 'show one large screenshot at a time');
+  assert.equal([...onboarding.matchAll(/data-setup-step/g)].length, 9, 'provide selectors for seven steps, setup progress, and team ready');
+  const homeJs = read('home.js');
+  for (const image of ['onboarding-user-step-1.webp', 'onboarding-user-step-2.webp', 'onboarding-user-step-3.webp', 'onboarding-user-step-4.webp', 'onboarding-user-step-5.webp', 'onboarding-user-step-6.webp', 'onboarding-user-step-7.webp', 'onboarding-user-ready.webp', 'onboarding-ready-cropped.webp']) {
+    assert.match(onboarding, new RegExp(`data-src="/assets/landing/${image}"`));
+    assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'landing', image)), image);
+  }
+  assert.match(onboarding, /data-setup-prev/);
+  assert.match(onboarding, /data-setup-next/);
+  assert.match(homeJs, /showStep\(current - 1\)/);
+  assert.match(homeJs, /showStep\(current \+ 1\)/);
   assert.match(main, /name="businessType" required/);
   assert.match(main, /<option value="" selected>Choose one<\/option>/);
   assert.doesNotMatch(main, /data-preselect/);
@@ -67,6 +82,9 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
     build({ AIDENTIFY_SITE: '' });
     assert.equal(pub('index.html'), read('home.html'), 'product build serves the home page at /; Sign in opens /clinic');
     for (const f of ['home.css', 'home.js', 'assets/landing/chief.png']) assert.ok(fs.existsSync(path.join(ROOT, 'public', f)), f);
+    for (const f of ['onboarding-user-step-1.webp', 'onboarding-user-step-2.webp', 'onboarding-user-step-3.webp', 'onboarding-user-step-4.webp', 'onboarding-user-step-5.webp', 'onboarding-user-step-6.webp', 'onboarding-user-step-7.webp', 'onboarding-user-ready.webp']) {
+      assert.ok(fs.existsSync(path.join(ROOT, 'public', 'assets', 'landing', f)), f);
+    }
     assert.equal(pub('app.html'), read('index.html'), 'the workplace app moves to /app');
     build({ AIDENTIFY_SITE: 'landing' });
     assert.equal(pub('index.html'), applyPriceTokens(read('landing-v2.html')));

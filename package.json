@@ -10,7 +10,7 @@
     "check": "node scripts/check.mjs",
     "update": "bash install.sh --update",
     "social:snapshot": "node scripts/social-snapshot.mjs",
-    "test": "node --test test/*.test.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "test:clinic": "node --test test/clinic.test.mjs",
     "db:migrate-from-file": "node scripts/db-migrate.mjs from-file",
     "db:export-to-file": "node scripts/db-migrate.mjs to-file",

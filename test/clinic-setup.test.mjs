@@ -3,13 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { ROOT, startServer } from './helpers.mjs';
 import { parsePaste } from '../lib/clinic.js';
 
 const PW = 'Clinic-pass-123!';
 const MOCK = { RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on', CLINIC_DEMO_PLATFORM_KEY: '1' };
 const KEY = 'sk-mock-setup-' + 'k'.repeat(24) + 'wxyz';
-const html = () => fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'clinic.html'), 'utf8');
+const html = () => fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
 
 test('a paste of name and phone becomes customer rows', () => {
   const rows = parsePaste('Name, phone\nAsha Rao, 919000000111, asha@example.com\n, 919\nskip\n');
