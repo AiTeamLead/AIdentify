@@ -82,6 +82,22 @@ test('industry offers are structured percent or flat amounts', async () => {
   } finally { await s.stop(); }
 });
 
+test('audience prediction returns 5 to 8 choices and preselects three', async () => {
+  const { predictAudiences } = await import('../lib/validation/onboarding.js');
+  const local = predictAudiences({ industry: 'dental', services: 'Cleaning, Whitening' });
+  assert.ok(local.audiences.length >= 5 && local.audiences.length <= 8);
+  assert.equal(local.selected.length, 3);
+  const s = await startServer({ RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on' });
+  try {
+    const tok = (await s.api('/api/auth/signup', { email: 'e2e-aud-' + Date.now() + '@example.com', name: 'A', password: 'Clinic-pass-123!' })).d.token;
+    const d = await s.api('/api/clinic/audiences/predict', { role: 'marketing', services: 'Social media' }, tok);
+    assert.equal(d.status, 200);
+    assert.equal(d.d.source, 'rules');
+    assert.equal(d.d.selected.length, 3);
+    assert.ok(d.d.audiences.length >= 5);
+  } finally { await s.stop(); }
+});
+
 test('phone numbers are E.164 for India and emails are rejected', () => {
   assert.equal(validatePhone('9876543210').value, '+919876543210');
   assert.equal(validatePhone('+91 98765 43210').value, '+919876543210');

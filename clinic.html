@@ -805,6 +805,13 @@ function obShow(i, opt) {
     if (location.pathname !== path) history.pushState({ ob: ob.step }, '', path);
   }
   saveOnboardingDraft();
+  if (steps[ob.step].id === 'audience' && token && !obList(ob.audience).length && !ob.predicting) {
+    ob.predicting = true;
+    api('/api/clinic/audiences/predict', { role: ob.role, services: ob.services }).then((d) => {
+      ob.predicting = false;
+      if (d && d.selected && d.selected.length) obSetTags('audience', d.selected);
+    }).catch(() => { ob.predicting = false; });
+  }
   if (['biz', 'city', 'review'].includes(steps[ob.step].id)) render(); // those questions quote earlier answers
   const id = steps[ob.step].id;
   const fm = root.querySelector('.ob-form'); if (fm) fm.dataset.dir = ob.dir;
