@@ -1813,7 +1813,26 @@ root.addEventListener('click', (e) => {
   const b = e.target.closest('[data-ob]'); if (!b) return;
   const f = shell.querySelector('.ob-form'); obSave(f);
   const steps = obSteps();
-  if (b.dataset.ob === 'next') { if (obValid(f)) obShow(ob.step + 1); }
+  if (b.dataset.ob === 'next') {
+    if (!obValid(f)) return;
+    if (obSteps()[ob.step].id === 'ai') {
+      const keyEl = f.querySelector('[name="key"]');
+      const key = keyEl ? String(keyEl.value || '').trim() : '';
+      const box = root.querySelector('.ob-msg');
+      if (!key) { if (box) box.hidden = true; obShow(ob.step + 1); return; }
+      if (box) { box.hidden = false; box.textContent = 'Validating…'; }
+      const provider = (f.querySelector('[name="provider"]') || {}).value || 'openrouter';
+      const modelSel = f.querySelector('[name="model"]');
+      const model = modelSel && modelSel.value === '__other' ? (f.querySelector('[name="modelOther"]') || {}).value : (modelSel || {}).value;
+      const region = provider === 'bedrock' ? ((f.querySelector('[name="region"]') || {}).value || '') : '';
+      api('/api/ai/key', { provider, key, model, region }).then(() => {
+        if (box) { box.hidden = false; box.textContent = 'API key validated successfully.'; }
+        obShow(ob.step + 1);
+      }).catch((err) => { if (box) { box.hidden = false; box.textContent = err.message || 'Unable to validate the API key. Please check your key and try again.'; } });
+      return;
+    }
+    obShow(ob.step + 1);
+  }
   else if (b.dataset.ob === 'back') obShow(ob.step - 1);
   else if (b.dataset.ob === 'skip') {
     const k = f.querySelector('[name="key"]'); if (k) k.value = '';
