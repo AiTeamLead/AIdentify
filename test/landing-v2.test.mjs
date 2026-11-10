@@ -24,9 +24,14 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   const wl = read('white-label.html');
   const productHome = read('home.html');
   assert.match(productHome, /aria-label="AIdentify home"[^>]*>[\s\S]*?AIdentify<\/a>/);
-  assert.match(productHome, /Less admin\. More time for your customers\./);
-  assert.match(productHome, /You started a business to serve people—not chase admin\./);
-  assert.match(productHome, /Your day-to-day, under one roof\./);
+  assert.match(productHome, /Run Your Business Smarter\. Let AI Handle the Repetitive Work\./);
+  assert.match(productHome, /Growing a Business Is Hard When Everything Depends on You\./);
+  assert.match(productHome, /Meet Your AI Business Team\./);
+  assert.match(productHome, /More Time for Customers\. Less Time on Repetitive Work\./);
+  assert.match(productHome, /Get Started in Five Simple Steps\./);
+  assert.match(productHome, /Everything Your Business Needs to Stay Organised\./);
+  assert.match(productHome, /Will AI send messages automatically/);
+  assert.doesNotMatch(productHome, /href="\/white-label"|href="\/v1"/);
   assert.match(productHome, /Get Started Free/);
   assert.equal([...productHome.matchAll(/role="tab" id="tab-/g)].length, 7, 'show all industries as tabs');
   assert.match(productHome, /role="tablist" aria-label="Industries"/);

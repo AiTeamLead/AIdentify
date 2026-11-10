@@ -35,7 +35,7 @@ test('each pack path serves the app and the account reports its own path', async
     assert.equal((await fetch(s.base + '/Nope')).status, 404);
     // "/" is the public home page whose Sign in opens /clinic; the workplace app is at /app and still answers /?bot=1 (Bot Mode frame)
     const homePage = await (await fetch(s.base + '/')).text();
-    assert.match(homePage, /Less admin\. More time for your customers\./); assert.match(homePage, /href="\/Aesthetic">Sign in/); assert.match(homePage, /href="\/Aesthetic#signup">Get Started Free/);
+    assert.match(homePage, /Run Your Business Smarter\. Let AI Handle the Repetitive Work\./); assert.match(homePage, /href="\/Aesthetic">Sign in/); assert.match(homePage, /href="\/Aesthetic#signup">Get Started Free/);
     for (const a of ['/home.css', '/home.js', '/assets/landing/chief.png', '/assets/landing/dashboard.png', '/assets/landing/crm.png', '/assets/landing/approvals.png', '/assets/landing/onboarding-user-step-1.webp', '/assets/landing/onboarding-user-step-2.webp', '/assets/landing/onboarding-user-step-3.webp', '/assets/landing/onboarding-user-step-4.webp', '/assets/landing/onboarding-user-step-5.webp', '/assets/landing/onboarding-user-step-6.webp', '/assets/landing/onboarding-user-step-7.webp', '/assets/landing/onboarding-user-ready.webp', '/assets/landing/onboarding-ready-cropped.webp']) assert.equal((await fetch(s.base + a)).status, 200, a);
     for (const p of ['/app', '/?bot=1', '/app?bot=1&mini=1']) assert.match(await (await fetch(s.base + p)).text(), /const botMode=/, p);
     const tok = (await s.api('/api/auth/signup', { email: 'route@example.com', name: 'R', password: PW })).d.token;
