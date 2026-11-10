@@ -27,4 +27,16 @@ test('billing harness: Razorpay-style HMAC webhook signature', async () => {
   await assert.rejects(readRazorpayWebhook({ rawBody: raw, headers: { 'x-razorpay-signature': '0'.repeat(64) }, secret }), /bad signature/);
 });
 
-test.skip('billing: live Razorpay webhook route (step 3, not built yet)', () => {});
+test('billing: the clinic Razorpay webhook route rejects a bad signature', async () => {
+  const { startServer } = await import('./helpers.mjs');
+  const s = await startServer({ RAZORPAY_WEBHOOK_SECRET: 'whsec_unit_route' });
+  try {
+    const raw = JSON.stringify({ entity: 'event', event: 'payment.captured', payload: { payment: { entity: { id: 'pay_x', amount: 100 } } } });
+    const bad = await fetch(s.base + '/api/clinic/payments/razorpay', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-razorpay-signature': 'ab'.repeat(32), 'x-razorpay-event-id': 'evt_units_bad' },
+      body: raw,
+    });
+    assert.equal(bad.status, 400);
+  } finally { await s.stop(); }
+});

@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, startServer } from './helpers.mjs';
+import { chromiumPath } from './chromium.mjs';
 
-const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', process.env.BROWSER_EXECUTABLE].find((p) => p && fs.existsSync(p));
+const EXE = chromiumPath();
 let pw = null; try { pw = await import('playwright'); } catch { /* not installed */ }
 
 test('sign-in password has an accessible show/hide control', () => {

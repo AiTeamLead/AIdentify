@@ -3,12 +3,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import fs from 'node:fs';
 import { startServer } from './helpers.mjs';
+import { chromiumPath } from './chromium.mjs';
 
 const PW = 'Clinic-pass-123!';
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', process.env.BROWSER_EXECUTABLE].find((p) => p && fs.existsSync(p));
+const EXE = chromiumPath();
 
 test('create_image, attached images, public media links, and uploading into a page in the agent’s browser', { skip: !EXE && 'no Chromium on this machine' }, async () => {
   const web = http.createServer((req, res) => {

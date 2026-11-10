@@ -3,11 +3,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import fs from 'node:fs';
 import { startServer } from './helpers.mjs';
+import { chromiumPath } from './chromium.mjs';
 
 const PW = 'Clinic-pass-123!';
-const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', process.env.BROWSER_EXECUTABLE].find((p) => p && fs.existsSync(p));
+const EXE = chromiumPath();
 
 function fakeInsta() {
   const comments = [];
