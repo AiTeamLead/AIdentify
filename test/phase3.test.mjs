@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { writeAudit, readAudit, payloadHash } from '../lib/audit.js';
 import { createThread, appendMessage, listThreads, recallFacts, renameThread, deleteThread } from '../lib/threads.js';
-import { deletionPlan, recordDeletion } from '../lib/privacy-job.js';
+import { deletionPlan, recordDeletion, finishDeletion, revokeLocalTokens } from '../lib/privacy-job.js';
 
 function memory() {
   const rows = new Map();
@@ -45,4 +45,19 @@ test('deletion keeps only a non-PII hash', async () => {
   const audit = JSON.stringify(await readAudit(st, 'system'));
   assert.equal(audit.includes('person@example.com'), false);
   assert.match(audit, /account-deleted/);
+});
+
+test('deletion emails when mail is on, records mail off otherwise, and revokes local tokens', async () => {
+  const st = memory();
+  await st.put('as_aikey:person@example.com', JSON.stringify({ sealed: 'token-blob' }), 1);
+  await st.put('as_toks:person@example.com', JSON.stringify(['ab'.repeat(16)]), 1);
+  await st.put('as_tok:' + 'ab'.repeat(16), JSON.stringify({ email: 'person@example.com' }), 1);
+  const off = await finishDeletion(st, 'person@example.com', { send: async () => { throw new Error('no_system_mail'); } });
+  assert.equal(off.mail, 'off');
+  assert.ok(off.revoked.includes('as_aikey'));
+  assert.equal(await st.get('as_aikey:person@example.com'), null);
+  assert.equal(JSON.stringify(await readAudit(st, 'system')).includes('person@example.com'), false);
+  const sent = await finishDeletion(st, 'other@example.com', { send: async (msg) => { assert.equal(msg.to, 'other@example.com'); assert.match(msg.subject, /deleted/); return { id: 'm1' }; } });
+  assert.equal(sent.mail, 'sent');
+  assert.deepEqual(await revokeLocalTokens(st, 'nobody@example.com'), []);
 });
