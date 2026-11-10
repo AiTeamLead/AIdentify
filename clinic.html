@@ -1504,7 +1504,7 @@ async function act(name, el) {
       const f = Object.fromEntries(new FormData(el).entries());
       const path = mode === 'create' ? '/api/auth/signup' : '/api/auth/login';
       const d = await api(path, { email:f.email, password:f.password, name:f.name || 'Clinic owner' });
-      token = d.token; sessionStorage.setItem('aaas_clinic_token', token); err = ''; skipProfile = false;
+      token = d.token; sessionStorage.setItem('aaas_clinic_token', token); err = ''; toast = ''; skipProfile = false;
       await reload(); if (state && state.role) { screen = 'dash'; applyBot(); render(); } return;
     }
     if (name === 'demo') {
@@ -1701,7 +1701,7 @@ async function act(name, el) {
       chatLog.push({ r:'a', t:d.answer }); chatBusy = false; await reload(); return;
     }
     if (token) await reload();
-  } catch (e) { err = e.message; toast = e.message; chatBusy = false; render(); }
+  } catch (e) { err = e.message; toast = token ? e.message : ''; chatBusy = false; render(); }
 }
 // ---- onboarding interactions ----
 root.addEventListener('click', (e) => {

@@ -32,6 +32,12 @@ test('Google sign-in stays below the email sign-in button and uses the existing 
   assert.match(src, /meta\.google \? '<div class="auth-divider" aria-hidden="true">or<\/div><a class="btn-ghost google-signin" href="\/api\/auth\/google\/start\?next=clinic"><span class="google-mark" aria-hidden="true">G<\/span>Continue with Google<\/a>' : ''/);
 });
 
+test('a failed sign-in does not leave its toast on the onboarding brief', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
+  assert.match(src, /sessionStorage\.setItem\('aaas_clinic_token', token\); err = ''; toast = '';/);
+  assert.match(src, /toast = token \? e\.message : '';/);
+});
+
 test('sign-in page omits pricing while keeping the in-app Pricing screen', () => {
   const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
   const login = src.slice(src.indexOf('function loginView() {'), src.indexOf('const AI_PROVIDERS_FALLBACK'));
