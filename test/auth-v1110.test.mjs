@@ -49,7 +49,10 @@ test('forgot + reset over HTTP: no email enumeration, no token leak without mock
     const link = srv.log().match(/#as_reset=([\w-]+)/g); assert.ok(link && link.length === 1, 'local server logs the link once (no log for unknown email)');
     const tok = link[0].split('=')[1];
     assert.equal((await srv.api('/api/auth/reset-password', { token: tok, password: 'short' })).status, 400);
+    const prior = await srv.api('/api/auth/login', { email: em, password: 'Old-pass-829x' });
+    assert.equal(prior.status, 200);
     const ok = await srv.api('/api/auth/reset-password', { token: tok, password: 'New-pass-551y' }); assert.equal(ok.status, 200);
+    assert.equal((await srv.api('/api/auth/me', undefined, prior.d.token)).status, 401, 'reset invalidates the previous session');
     assert.equal((await srv.api('/api/auth/reset-password', { token: tok, password: 'New-pass-551y' })).d.error, 'reset_invalid');
     assert.equal((await srv.api('/api/auth/login', { email: em, password: 'Old-pass-829x' })).status, 401);
     assert.equal((await srv.api('/api/auth/login', { email: em, password: 'New-pass-551y' })).status, 200);
