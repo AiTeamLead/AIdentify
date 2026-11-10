@@ -537,8 +537,10 @@ function loginView() {
   </form></div>` : mode==='reset' ? `<form class="panel stack" data-act="reset">
     <h1>Set a new password</h1>
     <p class="sub">At least 8 characters.</p>
-    <label>New password<input name="password" type="password" autocomplete="new-password" required minlength="8"></label>
-    <label>Repeat it<input name="password2" type="password" autocomplete="new-password" required minlength="8"></label>
+    <label for="reset-password">New password</label>
+    <div class="password-input"><input id="reset-password" name="password" type="password" autocomplete="new-password" required minlength="8"><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m3 3 18 18"></path></svg></button></div>
+    <label for="reset-password2">Repeat it</label>
+    <div class="password-input"><input id="reset-password2" name="password2" type="password" autocomplete="new-password" required minlength="8"><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m3 3 18 18"></path></svg></button></div>
     <div class="err">${esc(err)}</div>
     <button class="btn" type="submit">Change password</button>
     <button type="button" class="btn-ghost" data-act="mode" data-mode="signin">Back to sign in</button>
@@ -1267,7 +1269,7 @@ function privacy() {
     <article class="draft"><b>Human approval</b><p>Enquiries, reminders, review requests, posts and payment reminders are drafts. Approve records your OK. Reject skips it. Neither one sends an email, a text, or a post.</p></article>
     <article class="draft"><b>Export</b><p>Download the records in this account as JSON. The public form token is left out.</p><button class="btn" type="button" data-act="export">Download my data</button></article>
     <form class="draft stack" data-act="wipe"><b>Delete the records</b><p class="small">Removes this team’s ${esc((state.labels&&state.labels.who)||'people')}, invoices, drafts and form from this account. Your sign-in stays. Type “delete my data”.</p><input name="confirm" placeholder="delete my data"><button class="btn-danger" type="submit">Delete my data</button></form>
-    <form class="draft stack" data-act="wipe-account"><b>Delete the account</b><p class="small">Uses your password. The sample business password is not shown, so use “Delete my data” there. Staff accounts cannot be deleted here.</p><input name="password" type="password" autocomplete="current-password" placeholder="Password"><button class="btn-danger" type="submit">Delete this account</button></form>`;
+    <form class="draft stack" data-act="wipe-account"><b>Delete the account</b><p class="small">Uses your password. The sample business password is not shown, so use “Delete my data” there. Staff accounts cannot be deleted here.</p><div class="password-input"><input name="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password"><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m3 3 18 18"></path></svg></button></div><button class="btn-danger" type="submit">Delete this account</button></form>`;
 }
 function settings() {
   const r = state.rules || { from: '09:00', to: '20:00', everyDays: 7, cap: 2, tone: '' };

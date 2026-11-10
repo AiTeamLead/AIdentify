@@ -16,6 +16,12 @@ test('sign-in password has an accessible show/hide control', () => {
   assert.match(src, /class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"/);
   assert.match(src, /input\.type = visible \? 'text' : 'password'/);
   assert.match(src, /toggle\.setAttribute\('aria-label', visible \? 'Hide password' : 'Show password'\)/);
+  const reset = src.slice(src.indexOf('mode===\'reset\''), src.indexOf('mode===\'create\''));
+  assert.match(reset, /id="reset-password"/);
+  assert.match(reset, /id="reset-password2"/);
+  assert.equal((reset.match(/data-password-toggle/g) || []).length, 2);
+  const wipe = src.slice(src.indexOf('data-act="wipe-account"'), src.indexOf('function settings()'));
+  assert.match(wipe, /data-password-toggle/);
 });
 
 test('Google sign-in stays below the email sign-in button and uses the existing OAuth route', () => {
