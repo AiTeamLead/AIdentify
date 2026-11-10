@@ -56,6 +56,14 @@ test('without Google: built-in list; festival drafts go to Approvals once', asyn
     const home = await s.api('/api/clinic', undefined, tok);
     assert.ok(home.d.drafts.some((x) => x.status === 'pending' && /Diwali posts/.test(x.title)));
     assert.equal((await s.api('/api/clinic/festivals', { month: '2026-11' })).status, 401);
+    const due = await s.api('/api/clinic/social/festival-due', {}, tok);
+    assert.equal(due.status, 200, JSON.stringify(due.d));
+    assert.ok((due.d.drafted || []).length >= 1);
+    const pending = (await s.api('/api/clinic', undefined, tok)).d.drafts.find((x) => x.status === 'pending' && x.kind === 'post');
+    const decided = await s.api('/api/clinic/decide', { id: pending.approvalId, decision: 'approve' }, tok);
+    assert.equal(decided.status, 200, JSON.stringify(decided.d));
+    assert.match(decided.d.approval.result, /No social account is connected/);
+    assert.match(decided.d.approval.result, /Next: fix that and retry/);
   } finally { await s.stop(); }
 });
 

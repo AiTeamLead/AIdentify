@@ -496,6 +496,7 @@ let drawer = null;
 let chatOpen = false;
 let chatLog = [];
 let chatDraft = '';
+let chiefThread = '';
 let chatBusy = false;
 let showAdd = '';
 let skipProfile = false;
@@ -1073,7 +1074,24 @@ function dash() {
         <p style="margin-top:14px"><button class="btn" type="button" data-act="go" data-screen="setup">15-minute setup</button></p>
       </section>
     </div>
-    ${checklistCard()}`;
+    ${checklistCard()}${tourHtml()}`;
+}
+function tourHtml() {
+  if (!state || !state.role || screen !== 'dash' || botMode) return '';
+  let stored = '';
+  try { stored = localStorage.getItem('aaas_tour') || ''; } catch (e) { stored = ''; }
+  if (stored === 'done') return '';
+  const steps = [
+    { title: 'Dashboard', body: 'This is the whole business: money, bookings, and what needs you.' },
+    { title: 'Front Desk', body: 'New enquiries and appointments start here. Follow-ups and reviews sit in the same place.' },
+    { title: 'Social Media', body: 'Drafts wait for you. Nothing is published until you approve it.' },
+    { title: 'Billing', body: 'Invoices, offers, and payment status live here.' },
+    { title: 'Approvals', body: 'Every message that would leave the building stops here first.' },
+  ];
+  const step = Math.max(0, Number(stored) || 0);
+  if (step >= steps.length) return '';
+  const cur = steps[step];
+  return `<div class="ov" id="tour" role="dialog" aria-modal="true" aria-labelledby="tourTitle"><div class="panel stack"><p class="small">Step ${step + 1} of ${steps.length}</p><h2 id="tourTitle">${esc(cur.title)}</h2><p>${esc(cur.body)}</p><div><button class="btn" type="button" data-act="tour" data-tour="next">Next</button> <button class="btn-ghost" type="button" data-act="tour" data-tour="back">Back</button> <button class="btn-ghost" type="button" data-act="tour" data-tour="skip">Skip</button></div></div></div>`;
 }
 function drawerHtml() {
   if (!drawer) return '';
@@ -1094,9 +1112,10 @@ function drawerHtml() {
 function chiefPage() {
   const opener = (state.chief && state.chief.opener) || 'I’m Chief. Ask me about this business. Nothing is sent until you approve a draft.';
   if (!chatLog.length) chatLog = [{ r: 'a', t: opener }];
-  return `<section class="chief" aria-label="Chief"><header><b>Chief</b><span>${esc(state.biz || '')}. Answers come from this account’s records. Drafts still need approval.</span> <button class="btn-ghost" type="button" data-act="go" data-screen="dash">Dashboard</button></header>
+  const threads = (state && state.threads) || [];
+  return `<section class="chief" aria-label="Chief" style="display:grid;grid-template-columns:220px minmax(0,1fr);min-height:70vh"><aside class="thread-side" aria-label="Chats" style="border-right:1px solid var(--line);padding:12px"><button class="btn" type="button" data-act="thread-new">New chat</button><ul style="list-style:none;padding:0;margin:12px 0">${threads.map((t) => `<li style="margin:8px 0"><button type="button" data-act="thread-open" data-id="${esc(t.id)}" ${chiefThread === t.id ? 'aria-current="true"' : ''}>${esc(t.title || 'Chat')}</button> <button type="button" class="btn-ghost" data-act="thread-rename" data-id="${esc(t.id)}">Rename</button> <button type="button" class="btn-ghost" data-act="thread-del" data-id="${esc(t.id)}">Delete</button></li>`).join('') || '<li class="small">No saved chats yet.</li>'}</ul></aside><div><header><b>Chief</b><span>${esc(state.biz || '')}. Answers come from this account’s records. Drafts still need approval. A failed publish is quoted, not called a success.</span> <button class="btn-ghost" type="button" data-act="go" data-screen="dash">Dashboard</button></header>
     <div class="log">${chatLog.map((m) => `<div class="bubble ${m.r}">${m.r === 'a' ? chatMd(m.t) : esc(m.t)}</div>`).join('')}${chatBusy ? '<div class="small">Checking the records…</div>' : ''}</div>
-    <form data-act="chat"><input id="chatIn" name="message" value="${esc(chatDraft)}" placeholder="Ask about leads, approvals or payments" autocomplete="off"><button class="btn" type="submit">Send</button></form></section>`;
+    <form data-act="chat"><input id="chatIn" name="message" value="${esc(chatDraft)}" placeholder="Ask about leads, approvals or payments" autocomplete="off"><button class="btn" type="submit">Send</button></form></div></section>`;
 }
 function softwareCard() {
   const s = state.stats || {};
@@ -1153,6 +1172,8 @@ function front() {
   const opts = (state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
   return `${agentHead(a)}
     <div class="row-actions"><button class="btn" type="button" data-act="desk-open" data-form="enq">+ New Enquiry</button> <button class="btn" type="button" data-act="desk-open" data-form="appt">+ Book Appointment</button></div>
+    <form class="form" data-act="triage"><label>Unknown number<input name="phone" required placeholder="9198…"></label><div style="align-self:end"><button class="btn" type="button" data-act="triage" data-decision="accept">Accept</button> <button class="btn-ghost" type="button" data-act="triage" data-decision="decline">Decline</button></div></form>
+    <p class="small">Accept or Decline stores the decision only. The message body is not saved.</p>
     <div class="row-actions"><button class="btn-ghost" type="button" data-act="go" data-screen="front">Enquiries</button> <button class="btn-ghost" type="button" data-act="go" data-screen="front">Appointments</button> <button class="btn-ghost" type="button" data-act="go" data-screen="recall">Members & Follow-ups</button> <button class="btn-ghost" type="button" data-act="go" data-screen="reviews">Reviews & Referrals</button></div>
     <div class="split">
       <section><h2>Enquiries</h2>
@@ -1220,9 +1241,10 @@ function social() {
   const days = [...Array(7)].map((_, i) => { const [y,m,d] = start.split('-').map(Number); const dt = new Date(Date.UTC(y, m-1, d+i)); const key = dt.toISOString().slice(0,10); const label = dt.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', timeZone:'UTC' }); return { key, label }; });
   void days;
   return `${agentHead(a)}${festivalCalendar()}
+    <p><button class="btn" type="button" data-act="fest-due">Draft festivals due this week</button></p>
     <h2>Draft a post</h2>
     <form class="form" data-act="social"><label class="wide">Topic<input name="topic" required placeholder="${esc((state.labels&&state.labels.example)||'What to say this week')}"></label><label>Put it on<input name="when" type="date"></label><div style="align-self:end"><button class="btn" type="submit">Create draft</button></div></form>
-    <p class="small">The draft is written by the same AI path as the rest of AaaS. Approving it only puts it on this calendar. Nothing is published.</p>
+    <p class="small">The draft is written by the same AI path as the rest of AaaS. Approving it calls the publisher. If the network does not confirm the live post, the result says it failed and what to fix next. Nothing is published until that check passes.</p>
     <h2>Forwardable referral</h2>
     <p class="sub">A short message this person can forward on WhatsApp, with their own booking link. It waits in Approvals. Nothing is sent.</p>
     <form class="form" data-act="referral"><label>Person<select name="patientId">${(state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></label><div style="align-self:end"><button class="btn" type="submit">Draft referral message</button></div></form>
@@ -1257,7 +1279,7 @@ function festivalCalendar() {
     const ps = posts.filter((p) => dayKey(p.at) === key);
     cells.push(`<div class="cal-cell${key === today ? ' today' : ''}${fes.length ? ' has-fest' : ''}"><span class="cal-d">${d}</span>
       ${fes.map((f) => `<button type="button" class="fest ${f.kind === 'public' ? 'pub' : ''}" data-act="fest-draft" data-date="${esc(f.date)}" data-name="${esc(f.name)}" title="${drafted(f) ? 'Posts already drafted for ' : 'Draft festival posts for '}${esc(f.name)}">${esc(f.name)}${drafted(f) ? ' ✓' : ''}</button>`).join('')}
-      ${ps.map((p) => `<div class="post">${pill(p.status)} ${esc(String(p.festival ? p.festival + ' posts' : p.text).slice(0, 70))}</div>`).join('')}</div>`);
+      ${ps.map((p) => `<div class="post">${pill(p.status)} ${esc(String(p.festival ? p.festival + ' posts' : p.text).slice(0, 70))}${p.result ? ' ' + esc(p.result) : ''}</div>`).join('')}</div>`);
   }
   const monthName = first.toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   const upcoming = events.filter((f) => f.date >= today);
@@ -1273,7 +1295,7 @@ function festivalCalendar() {
       <span class="small cal-src">${esc(src)}</span></div>
     <div class="cal" role="grid" aria-label="${esc(monthName)} festival calendar">
       ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((w) => `<div class="cal-w">${w}</div>`).join('')}${cells.join('')}</div>
-    <p class="small">Click a festival to draft its posts: one version each for Instagram / Facebook, X, LinkedIn and WhatsApp status, in your voice. They wait in Approvals. Approving only puts them on this calendar. Nothing is published.</p>
+    <p class="small">Click a festival to draft its posts: one version each for Instagram / Facebook, X, LinkedIn and WhatsApp status, in your voice. They wait in Approvals. Approving calls the publisher and quotes a failure when the live post is not confirmed.</p>
     ${upcoming.length ? `<h3 class="fest-h">Coming up in ${esc(monthName)}</h3><div class="fest-list">${upcoming.map((f) => `<div class="fest-row"><div><b>${esc(f.name)}</b><div class="small">${esc(new Date(f.date + 'T00:00:00Z').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }))}${f.kind === 'public' ? ' · public holiday' : ''}</div></div>
       ${drafted(f) ? '<span class="pill">Drafted</span>' : `<button class="btn" type="button" data-act="fest-draft" data-date="${esc(f.date)}" data-name="${esc(f.name)}">Draft festival posts</button>`}</div>`).join('')}</div>` : ''}`;
 }
@@ -1400,7 +1422,7 @@ function connState(c) {
 function connections() {
   const place = (state.labels && state.labels.place) || 'business';
   return `${banner()}<h1>Connections</h1><p class="sub">Eka.care reads from their API when the server has credentials. A sample ${esc(place)} stays on sample rows and shows Connected (demo). Other software can use CSV or a webhook. Nothing is sent back out.</p>
-    ${(state.connections||[]).map((c) => `<div class="draft conn"><div><b>${esc(c.name)}</b><div class="small">${esc(c.detail)}</div>${c.url?`<div class="small"><a class="link" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></div>`:''}${c.docs?`<div class="small"><a class="link" href="${esc(c.docs)}" target="_blank" rel="noopener">API docs</a></div>`:''}</div><div class="actions">${connState(c)}${c.id==='eka' && (c.status==='demo' || c.status==='ready')?'<button class="btn" type="button" data-act="sync-eka">Sync</button>':''}</div></div>`).join('')}
+    ${(state.connections||[]).map((c) => `<div class="draft conn"><div><b>${esc(c.name)}</b><div class="small">${esc(c.detail)}</div>${c.risk?`<p class="small">${esc(c.risk)}</p>`:''}${c.url?`<div class="small"><a class="link" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></div>`:''}${c.docs?`<div class="small"><a class="link" href="${esc(c.docs)}" target="_blank" rel="noopener">API docs</a></div>`:''}</div><div class="actions">${connState(c)}${c.id==='eka' && (c.status==='demo' || c.status==='ready')?'<button class="btn" type="button" data-act="sync-eka">Sync</button>':''}</div></div>`).join('')}
     <p><button class="btn" type="button" data-act="form-done">I have put the booking form on my site</button></p>
     <h2>Import a CSV</h2>
     <p class="small">Columns: type, name, phone, email, last_visit, value, when, service, status, fee. The file uses type patient for a person and appointment for a ${esc((state.labels&&state.labels.visit)||'visit')}. Up to 2000 rows. Nothing is sent.</p>
@@ -1540,6 +1562,9 @@ function render() {
 }
 async function reload() {
   state = await api('/api/clinic');
+  if (state && state.role && token) {
+    try { const t = await api('/api/clinic/threads'); state.threads = t.threads || []; } catch (e) { state.threads = state.threads || []; }
+  }
   syncPath();
   if (state.role && /^\/onboarding\/step\//.test(location.pathname)) history.replaceState(null, '', state.rolePath || '/clinic');
   if (!state.role && skipProfile) { state = await api('/api/clinic/role', { role: 'dental' }); syncPath(); } // the sample business opens as a dental clinic; it can switch in the sidebar
@@ -1582,6 +1607,51 @@ async function act(name, el) {
     if (name === 'chief-tip-close') { chiefTipDone(); render(); return; }
     if (name === 'chief-tip-open') { chiefTipDone(); miniOpen = true; render(); return; }
     if (name === 'open-chief') { screen = 'chat'; botMode = false; writeBot(false); advanced = false; writeAdvanced(false); setView('chat'); render(); return; }
+    if (name === 'tour') {
+      let stored = '0'; try { stored = localStorage.getItem('aaas_tour') || '0'; } catch (e) { stored = '0'; }
+      const n = Number(stored) || 0;
+      const which = el.dataset.tour;
+      let next = stored;
+      if (which === 'skip' || (which === 'next' && n >= 4)) next = 'done';
+      else if (which === 'back') next = String(Math.max(0, n - 1));
+      else next = String(n + 1);
+      try { localStorage.setItem('aaas_tour', next); } catch (e) {}
+      render(); return;
+    }
+    if (name === 'thread-new') {
+      const made = await api('/api/clinic/threads', { title: 'New chat' });
+      chiefThread = made.thread && made.thread.id || '';
+      chatLog = [];
+      await reload(); screen = 'chat'; render(); return;
+    }
+    if (name === 'thread-open') {
+      chiefThread = el.dataset.id || '';
+      chatLog = [];
+      render(); return;
+    }
+    if (name === 'thread-rename') {
+      const title = window.prompt('Chat name', 'Chat');
+      if (title) await api('/api/clinic/threads', { op: 'rename', id: el.dataset.id, title });
+      await reload(); screen = 'chat'; render(); return;
+    }
+    if (name === 'thread-del') {
+      await api('/api/clinic/threads', { op: 'delete', id: el.dataset.id });
+      if (chiefThread === el.dataset.id) { chiefThread = ''; chatLog = []; }
+      await reload(); screen = 'chat'; render(); return;
+    }
+    if (name === 'triage') {
+      const form = el.closest('form') || el;
+      const phone = (form.querySelector('[name="phone"]') || {}).value || '';
+      const decision = el.dataset.decision === 'decline' ? 'decline' : 'accept';
+      const d = await api('/api/clinic/triage', { phone, decision });
+      flash((d.decision === 'decline' ? 'Declined' : 'Accepted') + '. The message was not stored.');
+      return;
+    }
+    if (name === 'fest-due') {
+      const r = await api('/api/clinic/social/festival-due', {});
+      flash('Drafted ' + ((r.drafted || []).length) + ' festival posts. They wait in Approvals.');
+      await reload(); return;
+    }
     if (name === 'drawer') { drawer = { kind: el.dataset.kind, id: el.dataset.id }; render(); return; }
     if (name === 'drawer-close') { drawer = null; render(); return; }
     if (name === 'go') { if (el.dataset.screen === 'setup') wiz = el.dataset.wiz || 1; botMode = false; advanced = true; writeAdvanced(true); go(el.dataset.screen); return; }
@@ -1724,7 +1794,7 @@ async function act(name, el) {
     else if (name === 'decide') {
       const r = await api('/api/clinic/decide', { id:el.dataset.id, decision:el.dataset.decision });
       const result = (r.approval && r.approval.result) || '';
-      flash(el.dataset.decision==='reject' ? 'Rejected. Nothing was sent.' : (/Sent on WhatsApp/.test(result) ? result : 'Approved. Nothing was sent.'));
+      flash(el.dataset.decision==='reject' ? 'Rejected. Nothing was sent.' : (result || 'Approved. Nothing was sent.'));
     }
     else if (name === 'form-done') { await api('/api/clinic/checklist', { id: 'form' }); flash('Booking form marked as connected.'); }
     else if (name === 'sync-eka') {
@@ -1794,9 +1864,15 @@ async function act(name, el) {
     else if (name === 'chat') {
       const message = (new FormData(el).get('message') || '').trim();
       if (!message) return;
+      if (!chiefThread) {
+        const made = await api('/api/clinic/threads', { title: message.slice(0, 40) });
+        chiefThread = made.thread && made.thread.id || '';
+      }
+      if (chiefThread) await api('/api/clinic/threads', { op: 'message', id: chiefThread, role: 'user', text: message });
       chatDraft = ''; chatLog.push({ r:'u', t:message }); chatBusy = true; render();
       const hist = chatLog.slice(0, -1).slice(-6);
-      const d = await api('/api/clinic/chat', { message, history: hist });
+      const d = await api('/api/clinic/chat', { message, history: hist, threadId: chiefThread });
+      if (chiefThread) await api('/api/clinic/threads', { op: 'message', id: chiefThread, role: 'assistant', text: d.answer || '' });
       chatLog.push({ r:'a', t:d.answer }); chatBusy = false; await reload(); return;
     }
     if (token) await reload();
