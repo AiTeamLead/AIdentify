@@ -758,7 +758,7 @@ function profileView() {
   const form = `<form class="ob-form" data-act="profile" novalidate>
     ${roleStep}
     ${step('biz', { q: `What’s the name of your ${esc(typeName.toLowerCase())}?`, sub: 'This is how your posts and messages sign off.',
-      html: `<div class="ob-iw${obCheck('biz') ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="60" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><p class="ob-countline"><span data-count="biz">${String(tidyOb(ob.biz)).length}/60</span></p><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheck('biz') ? obCheer('biz') : '')}</p>` })}
+      html: `<div class="ob-iw${obCheck('biz') ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="60" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><div class="ob-places" hidden></div><p class="ob-countline"><span data-count="biz">${String(tidyOb(ob.biz)).length}/60</span></p><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheck('biz') ? obCheer('biz') : '')}</p>` })}
     ${step('city', { q: `Where does <em>${esc(nameFor)}</em> work?`, sub: 'Add each city, then the branches in that city. Paste a CSV for a long list: City, Branch, Area, Phone.',
       html: `<div class="ob-iw${obCheck('city') ? ' valid' : ''}"><input class="ob-input" name="city" maxlength="80" value="${esc(ob.city)}" placeholder="City" autocomplete="address-level2" list="obCities"><span class="ob-okic" aria-hidden="true">✓</span></div><datalist id="obCities">${OB_CITIES.map((c) => `<option value="${esc(c)}"></option>`).join('')}</datalist>${obChips('city', OB_CITIES)}<ul class="ob-loc" aria-label="Locations">${(ob.locations || []).map((l) => `<li><b>${esc(l.city)}</b> <span class="small">${(l.branches || []).length ? esc(l.branches.length + ' branches') : 'city only'}</span></li>`).join('') || '<li class="small">No location yet.</li>'}</ul><p class="small">${esc(ob.locationSummary || '')}</p><label class="small">Branches for the city above<textarea data-branch-csv rows="3" placeholder="Hyderabad, Banjara Hills, Road 12, 9876543210"></textarea></label>` })}
     ${step('services', { q: 'What do you offer?', sub: 'Type a service and press <b>Enter</b> or comma. Tap a suggestion to add it. Offers below can become coupon codes on invoices.',
@@ -1008,8 +1008,14 @@ function kpis() {
   return `<div class="kpis">${tiles.map(([k,v,h]) => `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="hint">${esc(h)}</div></div>`).join('')}</div>`;
 }
 function banner() {
-  // Sample-data warning banner removed from the owner screens.
-  return '';
+  const starter = state && state.aiKey && state.aiKey.starter;
+  if (!starter || !starter.enrolled || starter.blocked || !starter.warn) return '';
+  return `<div class="banner" role="status">${esc(starter.label)}. Add your own key before it runs out.</div>`;
+}
+function upgradeModal() {
+  const starter = state && state.aiKey && state.aiKey.starter;
+  if (!starter || !starter.blocked || botMode) return '';
+  return `<div class="ov" role="dialog" aria-modal="true" aria-labelledby="upTitle"><div class="panel stack"><h2 id="upTitle">Upgrade</h2><p>The $1 starter credit is used up. Add your own key, or choose a plan.</p><div><button class="btn" type="button" data-act="go" data-screen="settings">Add your own key</button> <button class="btn-ghost" type="button" data-act="go" data-screen="pricing">Choose a plan</button></div></div></div>`;
 }
 function checklistCard() {
   const steps = state.checklist || [];
@@ -1517,6 +1523,7 @@ function render() {
     const page = { dash, front, recall, reviews, social, insights, billing, approvals, connections, pricing, usage, privacy, visit, settings, setup: setupView, chat: chiefPage }[screen === 'visit' && !state.visitKit ? 'dash' : screen] || dash;
     body = `<div class="app">${side()}<main class="main" data-screen="${esc(screen)}">${page()}</main></div>${botSwitch()}${drawerHtml()}${chiefTip()}<button class="chat-fab bot${miniOpen ? ' open' : ''}${chiefTipShown() ? ' pulse' : ''}" type="button" data-act="chief-mini" aria-expanded="${miniOpen ? 'true' : 'false'}" aria-controls="chiefMini">${ROBOT}<span>Chief</span></button>`;
   }
+  if (state && state.role) body += upgradeModal();
   if (toast) body += `<div class="toast" role="status">${esc(toast)}</div>`;
   const navTop = (root.querySelector('.side') || {}).scrollTop || 0;
   // keep the onboarding AI fields (provider, model, pasted key) across a re-render
