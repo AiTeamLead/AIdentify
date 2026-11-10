@@ -973,14 +973,11 @@ function side() {
     <div class="brand"><div class="mark">A</div><div><b>AIdentify</b><span>${esc(state.biz || '')}</span></div></div>
     <nav class="nav">
       ${item('dash','Dashboard')}
-      ${(state.agents||[]).map((a) => item(a.key, a.name)).join('')}
+      ${item('front','Front Desk')}
+      ${item('social','Social Media')}
+      ${item('billing','Billing & Invoicing')}
       ${item('approvals','Approvals', pending?`<span class="badge">${pending}</span>`:'')}
-      ${item('connections','Connections')}
-      ${state.visitKit ? item('visit','Clinic visit') : ''}
-      ${item('pricing','Pricing')}
-      ${item('usage','Usage & cost')}
       ${item('settings','Settings')}
-      ${item('privacy','Privacy')}
     </nav>
     <div class="grow"></div>
     ${state.industryLocked
@@ -1155,9 +1152,11 @@ function front() {
   const a = state.agents.find((x) => x.key==='front');
   const opts = (state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
   return `${agentHead(a)}
+    <div class="row-actions"><button class="btn" type="button" data-act="desk-open" data-form="enq">+ New Enquiry</button> <button class="btn" type="button" data-act="desk-open" data-form="appt">+ Book Appointment</button></div>
+    <div class="row-actions"><button class="btn-ghost" type="button" data-act="go" data-screen="front">Enquiries</button> <button class="btn-ghost" type="button" data-act="go" data-screen="front">Appointments</button> <button class="btn-ghost" type="button" data-act="go" data-screen="recall">Members & Follow-ups</button> <button class="btn-ghost" type="button" data-act="go" data-screen="reviews">Reviews & Referrals</button></div>
     <div class="split">
       <section><h2>Enquiries</h2>
-        <form class="form" data-act="add-enq" style="grid-template-columns:1fr 1fr">
+        <form class="form" data-act="add-enq" style="grid-template-columns:1fr 1fr" ${showAdd==='enq'?'':'hidden'}>
           <label>Name<input name="name" required></label>
           <label>Phone<input name="phone" required></label>
           <label>Channel<select name="channel"><option>Phone</option><option>Website</option><option>Instagram</option><option>Walk-in</option></select></label>
@@ -1172,7 +1171,7 @@ function front() {
         </tbody></table></div>
       </section>
       <section><h2>Appointments</h2>
-        <form class="form" data-act="add-appt" style="grid-template-columns:1fr 1fr">
+        <form class="form" data-act="add-appt" style="grid-template-columns:1fr 1fr" ${showAdd==='appt'?'':'hidden'}>
           <label>Person<select name="patientId">${opts}</select></label>
           <label>When<input name="at" type="datetime-local" required></label>
           <label>Service<input name="service" value="${esc((state.labels&&state.labels.service)||'Visit')}"></label>
@@ -1746,6 +1745,7 @@ async function act(name, el) {
     }
     else if (name === 'paid') { await api('/api/clinic/invoices/update', { id: Number(el.dataset.id), status: el.dataset.status }); flash(el.dataset.status==='paid' ? 'Marked paid. The dashboard uses paid invoices.' : 'Marked unpaid.'); }
     else if (name === 'remind-inv') { await api('/api/clinic/invoices/remind', { id: Number(el.dataset.id) }); flash('Payment reminder queued. Nothing was sent.'); }
+    else if (name === 'desk-open') { showAdd = el.dataset.form || ''; render(); return; }
     else if (name === 'pay-order') {
       const d = await api('/api/clinic/payments/order', { id: Number(el.dataset.id) });
       if (!d.checkout || !d.checkout.key) throw new Error(d.error || 'Razorpay is not configured.');
