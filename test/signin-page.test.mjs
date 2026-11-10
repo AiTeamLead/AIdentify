@@ -29,8 +29,7 @@ test('Google sign-in stays below the email sign-in button and uses the existing 
   const primary = src.indexOf('<button class="btn" type="submit">${mode===\'create\'?\'Create account\':\'Sign in\'}</button>');
   const google = src.indexOf('href="/api/auth/google/start?next=clinic"');
   assert.ok(primary >= 0 && google > primary);
-  assert.match(src, /<a class="btn-ghost google-signin" href="\/api\/auth\/google\/start\?next=clinic"><span class="google-mark" aria-hidden="true">G<\/span>Continue with Google<\/a>/);
-  assert.doesNotMatch(src, /meta\.google\?'<div class="auth-divider"/);
+  assert.match(src, /meta\.google \? '<div class="auth-divider" aria-hidden="true">or<\/div><a class="btn-ghost google-signin" href="\/api\/auth\/google\/start\?next=clinic"><span class="google-mark" aria-hidden="true">G<\/span>Continue with Google<\/a>' : ''/);
 });
 
 test('sign-in page omits pricing while keeping the in-app Pricing screen', () => {

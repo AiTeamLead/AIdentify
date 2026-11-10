@@ -557,7 +557,7 @@ function loginView() {
     <div class="err">${esc(err)}</div>
     ${notice?`<p class="small" role="status">${esc(notice)}</p>`:''}
     <button class="btn" type="submit">${mode==='create'?'Create account':'Sign in'}</button>
-    <div class="auth-divider" aria-hidden="true">or</div><a class="btn-ghost google-signin" href="/api/auth/google/start?next=clinic"><span class="google-mark" aria-hidden="true">G</span>Continue with Google</a>
+    ${meta.google ? '<div class="auth-divider" aria-hidden="true">or</div><a class="btn-ghost google-signin" href="/api/auth/google/start?next=clinic"><span class="google-mark" aria-hidden="true">G</span>Continue with Google</a>' : ''}
     ${meta.demoLogin?'<button class="btn-ghost" type="button" data-act="demo">Explore the sample business</button><p class="small">Local or staging only. Opens a sample owner account. No password is shown.</p>':''}
   </form></div>`}`;
 }

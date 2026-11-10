@@ -1454,7 +1454,7 @@ async function altShow(){const box=$('#aAlt');if(!box)return;
   box.classList.toggle('hide',!authProv.google&&!authProv.email)}
 function altNote(m){const n=$('#aAltNote');n.textContent=m||'';n.classList.toggle('hide',!m)}
 $('#aGoogle').onclick=async()=>{err('');altNote('');
-  if(authProv&&!authProv.google)return altNote('Google sign-in isn’t set up on this server yet. The admin adds GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env (see README → Sign-in). Use an email code or a password meanwhile.');
+  if(authProv&&!authProv.google)return altNote('Google sign-in isn’t available right now. Use your email and password.');
   $('#aGoogle').disabled=true;location.href='/api/auth/google/start?rem='+($('#aRem').checked?1:0)};
 async function codeSend(){err('');altNote('');const email=$('#aEmail').value.trim().toLowerCase();
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('#aEmail').focus();return err('Enter your email above first.')}
