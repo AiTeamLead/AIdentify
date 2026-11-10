@@ -33,7 +33,11 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   assert.match(productHome, /Will AI send messages automatically/);
   assert.doesNotMatch(productHome, /href="\/white-label"|href="\/v1"/);
   assert.match(productHome, /Get Started Free/);
-  assert.equal([...productHome.matchAll(/role="tab" id="tab-/g)].length, 7, 'show all industries as tabs');
+  assert.equal([...productHome.matchAll(/role="tab" id="tab-/g)].length, 8, 'show all industries as tabs, digital marketing first');
+  assert.match(productHome, /id="tab-mkt"[^>]*aria-selected="true"/);
+  assert.match(productHome, /\$1 of platform model use/);
+  assert.match(productHome, /₹2,999 \/ month/);
+  assert.match(productHome, /₹4,999 \/ month/);
   assert.match(productHome, /role="tablist" aria-label="Industries"/);
   const homeCss = read('home.css');
   assert.match(homeCss, /\.tabs\s*\{\s*display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
