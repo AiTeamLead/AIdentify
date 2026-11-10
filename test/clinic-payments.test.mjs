@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { startServer } from './helpers.mjs';
 import { razorpaySignature } from '../lib/billing.js';
-import { paymentEnv, upiDeepLink, createRazorpayLink, paymentLinkId } from '../lib/clinic-payments.js';
+import { paymentEnv, upiDeepLink, createRazorpayLink, paymentLinkId, createRazorpayOrder } from '../lib/clinic-payments.js';
 
 const PW = 'Clinic-pass-123!';
 const MOCK = { RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on', CLINIC_DEMO_PLATFORM_KEY: '1' };
@@ -129,4 +129,26 @@ test('a test Razorpay link is on the invoice and the reminder, and the webhook m
     assert.deepEqual(rows, []);
     assert.doesNotMatch(s.log(), /api\.razorpay\.com/);
   } finally { await s.stop(); }
+});
+
+test('Razorpay orders stay in test mode and enable UPI inside Checkout', async () => {
+  const missing = await createRazorpayOrder({ amountInr: 1800, receipt: 'INV-1', env: {} });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.configured, false);
+  let seen = null;
+  const made = await createRazorpayOrder({
+    amountInr: 1800, receipt: 'INV-2026-0001',
+    env: { RAZORPAY_KEY_ID: KEY, RAZORPAY_KEY_SECRET: SECRET },
+    fetchImpl: async (url, opt) => { seen = { url, body: JSON.parse(opt.body) }; return { ok: true, json: async () => ({ id: 'order_test_1', amount: 180000, currency: 'INR' }) }; },
+  });
+  assert.equal(made.ok, true);
+  assert.equal(made.test, true);
+  assert.equal(made.orderId, 'order_test_1');
+  assert.equal(made.keyId, KEY);
+  assert.equal(made.checkout.method.upi, true);
+  assert.equal(seen.url, 'https://api.razorpay.com/v1/orders');
+  assert.equal(seen.body.currency, 'INR');
+  assert.doesNotMatch(JSON.stringify(made), new RegExp(SECRET));
+  const live = await createRazorpayOrder({ amountInr: 1800, env: { RAZORPAY_KEY_ID: 'rzp_live_nope', RAZORPAY_KEY_SECRET: SECRET }, fetchImpl: async () => { throw new Error('no'); } });
+  assert.equal(live.configured, false);
 });
