@@ -131,6 +131,25 @@ test('a test Razorpay link is on the invoice and the reminder, and the webhook m
   } finally { await s.stop(); }
 });
 
+test('an invoice Pay action refuses to pretend success when Razorpay is not configured', async () => {
+  const s = await startServer({ ...MOCK, CLINIC_DEMO: '1' });
+  try {
+    const signed = await s.api('/api/auth/signup', { email: 'e2e-pay-' + Date.now() + '@example.com', name: 'Pay', password: PW });
+    const tok = signed.d.token;
+    await s.api('/api/clinic/profile', { biz: 'Pay Clinic', city: 'Hyderabad', services: 'Check-up', audience: 'Local owners', offer: 'This week' }, tok);
+    await s.api('/api/clinic/role', { role: 'dental' }, tok);
+    const clinic = await s.api('/api/clinic', undefined, tok);
+    const patient = (clinic.d.patients || [])[0];
+    assert.ok(patient && patient.id);
+    const made = await s.api('/api/clinic/invoices', { patientId: patient.id, items: [{ desc: 'Visit', qty: 1, rate: 1500 }] }, tok);
+    assert.equal(made.status, 200, JSON.stringify(made.d));
+    const pay = await s.api('/api/clinic/payments/order', { id: made.d.invoice.id }, tok);
+    assert.equal(pay.status, 400);
+    assert.match(pay.d.message, /not configured/);
+    assert.equal(pay.d.orderId, undefined);
+  } finally { await s.stop(); }
+});
+
 test('Razorpay orders stay in test mode and enable UPI inside Checkout', async () => {
   const missing = await createRazorpayOrder({ amountInr: 1800, receipt: 'INV-1', env: {} });
   assert.equal(missing.ok, false);
