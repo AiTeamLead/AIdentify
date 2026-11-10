@@ -1441,9 +1441,14 @@ function botSwitch() {
 }
 function render() {
   let body = '';
+  let parkedBot = null;
+  if (token && state && state.role && botMode) {
+    const frame = root.querySelector('iframe.bot-frame');
+    if (frame && frame.getAttribute('src') === botSrc()) { parkedBot = frame; frame.remove(); }
+  }
   if (!token) body = loginView();
   else if (!state) body = '<div class="auth"><div class="panel"><p class="sub">Loading…</p></div></div>';
-  else if (state.role && botMode) body = `<div class="bot-on">${botSwitch()}<iframe class="bot-frame" title="Bot Mode" src="${esc(botSrc())}"></iframe></div>`;
+  else if (state.role && botMode) body = `<div class="bot-on">${botSwitch()}${parkedBot ? '<div id="bot-slot"></div>' : `<iframe class="bot-frame" title="Bot Mode" src="${esc(botSrc())}"></iframe>`}</div>`;
   else if (state.role && !advanced) body = `<div class="bot-on">${botSwitch()}${chiefPage()}</div>`;
   else if (!state.role) body = screen === 'setup' && wiz === 'call' ? setupView() : profileView();
   else {
@@ -1456,6 +1461,7 @@ function render() {
   const obf = root.querySelector('.ob-form');
   const obKeep = obf ? Object.fromEntries(['provider', 'model', 'modelOther', 'key'].map((n) => { const el = obf.querySelector(`[name="${n}"]`); return [n, el ? el.value : '']; })) : null;
   root.innerHTML = body;
+  if (parkedBot) { const slot = root.querySelector('#bot-slot'); if (slot) slot.replaceWith(parkedBot); }
   if (obKeep) obRestore(obKeep);
   const navEl = root.querySelector('.side'); if (navEl) navEl.scrollTop = navTop;
   if (root.querySelector('select[data-ai-model]')) setTimeout(primeModels, 0);
