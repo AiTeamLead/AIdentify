@@ -863,7 +863,7 @@ function obValid(form) {
   ob.bad = ob.bad || {};
   const say = (m, el) => { ob.bad[id] = true; obPaintTrack(); const box = root.querySelector('.ob-msg'); if (box) { box.textContent = m; box.hidden = false; clearTimeout(obSave.t); obSave.t = setTimeout(() => { box.hidden = true; }, 3200); } const f = el && form.querySelector(el); if (f) { f.classList.add('ob-shake'); setTimeout(() => { f.classList.remove('ob-shake'); f.focus(); }, 380); } return false; };
   if (id === 'role') {
-    if (!ob.role) return say('Pick the kind of business you run.');
+    if (!ob.role) return say('Please select a business category to continue.');
     if (ob.role === 'other' && !ob.businessType.trim()) return say('Type what kind of business it is.', '[name="businessType"]');
   }
   if (['biz', 'city', 'services', 'audience'].includes(id) && !String(ob[id] || '').trim()) return say(id === 'services' ? 'Add at least one service.' : id === 'audience' ? 'Add at least one group of customers.' : 'This one is needed to set up your team.', ['services', 'audience'].includes(id) ? `[data-tags="${id}"]` : `[name="${id}"]`);
@@ -1772,7 +1772,6 @@ root.addEventListener('change', (e) => {
   const o = r.form.querySelector('.ob-other'); if (o) o.hidden = r.value !== 'other';
   const pk = obPack(), brand = root.querySelector('.ob-brand span'); if (brand && pk) brand.textContent = pk.title;
   if (r.value === 'other') setTimeout(() => o && o.querySelector('input').focus(), 30);
-  else setTimeout(() => { if (ob && obSteps()[ob.step].id === 'role' && ob.role === r.value) obShow(ob.step + 1); }, 320); // Typeform-style: a pick moves on
 });
 root.addEventListener('paste', (e) => {
   const t = e.target; if (!(t && t.classList && t.classList.contains('ob-tag-in'))) return;
