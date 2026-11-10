@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AIdentify</title>
+<style>html.bot-boot #auth,html.bot-boot .nav,html.bot-boot #side,html.bot-boot #main{display:none!important}html.bot-boot body{background:#0a0a0a}html.bot-boot body::after{content:"";position:fixed;left:50%;top:42%;width:180px;height:10px;margin-left:-90px;border-radius:999px;background:#27272a}</style>
+<script>(function(){try{var q=location.search+" "+location.hash;if(/(?:^|[?&#])bot=1(?:&|$)/.test(q))document.documentElement.classList.add("bot-boot")}catch(e){}})();</script>
 </head>
 <body>
 
@@ -1415,14 +1417,14 @@ function applyBrand(b){
 fetch('/api/branding').then(r=>r.ok?r.json():null).then(b=>{if(b&&b.name)applyBrand(b)}).catch(()=>{});
 function sessionUser(u){return {email:u.email,name:u.name,role:u.role||'customer',kind:u.kind||'',agencyRole:u.agencyRole||'',agency:u.agency||'',brand:u.brand||null,imp:!!u.imp}}
 function enter(u,welcome){
-  user=u;if(botMode){tab='My Workplace';welcome=false;}document.body.classList.toggle('bot-mode',!!botMode);document.body.classList.toggle('bot-mini',!!miniMode);if(u&&u.brand)applyBrand(u.brand);loadData();$('#vaVoice').checked=prefOf('voice')!==false;if(!tabsFor().some(x=>x[0]===tab))tab=tabsFor()[0][0];if(botMode)tab='My Workplace';document.body.classList.remove('locked');$('#auth').classList.add('hide');
+  user=u;if(botMode){tab='My Workplace';welcome=false;}document.documentElement.classList.remove('bot-boot');document.body.classList.toggle('bot-mode',!!botMode);document.body.classList.toggle('bot-mini',!!miniMode);if(u&&u.brand)applyBrand(u.brand);loadData();$('#vaVoice').checked=prefOf('voice')!==false;if(!tabsFor().some(x=>x[0]===tab))tab=tabsFor()[0][0];if(botMode)tab='My Workplace';document.body.classList.remove('locked');$('#auth').classList.add('hide');
   playIn();renderUser();renderStatic();refresh();window.scrollTo(0,0);
   if(botMode){/* clinic Bot Mode: the workplace chat, not the product tour */}
   else if(needsOnboard())showOnboard();
   else if(welcome)showIntro(u.name);
   setTimeout(wpInboxStart,1500);setTimeout(ffStart,2000);
 }
-function showAuth(){document.body.classList.add('locked');$('#auth').classList.remove('hide');loginAs='user';setMode('in');$('#aEmail').focus()}
+function showAuth(){document.documentElement.classList.remove('bot-boot');document.body.classList.add('locked');$('#auth').classList.remove('hide');loginAs='user';setMode('in');if(!botMode)$('#aEmail').focus()}
 function signOut(){
   const tok=SYNC.token;
   if(tok)fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:'{}'}).catch(()=>{});
@@ -1576,8 +1578,8 @@ $('#authForm').onsubmit=async e=>{
     if(hp.get('as_reset')){resetTok=hp.get('as_reset');history.replaceState(null,'',location.pathname+location.search);LS.del('as_tok');showAuth();setStep(5);return}
     if(hp.get('as_autherr')){history.replaceState(null,'',location.pathname+location.search);LS.del('as_tok');showAuth();err(hp.get('as_autherr'));return}
     if(hp.get('as_auth')){history.replaceState(null,'',location.pathname+location.search);
-      try{const t=hp.get('as_auth'),em=String(hp.get('em')||'').toLowerCase();await SYNC.auth(t);const me=await SYNC.api('/api/auth/me');await authDone({token:t,user:me.user},em,hp.get('rem')!=='0');return}
-      catch(x){LS.del('as_tok');showAuth();err('Google sign-in didn’t finish: '+(x.message||x));return}}
+      try{const t=hp.get('as_auth'),em=String(hp.get('em')||'').toLowerCase();await SYNC.auth(t);const me=await SYNC.api('/api/auth/me');await authDone({token:t,user:me.user},em||me.user.email,hp.get('rem')!=='0');return}
+      catch(x){LS.del('as_tok');showAuth();err(botMode?'This Bot Mode session expired. Sign in on the clinic page and open Bot Mode again.':'Google sign-in didn’t finish: '+(x.message||x));return}}
     const tok=LS.get('as_tok'),em=ST.get('as_session');
     let ok=false;if(tok&&em){try{ok=await SYNC.auth(tok)}catch(x){ok=false}}
     if(ok!==false&&tok&&em){try{users=JSON.parse(ST.get('as_users')||'{}')||{}}catch(x){}}
