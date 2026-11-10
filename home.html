@@ -166,7 +166,8 @@ try{const t=localStorage.getItem('as_theme');if(t==='light'||t==='dark')document
       <h2>Built for Small Businesses Across Different Industries.</h2>
       <p class="dek">One product. The words match the work. Each industry pack changes the labels and sample rows while the workspace and approval process stay familiar.</p>
       <div class="tabs" role="tablist" aria-label="Industries">
-        <button role="tab" id="tab-clinic" aria-controls="ind-clinic" aria-selected="true" type="button">Clinics</button>
+        <button role="tab" id="tab-mkt" aria-controls="ind-mkt" aria-selected="true" type="button">Digital marketing</button>
+        <button role="tab" id="tab-clinic" aria-controls="ind-clinic" aria-selected="false" type="button">Clinics</button>
         <button role="tab" id="tab-coach" aria-controls="ind-coach" aria-selected="false" type="button">Coaches and consultants</button>
         <button role="tab" id="tab-realty" aria-controls="ind-realty" aria-selected="false" type="button">Real estate brokers</button>
         <button role="tab" id="tab-salon" aria-controls="ind-salon" aria-selected="false" type="button">Salons, gyms and studios</button>
@@ -174,7 +175,11 @@ try{const t=localStorage.getItem('as_theme');if(t==='light'||t==='dark')document
         <button role="tab" id="tab-class" aria-controls="ind-class" aria-selected="false" type="button">Coaching institutes</button>
         <button role="tab" id="tab-other" aria-controls="ind-other" aria-selected="false" type="button">Other businesses</button>
       </div>
-      <div role="tabpanel" id="ind-clinic" aria-labelledby="tab-clinic" class="panel card">
+      <div role="tabpanel" id="ind-mkt" aria-labelledby="tab-mkt" class="panel card">
+        <h3>Digital marketing agencies</h3>
+        <p>Keep leads, retainers, reports and invoices in one desk. You approve every message. <a href="/Marketing">Explore this workspace</a></p>
+      </div>
+      <div role="tabpanel" id="ind-clinic" aria-labelledby="tab-clinic" class="panel card" hidden>
         <h3>Clinics</h3>
         <p>Manage bookings, enquiries and invoices. AIdentify is for admin—not medical records or advice. <a href="/clinic">Dental clinic</a> · <a href="/Aesthetic">Skin, hair and aesthetic clinic</a></p>
       </div>
@@ -276,6 +281,20 @@ try{const t=localStorage.getItem('as_theme');if(t==='light'||t==='dark')document
     </div>
   </section>
 
+  <section class="sec" id="pricing">
+    <div class="wrap">
+      <p class="eyebrow">Pricing</p>
+      <h2>Start free. Pay in rupees when you are ready.</h2>
+      <p class="dek">Every new account can skip the API key and use <b>₹ starter credit worth $1</b>. At $1, add your own key or choose a plan. Prices are examples of the two ways to run AaaS.</p>
+      <div class="grid g3">
+        <article class="card"><h3>Starter credit</h3><p>$1 of platform model use. No card. You approve every draft.</p></article>
+        <article class="card"><h3>Self-hosted</h3><p>₹2,999 / month. One-time setup ₹9,999, waived on an annual plan. Runs on your server.</p></article>
+        <article class="card"><h3>Hosted</h3><p>₹4,999 / month. We run it, with backups and updates. No install.</p></article>
+      </div>
+      <p><a class="btn solid" href="/Aesthetic#signup">Build my AI team — free</a></p>
+    </div>
+  </section>
+
   <section class="sec" id="faq">
     <div class="wrap">
       <p class="eyebrow">Questions</p>
@@ -283,7 +302,7 @@ try{const t=localStorage.getItem('as_theme');if(t==='light'||t==='dark')document
       <div class="faq">
         <details><summary>What is AIdentify?</summary><p>AIdentify brings AI agents, customer records, follow-ups, invoices and approvals together in one workspace.</p></details>
         <details><summary>Do I need technical knowledge?</summary><p>No. Create an account and choose your industry. To use AI agents, connect a supported provider with your own API key.</p></details>
-        <details><summary>Do I need my own AI API key?</summary><p>Yes. Connect a supported provider using your own key. Your AI provider may charge for usage.</p></details>
+        <details><summary>Do I need my own AI API key?</summary><p>You can start on a $1 platform credit. After that, connect your own key or choose the self-hosted or hosted plan. Your provider bills usage on your key.</p></details>
         <details><summary>Will AI send messages automatically?</summary><p>No. Outgoing drafts wait for your review and approval. Sending also requires a connected channel.</p></details>
         <details><summary>Can I use AIdentify for my industry?</summary><p>Industry packs are available for clinics, coaches and consultants, real estate, salons and studios, home services, coaching institutes and other businesses. Clinic tools are for administration, not medical records or advice.</p></details>
         <details><summary>Can I manage all my customers in one place?</summary><p>Yes. Organise customer records, enquiries, follow-ups and invoices in your AIdentify workspace. CSV export is available.</p></details>
