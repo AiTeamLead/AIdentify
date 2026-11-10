@@ -466,7 +466,9 @@ const START_PATH = (location.pathname.replace(/\.html$/i, '').replace(/\/+$/, ''
 // "/" lists every industry; each industry path (/clinic, /Realestate, …) has its own sign-in for that industry.
 const ON_ROOT = /^\/(index(\.html)?)?$/.test(location.pathname);
 try { if (!ON_ROOT) sessionStorage.setItem('aaas_link', START_PATH); else sessionStorage.removeItem('aaas_link'); } catch (e) {}
-function toRoot() { if (location.pathname !== '/Aesthetic' || location.hash) history.replaceState(null, '', '/Aesthetic'); }
+function toRoot() { if (/^\/onboarding\/step\/[1-7]$/.test(location.pathname)) return; if (location.pathname !== '/Aesthetic' || location.hash) history.replaceState(null, '', '/Aesthetic'); }
+function captureReturn() { if (/^\/onboarding\/step\/[1-7]$/.test(location.pathname)) { try { sessionStorage.setItem('aaas_return', location.pathname); } catch (e) {} } }
+function onboardingStepFromPath() { const m = location.pathname.match(/^\/onboarding\/step\/([1-7])$/); return m ? Number(m[1]) - 1 : -1; }
 // the industry of the link this tab came in on (signed-out sign-in page, and "For this link" on the industry picker)
 function entryPack() { let l = ''; try { l = (sessionStorage.getItem('aaas_link') || '').toLowerCase(); } catch (e) {} return l ? ((state && state.packs) || meta.packs || []).find((p) => p.path && p.path.toLowerCase() === l) : null; }
 function homePath() { return (state && state.role && state.rolePath) || (token ? START_PATH : '/clinic'); }
@@ -502,7 +504,7 @@ const root = document.getElementById('root');
 async function api(path, body) {
   const r = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers: { 'content-type':'application/json', ...(token ? { authorization:'Bearer ' + token } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
   const d = await r.json().catch(() => ({}));
-  if (r.status === 401) { token = ''; sessionStorage.removeItem('aaas_clinic_token'); screen = 'login'; toRoot(); throw new Error(d.message || 'Please sign in again.'); }
+  if (r.status === 401) { captureReturn(); token = ''; sessionStorage.removeItem('aaas_clinic_token'); screen = 'login'; toRoot(); throw new Error('Your session expired. Sign in to continue — your progress is saved.'); }
   if (!r.ok) throw new Error(d.message || 'That did not work.');
   return d;
 }
@@ -769,8 +771,20 @@ function profileView() {
   </div>`;
 }
 // step navigation without re-rendering, so focus, typed text and the AI fields stay put
-function obShow(i) {
+function saveOnboardingDraft() {
+  if (!ob || !token || (state && state.role)) return;
+  const snap = { step: ob.step, role: ob.role, biz: ob.biz, city: ob.city, services: ob.services, audience: ob.audience, businessType: ob.businessType };
+  try { localStorage.setItem('aaas_ob_draft', JSON.stringify(snap)); } catch (e) {}
+  clearTimeout(saveOnboardingDraft.t);
+  saveOnboardingDraft.t = setTimeout(() => { api('/api/clinic/onboarding/draft', snap).catch(() => {}); }, 250);
+}
+function obShow(i, opt) {
   const steps = obSteps(); const from = ob.step; ob.step = Math.max(0, Math.min(i, steps.length - 1)); ob.dir = ob.step < from ? 'back' : 'fwd';
+  if (!opt || !opt.quiet) {
+    const path = '/onboarding/step/' + (ob.step + 1);
+    if (location.pathname !== path) history.pushState({ ob: ob.step }, '', path);
+  }
+  saveOnboardingDraft();
   if (['biz', 'city', 'review'].includes(steps[ob.step].id)) render(); // those questions quote earlier answers
   const id = steps[ob.step].id;
   const fm = root.querySelector('.ob-form'); if (fm) fm.dataset.dir = ob.dir;
@@ -1472,8 +1486,20 @@ function render() {
 async function reload() {
   state = await api('/api/clinic');
   syncPath();
+  if (state.role && /^\/onboarding\/step\//.test(location.pathname)) history.replaceState(null, '', state.rolePath || '/clinic');
   if (!state.role && skipProfile) { state = await api('/api/clinic/role', { role: 'dental' }); syncPath(); } // the sample business opens as a dental clinic; it can switch in the sidebar
-  if (!state.role) screen = 'profile';
+  if (!state.role) {
+    screen = 'profile';
+    ob = null; obInit();
+    const fromPath = onboardingStepFromPath();
+    let backup = null; try { backup = JSON.parse(localStorage.getItem('aaas_ob_draft') || 'null'); } catch (e) { backup = null; }
+    if (backup && typeof backup === 'object') {
+      for (const k of ['role', 'biz', 'city', 'services', 'audience', 'businessType']) if (!ob[k] && backup[k]) ob[k] = backup[k];
+    }
+    if (state.draftRole && !ob.role) ob.role = state.draftRole;
+    const saved = Number(state.onboardingStep);
+    ob.step = fromPath >= 0 ? fromPath : (Number.isFinite(saved) ? saved : (backup && Number.isFinite(Number(backup.step)) ? Number(backup.step) : 0));
+  }
   render();
 }
 async function act(name, el) {
@@ -1511,6 +1537,8 @@ async function act(name, el) {
       const path = mode === 'create' ? '/api/auth/signup' : '/api/auth/login';
       const d = await api(path, { email:f.email, password:f.password, name:f.name || 'Clinic owner' });
       token = d.token; sessionStorage.setItem('aaas_clinic_token', token); err = ''; toast = ''; skipProfile = false;
+      let ret = ''; try { ret = sessionStorage.getItem('aaas_return') || ''; sessionStorage.removeItem('aaas_return'); } catch (e) {}
+      if (/^\/onboarding\/step\/[1-7]$/.test(ret)) history.replaceState(null, '', ret);
       await reload(); if (state && state.role) { screen = 'dash'; applyBot(); render(); } return;
     }
     if (name === 'demo') {
@@ -1841,7 +1869,8 @@ root.addEventListener('input', (e) => { if (e.target.id === 'chatIn') chatDraft 
   if (location.hash === '#forgot') { mode = 'forgot'; history.replaceState(null, '', location.pathname); }
   if (hash.get('as_reset')) { resetTok = hash.get('as_reset'); mode = 'reset'; token = ''; sessionStorage.removeItem('aaas_clinic_token'); history.replaceState(null, '', location.pathname); }
   try { meta = await (await fetch('/api/clinic/meta')).json(); } catch { /* offline */ }
-  if (!token) { const ep = entryPack(); if (ep) { if (location.pathname !== ep.path || location.hash) history.replaceState(null, '', ep.path); document.title = 'AIdentify · ' + ep.title; } else toRoot(); }
+  if (!token) { captureReturn(); const ep = entryPack(); if (ep) { if (location.pathname !== ep.path || location.hash) history.replaceState(null, '', ep.path); document.title = 'AIdentify · ' + ep.title; } else toRoot(); }
+  window.addEventListener('popstate', () => { if (!ob || (state && state.role)) return; const i = onboardingStepFromPath(); if (i >= 0 && i !== ob.step) obShow(i, { quiet: true }); });
   window.addEventListener('message', (e) => {
     const mini = document.querySelector('#chiefMini iframe');
     if (e.origin === location.origin && e.data && e.data.type === 'aaas-mini' && mini && e.source === mini.contentWindow) {
@@ -1850,7 +1879,7 @@ root.addEventListener('input', (e) => { if (e.target.id === 'chatIn') chatDraft 
     if (e.origin !== location.origin || !e.data || e.data.type !== 'aaas-bot' || e.data.on !== false) return;
     botMode = false; writeBot(false); advanced = true; writeAdvanced(true); screen = 'dash'; setView('advanced'); render();
   });
-  if (token) { try { await reload(); if (state && state.role) { applyBot(); render(); } } catch { token = ''; screen = 'login'; toRoot(); render(); } }
+  if (token) { try { await reload(); if (state && state.role) { applyBot(); render(); } } catch (e) { err = (e && e.message) || 'Your session expired. Sign in to continue — your progress is saved.'; token = ''; screen = 'login'; toRoot(); render(); } }
   else render();
 })();
 </script>

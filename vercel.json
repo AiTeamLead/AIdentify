@@ -40,6 +40,10 @@
       "destination": "/clinic.html"
     },
     {
+      "source": "/onboarding/step/:step",
+      "destination": "/clinic.html"
+    },
+    {
       "source": "/setup",
       "destination": "/setup.html"
     },
