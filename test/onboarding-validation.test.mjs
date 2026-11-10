@@ -66,6 +66,22 @@ test('locations hold branches and summarize as City +N', async () => {
   } finally { await s.stop(); }
 });
 
+test('industry offers are structured percent or flat amounts', async () => {
+  const { offerTemplates, normalizeOffers } = await import('../lib/validation/onboarding.js');
+  const dental = offerTemplates('dental');
+  assert.equal(dental[0].type, 'percent');
+  assert.equal(dental[1].type, 'flat');
+  assert.equal(normalizeOffers([{ title: '123', type: 'percent', value: 10 }]).ok, false);
+  const s = await startServer({ RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on' });
+  try {
+    const tok = (await s.api('/api/auth/signup', { email: 'e2e-off-' + Date.now() + '@example.com', name: 'O', password: 'Clinic-pass-123!' })).d.token;
+    const saved = await s.api('/api/clinic/onboarding/draft', { step: 3, offers: dental, biz: 'Harbour Dental', city: 'Pune' }, tok);
+    assert.equal(saved.status, 200, JSON.stringify(saved.d));
+    assert.equal(saved.d.profile.offers[0].type, 'percent');
+    assert.equal(saved.d.profile.offers[1].value, 500);
+  } finally { await s.stop(); }
+});
+
 test('phone numbers are E.164 for India and emails are rejected', () => {
   assert.equal(validatePhone('9876543210').value, '+919876543210');
   assert.equal(validatePhone('+91 98765 43210').value, '+919876543210');

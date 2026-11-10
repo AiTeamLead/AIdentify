@@ -761,8 +761,8 @@ function profileView() {
       html: `<div class="ob-iw${obCheck('biz') ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="60" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><p class="ob-countline"><span data-count="biz">${String(tidyOb(ob.biz)).length}/60</span></p><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheck('biz') ? obCheer('biz') : '')}</p>` })}
     ${step('city', { q: `Where does <em>${esc(nameFor)}</em> work?`, sub: 'Add each city, then the branches in that city. Paste a CSV for a long list: City, Branch, Area, Phone.',
       html: `<div class="ob-iw${obCheck('city') ? ' valid' : ''}"><input class="ob-input" name="city" maxlength="80" value="${esc(ob.city)}" placeholder="City" autocomplete="address-level2" list="obCities"><span class="ob-okic" aria-hidden="true">✓</span></div><datalist id="obCities">${OB_CITIES.map((c) => `<option value="${esc(c)}"></option>`).join('')}</datalist>${obChips('city', OB_CITIES)}<ul class="ob-loc" aria-label="Locations">${(ob.locations || []).map((l) => `<li><b>${esc(l.city)}</b> <span class="small">${(l.branches || []).length ? esc(l.branches.length + ' branches') : 'city only'}</span></li>`).join('') || '<li class="small">No location yet.</li>'}</ul><p class="small">${esc(ob.locationSummary || '')}</p><label class="small">Branches for the city above<textarea data-branch-csv rows="3" placeholder="Hyderabad, Banjara Hills, Road 12, 9876543210"></textarea></label>` })}
-    ${step('services', { q: 'What do you offer?', sub: 'Type a service and press <b>Enter</b> or comma. Tap a suggestion to add it.',
-      html: `${obTagsHtml('services', 'e.g. ' + ((sug.services || [])[0] || 'Consultation'))}<p class="ob-cheer" data-cheer="services" aria-live="polite">${esc(obCheer('services'))}</p>${obChips('services', sug.services || [])}` })}
+    ${step('services', { q: 'What do you offer?', sub: 'Type a service and press <b>Enter</b> or comma. Tap a suggestion to add it. Offers below can become coupon codes on invoices.',
+      html: `${obTagsHtml('services', 'e.g. ' + ((sug.services || [])[0] || 'Consultation'))}<p class="ob-cheer" data-cheer="services" aria-live="polite">${esc(obCheer('services'))}</p>${obChips('services', sug.services || [])}<p class="ob-sub">Suggested offers</p><div class="ob-chips">${((globalThis.OBV && ob.role && globalThis.OBV.offerTemplates(ob.role)) || []).map((o) => `<button type="button" class="ob-chip${(ob.offers || []).some((x) => x.id === o.id) ? ' used' : ''}" data-offer="${esc(o.id)}" data-offer-json="${esc(JSON.stringify(o))}">+ ${esc(o.title)}</button>`).join('')}</div>` })}
     ${step('audience', { q: 'Who do you want to reach?', sub: 'The people your posts and follow-ups speak to. Add as many as you like.',
       html: `${obTagsHtml('audience', 'e.g. Families nearby')}<p class="ob-cheer" data-cheer="audience" aria-live="polite">${esc(obCheer('audience'))}</p>${obChips('audience', ['Families nearby', 'Working professionals', 'Students', 'Senior citizens', ...(sug.audience || [])])}` })}
     ${step('ai', { q: 'Connect your AI', sub: 'Agents run on your own key and you pay the provider directly. You can skip this and add it later in Settings.',
@@ -1782,6 +1782,15 @@ async function act(name, el) {
 root.addEventListener('click', (e) => {
   const form = e.target.closest && e.target.closest('.ob-form'); const shell = e.target.closest && e.target.closest('.ob');
   if (!shell || !ob) return;
+  const offerBtn = e.target.closest('[data-offer]');
+  if (offerBtn && ob) {
+    let row = null; try { row = JSON.parse(offerBtn.getAttribute('data-offer-json') || ''); } catch (err) { row = null; }
+    if (row && globalThis.OBV) {
+      const r = globalThis.OBV.normalizeOffers([...(ob.offers || []).filter((x) => x.id !== row.id), row]);
+      if (r.ok) { ob.offers = r.offers; offerBtn.classList.add('used'); }
+    }
+    return;
+  }
   const chip = e.target.closest('[data-ob-chip]');
   if (chip && form) {
     const f = chip.dataset.obChip, el = form.querySelector(`[name="${f}"]`); if (!el) return;
