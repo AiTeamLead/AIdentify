@@ -1253,7 +1253,7 @@ const submitPrompt=()=>{const i=$('#promptIn');if(!i.value.trim())return i.focus
 $('#promptForm').onsubmit=e=>{e.preventDefault();submitPrompt()};
 $('#promptIn').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitPrompt()}};
 $('#q').oninput=e=>{q=e.target.value.trim().toLowerCase();if(tab!=='Dashboard'&&tab!=='Agents'){tab='Agents';renderStatic()}refresh()};
-setInterval(()=>{renderBell();if(tab==='Analytics')renderTab()},60000);
+setInterval(()=>{if(document.hidden)return;renderBell();if(tab==='Analytics')renderTab()},60000);
 (function(){
   const bb=$('#bubble');let T=[];
   window.perform=function(name,task,id){
@@ -1368,7 +1368,7 @@ const SYNC=(()=>{
   async function auth(t){
     tok=t;be=httpBe;dead=false;
     try{const items=await be.load();const ch=[];items.forEach(it=>{if(apply(it,true))ch.push(it.k)});loaded=true;readyRes(true);
-      clearInterval(poll);poll=setInterval(async()=>{if(document.hidden||!tok)return;try{const c2=[];(await be.load()).forEach(it=>{if(apply(it,false))c2.push(it.k)});if(c2.length)onChange(c2)}catch(e){}},15000);
+      clearInterval(poll);poll=setInterval(async()=>{if(document.hidden||!tok)return;try{const c2=[];(await be.load()).forEach(it=>{if(apply(it,false))c2.push(it.k)});if(c2.length)onChange(c2)}catch(e){}},30000);
       return ch}
     catch(e){tok=null;be=null;if(e&&(e.status===401||e.status===403))return false;throw e}
   }

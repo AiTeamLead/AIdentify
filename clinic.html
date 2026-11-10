@@ -1111,7 +1111,7 @@ function front() {
           <div><button class="btn" type="submit">Add enquiry</button></div>
         </form>
         <div class="scroll"><table><thead><tr><th>Who</th><th>Channel</th><th>Status</th><th></th></tr></thead><tbody>
-          ${(state.enquiries||[]).map((e) => `<tr><td>${esc(e.name)}${e.demo?' <span class="pill">DEMO</span>':''}<div class="small">${esc(e.message||'')}</div></td><td>${esc(e.channel)}<div class="small">${esc(e.phone)}</div></td><td>${pill(e.status)}</td><td class="row-actions">
+          ${(state.enquiries||[]).slice(0, 25).map((e) => `<tr><td>${esc(e.name)}${e.demo?' <span class="pill">DEMO</span>':''}<div class="small">${esc(e.message||'')}</div></td><td>${esc(e.channel)}<div class="small">${esc(e.phone)}</div></td><td>${pill(e.status)}</td><td class="row-actions">
             <button class="btn-ghost" type="button" data-act="enq-status" data-id="${e.id}" data-status="${e.status==='closed'?'new':'closed'}">${e.status==='closed'?'Reopen':'Close'}</button>
             <button class="btn-danger" type="button" data-act="enq-del" data-id="${e.id}">Delete</button>
           </td></tr>`).join('') || '<tr><td colspan="4">No enquiries yet.</td></tr>'}
@@ -1126,7 +1126,7 @@ function front() {
           <div><button class="btn" type="submit">Add appointment</button></div>
         </form>
         <div class="scroll"><table><thead><tr><th>When</th><th>Who</th><th>Status</th><th></th></tr></thead><tbody>
-          ${(state.appointments||[]).map((ap) => `<tr><td>${esc(when(ap.at))}<div class="small">${esc(ap.service)} · ${inr(ap.fee)}</div></td><td>${esc(pname(ap.patientId))}${ap.demo?' <span class="pill">DEMO</span>':''}</td><td>${pill(ap.status)}${ap.reminder?`<div class="small">Reminder ${esc(ap.reminder.status)}</div>`:''}</td><td class="row-actions">
+          ${(state.appointments||[]).slice(0, 25).map((ap) => `<tr><td>${esc(when(ap.at))}<div class="small">${esc(ap.service)} · ${inr(ap.fee)}</div></td><td>${esc(pname(ap.patientId))}${ap.demo?' <span class="pill">DEMO</span>':''}</td><td>${pill(ap.status)}${ap.reminder?`<div class="small">Reminder ${esc(ap.reminder.status)}</div>`:''}</td><td class="row-actions">
             <button class="btn-ghost" type="button" data-act="appt-status" data-id="${ap.id}" data-status="noshow">Mark missed</button>
             <button class="btn-ghost" type="button" data-act="remind" data-id="${ap.id}">Queue reminder</button>
             <button class="btn-danger" type="button" data-act="appt-del" data-id="${ap.id}">Delete</button>

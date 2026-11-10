@@ -157,7 +157,7 @@ document.addEventListener('click', async (e) => {
       await api('/api/groups/agent', { aid: id, group: q('group'), model: q('model'), tools: [...document.querySelectorAll(`[data-ag="${id}"][data-tool]:checked`)].map((x) => x.dataset.tool) }); say('Saved'); load(); }
   } catch (x) { say(x.message); b.disabled = false; }
 });
-load(); setInterval(() => { if (!$('#dlg').open && document.activeElement.tagName !== 'INPUT') load(); }, 5000);
+load(); setInterval(() => { if (document.hidden || $('#dlg').open || document.activeElement.tagName === 'INPUT') return; load(); }, 15000);
 </script>
 </body>
 </html>
