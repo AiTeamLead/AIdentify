@@ -1288,6 +1288,7 @@ function billing() {
   const opts = (state.patients||[]).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
   const rows = (state.invoices||[]).map((inv) => `<tr><td>${esc(inv.number)}${inv.demo?' <span class="pill">DEMO</span>':''}<div class="small">${esc(pname(inv.patientId))}</div>${inv.payLink?`<div class="small"><a class="link" href="${esc(inv.payLink)}"${String(inv.payLink).startsWith('http')?' target="_blank" rel="noopener"':''}>${inv.payMode==='razorpay'?'Payment link':'UPI link'}</a></div>`:''}</td><td>${inr(inv.total)}</td><td>${pill(inv.state)}</td><td class="row-actions">
     <button class="btn-ghost" type="button" data-act="paid" data-id="${inv.id}" data-status="${inv.state==='paid'?'unpaid':'paid'}">${inv.state==='paid'?'Mark unpaid':'Mark paid'}</button>
+    ${inv.state!=='paid'?`<button class="btn-ghost" type="button" data-act="pay-order" data-id="${inv.id}">Pay</button>`:''}
     ${state.demo && inv.state!=='paid'?`<button class="btn-ghost" type="button" data-act="pay-sim" data-id="${inv.id}">Simulate payment</button>`:''}
     <button class="btn-ghost" type="button" data-act="remind-inv" data-id="${inv.id}">Queue reminder</button>
     <button class="btn-ghost" type="button" data-act="print" data-id="${inv.id}">Print</button>
@@ -1745,6 +1746,15 @@ async function act(name, el) {
     }
     else if (name === 'paid') { await api('/api/clinic/invoices/update', { id: Number(el.dataset.id), status: el.dataset.status }); flash(el.dataset.status==='paid' ? 'Marked paid. The dashboard uses paid invoices.' : 'Marked unpaid.'); }
     else if (name === 'remind-inv') { await api('/api/clinic/invoices/remind', { id: Number(el.dataset.id) }); flash('Payment reminder queued. Nothing was sent.'); }
+    else if (name === 'pay-order') {
+      const d = await api('/api/clinic/payments/order', { id: Number(el.dataset.id) });
+      if (!d.checkout || !d.checkout.key) throw new Error(d.error || 'Razorpay is not configured.');
+      const s = document.createElement('script'); s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = () => { if (!window.Razorpay) { flash('Razorpay Checkout did not load.'); return; } const rz = new window.Razorpay({ ...d.checkout, handler() { flash('Payment received. The invoice is marked paid when the webhook arrives.'); reload(); } }); rz.open(); };
+      s.onerror = () => flash('Razorpay Checkout did not load.');
+      document.body.appendChild(s);
+      return;
+    }
     else if (name === 'pay-sim') { await api('/api/clinic/payments/simulate', { id: Number(el.dataset.id) }); flash('Simulated the paid webhook. The invoice is marked paid. Razorpay was not called.'); }
     else if (name === 'print' || name === 'pdf') {
       const r = await fetch('/api/clinic/invoices/' + el.dataset.id + (name==='pdf'?'/pdf':'/print'), { headers: { authorization: 'Bearer ' + token } });
@@ -1796,6 +1806,18 @@ async function act(name, el) {
 root.addEventListener('click', (e) => {
   const form = e.target.closest && e.target.closest('.ob-form'); const shell = e.target.closest && e.target.closest('.ob');
   if (!shell || !ob) return;
+  const placeBtn = e.target.closest('[data-place]');
+  if (placeBtn && ob) {
+    const box = root.querySelector('.ob-places'); if (box) { box.hidden = true; box.innerHTML = ''; }
+    if (placeBtn.dataset.place === 'none') return;
+    const name = placeBtn.dataset.name || '';
+    const input = form && form.querySelector('[name="biz"]');
+    if (input && name) input.value = name;
+    ob.biz = name;
+    ob.place = { placeId: placeBtn.dataset.place || '', name, address: placeBtn.dataset.address || '', phone: placeBtn.dataset.phone || '' };
+    obPaintTrack(); obPaintPreview();
+    return;
+  }
   const offerBtn = e.target.closest('[data-offer]');
   if (offerBtn && ob) {
     let row = null; try { row = JSON.parse(offerBtn.getAttribute('data-offer-json') || ''); } catch (err) { row = null; }
@@ -1878,8 +1900,26 @@ root.addEventListener('input', (e) => {
   }
   obSave(f);
   if (e.target.name === 'city') obAddLocation(e.target.value);
+  if (e.target.name === 'biz') obSearchPlaces(e.target.value);
   obPaintTrack(); obPaintPreview();
 });
+let obPlaceTimer = 0;
+function obSearchPlaces(q) {
+  clearTimeout(obPlaceTimer);
+  const query = String(q || '').trim();
+  const box = root.querySelector('.ob-places');
+  if (!box) return;
+  if (query.length < 3 || !token) { box.hidden = true; box.innerHTML = ''; return; }
+  obPlaceTimer = setTimeout(() => {
+    api('/api/clinic/places', { q: query }).then((d) => {
+      const matches = (d && d.matches) || [];
+      if (!matches.length) { box.hidden = true; box.innerHTML = ''; return; }
+      box.hidden = false;
+      box.innerHTML = matches.map((m) => `<button type="button" class="ob-chip" data-place="${esc(m.placeId)}" data-name="${esc(m.name)}" data-address="${esc(m.address || '')}" data-phone="${esc(m.phone || '')}">${esc(m.name)} <small>${esc(m.address || '')}</small></button>`).join('')
+        + '<button type="button" class="ob-chip" data-place="none">My business isn\'t listed</button>';
+    }).catch(() => { box.hidden = true; });
+  }, 400);
+}
 document.addEventListener('keydown', (e) => {
   const f = root.querySelector('.ob-form'); if (!f || !ob || e.isComposing) return;
   const id = obSteps()[ob.step].id, t = e.target;
