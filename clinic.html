@@ -667,7 +667,7 @@ function obCheer(id) {
 }
 const OB_AV = ['#6d5dfc', '#0ea5e9', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6'];
 function obPreviewHtml() {
-  const pk = obPack(), name = String(ob.biz || '').trim(), city = String(ob.city || '').trim();
+  const pk = obPack(), name = obCheck('biz') ? String(ob.biz || '').trim() : '', city = obCheck('city') ? (ob.locationSummary || String(ob.city || '').trim()) : '';
   const svc = obList(ob.services), aud = obList(ob.audience);
   const kind = ob.role === 'other' ? (ob.businessType || 'Your business') : (pk ? pk.title : 'Pick a business type');
   const agents = (pk && pk.agents) || ['Front Desk', 'Follow-up', 'Reviews & Referrals', 'Social Media', 'Owner Insights', 'Billing & Invoicing'];
@@ -753,7 +753,7 @@ function profileView() {
   });
   const reviewRows = [
     ...(state && state.role ? [] : [['Business', ob.role === 'other' ? (ob.businessType || 'Other') : ((pk && pk.title) || '—'), 'role']]),
-    ['Name', ob.biz || '—', 'biz'], ['City', ob.city || '—', 'city'], ['Services', ob.services || '—', 'services'], ['Customers', ob.audience || '—', 'audience'],
+    ['Name', obCheck('biz') ? ob.biz : '—', 'biz'], ['Locations', (ob.locationSummary || (obCheck('city') ? ob.city : '')) || '—', 'city'], ['Services', obCheck('services') ? ob.services : '—', 'services'], ['Customers', obCheck('audience') ? ob.audience : '—', 'audience'], ['Offers', (ob.offers || []).map((o) => o.title).join(', ') || '—', 'services'],
   ];
   const form = `<form class="ob-form" data-act="profile" novalidate>
     ${roleStep}
@@ -780,7 +780,7 @@ function profileView() {
         <div class="brand ob-brand"><div class="mark">A</div><div><b>AIdentify</b><span>${esc(pk ? (ob.role === 'other' && ob.businessType ? ob.businessType : pk.title) : 'Your AI team')}</span></div></div>
         <p class="ob-foot">About 2 minutes · <button type="button" class="ob-link" data-act="go" data-screen="setup" data-wiz="call">Prefer a setup call?</button></p>
       </div>
-      <h1 class="ob-h">Let’s build your team${ob.biz ? ` for <span>${esc(ob.biz)}</span>` : ''}.</h1>
+      <h1 class="ob-h">Let’s build your team${obCheck('biz') ? ` for <span>${esc(ob.biz)}</span>` : ''}.</h1>
       <p class="ob-lead">Six AI teammates for enquiries, follow-ups, reviews, social posts, insights and invoices. Nothing goes out until you approve it.</p>
     </header>
     <main class="ob-main">
@@ -890,7 +890,7 @@ function obTrackHtml(at) {
 }
 function obPaintTrack() {
   const t = root.querySelector('.ob-flow'); if (t && ob) t.innerHTML = obTrackHtml(ob.step);
-  const h = root.querySelector('.ob-h'); if (h && ob) h.innerHTML = `Let’s build your team${String(ob.biz || '').trim() ? ` for <span>${esc(ob.biz.trim())}</span>` : ''}.`;
+  const h = root.querySelector('.ob-h'); if (h && ob) h.innerHTML = `Let’s build your team${obCheck('biz') ? ` for <span>${esc(ob.biz.trim())}</span>` : ''}.`;
 }
 function obSave(form) {
   if (!form || !ob) return;
