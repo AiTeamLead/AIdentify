@@ -622,6 +622,13 @@ const OB_ICONS = { marketing: '📣', dental: '🦷', aesthetic: '✨', coach: '
 const OB_CITIES = ['Hyderabad', 'Bengaluru', 'Mumbai', 'Delhi', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad'];
 let ob = null;
 function tidyOb(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
+function obAddLocation(city, branches) {
+  const V = globalThis.OBV; if (!V || !ob) return null;
+  const r = V.normalizeLocations([...(ob.locations || []), { city, branches: branches || [] }], { places: ob.places || [] });
+  if (!r.ok) return r;
+  ob.locations = r.locations; ob.city = r.city; ob.locationSummary = r.summary;
+  return r;
+}
 function obInit() {
   if (ob) return ob;
   const p = (state && state.profile) || {};
@@ -752,8 +759,8 @@ function profileView() {
     ${roleStep}
     ${step('biz', { q: `What’s the name of your ${esc(typeName.toLowerCase())}?`, sub: 'This is how your posts and messages sign off.',
       html: `<div class="ob-iw${obCheck('biz') ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="60" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><p class="ob-countline"><span data-count="biz">${String(tidyOb(ob.biz)).length}/60</span></p><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheck('biz') ? obCheer('biz') : '')}</p>` })}
-    ${step('city', { q: `Where is <em>${esc(nameFor)}</em>?`, sub: 'Posts and review requests mention the city.',
-      html: `<div class="ob-iw${String(ob.city).trim() ? ' valid' : ''}"><input class="ob-input" name="city" maxlength="80" value="${esc(ob.city)}" placeholder="City" autocomplete="address-level2" list="obCities"><span class="ob-okic" aria-hidden="true">✓</span></div><datalist id="obCities">${OB_CITIES.map((c) => `<option value="${esc(c)}"></option>`).join('')}</datalist><p class="ob-cheer" data-cheer="city" aria-live="polite">${esc(obCheer('city'))}</p>${obChips('city', OB_CITIES)}` })}
+    ${step('city', { q: `Where does <em>${esc(nameFor)}</em> work?`, sub: 'Add each city, then the branches in that city. Paste a CSV for a long list: City, Branch, Area, Phone.',
+      html: `<div class="ob-iw${obCheck('city') ? ' valid' : ''}"><input class="ob-input" name="city" maxlength="80" value="${esc(ob.city)}" placeholder="City" autocomplete="address-level2" list="obCities"><span class="ob-okic" aria-hidden="true">✓</span></div><datalist id="obCities">${OB_CITIES.map((c) => `<option value="${esc(c)}"></option>`).join('')}</datalist>${obChips('city', OB_CITIES)}<ul class="ob-loc" aria-label="Locations">${(ob.locations || []).map((l) => `<li><b>${esc(l.city)}</b> <span class="small">${(l.branches || []).length ? esc(l.branches.length + ' branches') : 'city only'}</span></li>`).join('') || '<li class="small">No location yet.</li>'}</ul><p class="small">${esc(ob.locationSummary || '')}</p><label class="small">Branches for the city above<textarea data-branch-csv rows="3" placeholder="Hyderabad, Banjara Hills, Road 12, 9876543210"></textarea></label>` })}
     ${step('services', { q: 'What do you offer?', sub: 'Type a service and press <b>Enter</b> or comma. Tap a suggestion to add it.',
       html: `${obTagsHtml('services', 'e.g. ' + ((sug.services || [])[0] || 'Consultation'))}<p class="ob-cheer" data-cheer="services" aria-live="polite">${esc(obCheer('services'))}</p>${obChips('services', sug.services || [])}` })}
     ${step('audience', { q: 'Who do you want to reach?', sub: 'The people your posts and follow-ups speak to. Add as many as you like.',
@@ -786,7 +793,7 @@ function profileView() {
 // step navigation without re-rendering, so focus, typed text and the AI fields stay put
 function saveOnboardingDraft() {
   if (!ob || !token || (state && state.role)) return;
-  const snap = { step: ob.step, role: ob.role, biz: ob.biz, city: ob.city, services: ob.services, audience: ob.audience, businessType: ob.businessType };
+  const snap = { step: ob.step, role: ob.role, biz: ob.biz, city: ob.city, services: ob.services, audience: ob.audience, businessType: ob.businessType, locations: ob.locations || [], offers: ob.offers || [] };
   try { localStorage.setItem('aaas_ob_draft', JSON.stringify(snap)); } catch (e) {}
   clearTimeout(saveOnboardingDraft.t);
   saveOnboardingDraft.t = setTimeout(() => { api('/api/clinic/onboarding/draft', snap).catch(() => {}); }, 250);
@@ -829,7 +836,10 @@ function obCheck(id) {
   if (!ob) return false;
   if (!V) return !!String(ob[id] || '').trim();
   if (id === 'biz') return V.validateBusinessName(ob.biz).ok;
-  if (id === 'city') return V.validateLocation(ob.city, { places: ob.places || [] }).ok;
+  if (id === 'city') {
+    if (ob.locations && ob.locations.length) return ob.locations.every((l) => V.validateLocation(l.city, { places: ob.places || [] }).ok);
+    return V.validateLocation(ob.city, { places: ob.places || [] }).ok;
+  }
   if (id === 'services') { const list = obList(ob.services); return list.length > 0 && list.length <= V.LIMITS.services && list.every((x) => V.validateService(x).ok); }
   if (id === 'audience') { const list = obList(ob.audience); return list.length > 0 && list.length <= V.LIMITS.audiences && list.every((x) => V.validateAudience(x).ok); }
   return true;
@@ -1777,7 +1787,7 @@ root.addEventListener('click', (e) => {
     const f = chip.dataset.obChip, el = form.querySelector(`[name="${f}"]`); if (!el) return;
     const v = chip.dataset.v, cur = el.value.trim();
     if (f === 'services' || f === 'audience') { chip.classList.add('used'); obSetTags(f, [...obList(ob[f]), v]); return; }
-    if (f === 'city') el.value = v;
+    if (f === 'city') { el.value = v; obAddLocation(v); }
     else if (!cur.toLowerCase().split(',').map((x) => x.trim()).includes(v.toLowerCase())) el.value = cur ? cur.replace(/,\s*$/, '') + ', ' + v : v;
     chip.classList.add('used'); obSave(form); obPaintTrack(); obPaintPreview(); el.focus(); return;
   }
@@ -1817,7 +1827,17 @@ root.addEventListener('paste', (e) => {
   const txt = (e.clipboardData && e.clipboardData.getData('text')) || ''; if (!txt.includes(',')) return;
   e.preventDefault(); obSetTags(t.dataset.tagIn, [...obList(ob[t.dataset.tagIn]), ...obList(txt)]);
 });
-root.addEventListener('input', (e) => { const f = e.target && e.target.closest && e.target.closest('.ob-form'); if (f && !(e.target.classList && e.target.classList.contains('ob-tag-in'))) { obSave(f); obPaintTrack(); obPaintPreview(); } });
+root.addEventListener('input', (e) => {
+  const f = e.target && e.target.closest && e.target.closest('.ob-form');
+  if (!f || (e.target.classList && e.target.classList.contains('ob-tag-in'))) return;
+  if (e.target.dataset && e.target.dataset.branchCsv != null && globalThis.OBV) {
+    const r = globalThis.OBV.parseBranchCsv(e.target.value, { places: (ob && ob.places) || [] });
+    if (r.ok && ob) { ob.locations = r.locations; ob.city = r.city; ob.locationSummary = r.summary; }
+  }
+  obSave(f);
+  if (e.target.name === 'city') obAddLocation(e.target.value);
+  obPaintTrack(); obPaintPreview();
+});
 document.addEventListener('keydown', (e) => {
   const f = root.querySelector('.ob-form'); if (!f || !ob || e.isComposing) return;
   const id = obSteps()[ob.step].id, t = e.target;

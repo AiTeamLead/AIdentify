@@ -47,6 +47,25 @@ test('the draft API rejects a numeric business name', async () => {
   } finally { await s.stop(); }
 });
 
+test('locations hold branches and summarize as City +N', async () => {
+  const { normalizeLocations, parseBranchCsv, locationSummary } = await import('../lib/validation/onboarding.js');
+  assert.equal(locationSummary(['Hyderabad', 'Pune', 'Mumbai']), 'Hyderabad +2');
+  const csv = parseBranchCsv('Hyderabad, Banjara, Road 12, 9876543210\nPune, Kothrud, Main road, 9876543211');
+  assert.equal(csv.ok, true);
+  assert.equal(csv.locations.length, 2);
+  assert.equal(csv.locations[0].branches[0].phone, '+919876543210');
+  assert.equal(normalizeLocations([{ city: 'siva123@gmail.com' }]).ok, false);
+  const s = await startServer({ RATE_LIMIT: 'off', AI_PROVIDER: 'mock', AI_MOCK: 'on' });
+  try {
+    const tok = (await s.api('/api/auth/signup', { email: 'e2e-loc-' + Date.now() + '@example.com', name: 'L', password: 'Clinic-pass-123!' })).d.token;
+    const saved = await s.api('/api/clinic/onboarding/draft', { step: 2, locations: csv.locations, biz: 'Harbour Dental' }, tok);
+    assert.equal(saved.status, 200, JSON.stringify(saved.d));
+    assert.equal(saved.d.city, 'Hyderabad');
+    assert.equal(saved.d.profile.locationSummary, 'Hyderabad +1');
+    assert.equal(saved.d.profile.locations[1].city, 'Pune');
+  } finally { await s.stop(); }
+});
+
 test('phone numbers are E.164 for India and emails are rejected', () => {
   assert.equal(validatePhone('9876543210').value, '+919876543210');
   assert.equal(validatePhone('+91 98765 43210').value, '+919876543210');
