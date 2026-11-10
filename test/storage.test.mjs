@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { startServer } from './helpers.mjs';
 import { connect, sqlStore, driverFor } from '../lib/db.js';
+import { businessIdFor } from '../lib/relational.js';
 import { hashRows } from '../scripts/db-migrate.mjs';
 
 function testUrl() {
@@ -74,6 +75,24 @@ test('postgres store', { skip: URL_ ? false : 'no test database (set DATABASE_UR
         assert.match(srv.log(), /Database: (Neon )?Postgres/);
         assert.equal((await srv.api('/api/health')).d.db, driverFor(URL_) === 'neon' ? 'neon' : 'postgres');
       } finally { await srv.stop(); }
+    });
+    await t.test('clinic KV rows backfill into the relational tables', async () => {
+      const email = 'backfill@example.com';
+      await st.put('as_clinic:' + email, JSON.stringify({ biz: 'Backfill Co', city: 'Pune', invoices: [{ number: 'INV-9', state: 'paid', total: 250 }], posts: [{ id: 3, status: 'draft', text: 'Hi' }] }), Date.now());
+      const filled = await st.backfill();
+      assert.ok(filled.businesses >= 1);
+      assert.ok(filled.statements >= 4);
+      const again = await st.backfill();
+      assert.equal(again.businesses, filled.businesses);
+      const biz = await c.q(`select name from aaas_business where id = $1`, [businessIdFor(email)]);
+      assert.equal(biz[0].name, 'Backfill Co');
+      const posts = await c.q(`select status, body from aaas_post where business_id = $1`, [businessIdFor(email)]);
+      assert.equal(posts[0].body, 'Hi');
+      await c.q(`delete from aaas_post where business_id = $1`, [businessIdFor(email)]);
+      await c.q(`delete from aaas_invoice where business_id = $1`, [businessIdFor(email)]);
+      await c.q(`delete from aaas_location where business_id = $1`, [businessIdFor(email)]);
+      await c.q(`delete from aaas_user where business_id = $1`, [businessIdFor(email)]);
+      await c.q(`delete from aaas_business where id = $1`, [businessIdFor(email)]);
     });
     await t.test('hash helper is order-independent', () => {
       assert.equal(hashRows([{ k: 'b', v: '1', at: 1 }, { k: 'a', v: '2', at: 2 }]), hashRows([{ k: 'a', v: '2', at: 2 }, { k: 'b', v: '1', at: 1 }]));

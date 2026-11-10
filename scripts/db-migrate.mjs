@@ -78,6 +78,10 @@ async function fromFile() {
     const okCount = got.length === expect.length, okHash = hashRows(got) === hashRows(expect);
     console.log(`Verify: ${got.length}/${expect.length} rows present, hash ${okHash ? 'matches' : 'DIFFERS'} (sha256 ${hashRows(expect).slice(0, 16)}…). Database now has ${after.size} rows.`);
     if (!okCount || !okHash) { console.error('Verification failed.'); return 1; }
+    if (typeof st.backfill === 'function') {
+      const filled = await st.backfill();
+      console.log(`Relational backfill: ${filled.businesses} businesses, ${filled.statements} statements.`);
+    }
     console.log('Done. Point the server at the database with DATABASE_URL (and HOSTED=1 for a hosted deploy).');
     return 0;
   } finally { await st.close(); }
