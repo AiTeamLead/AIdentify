@@ -13,6 +13,8 @@ for (const p of PAGES) {
   fs.writeFileSync(`${OUT}/${p}`, body);
 }
 for (const p of ASSETS) fs.copyFileSync(p, `${OUT}/${p}`);
+fs.mkdirSync(`${OUT}/vendor`, { recursive: true });
+fs.copyFileSync('lib/validation/onboarding.js', `${OUT}/vendor/onboarding.js`);
 // one clinic page per industry (/Realestate, /Institute, …), generated from the packs so new packs get a URL too
 const { PACK_PATHS } = await import('../lib/clinic-packs.js');
 for (const p of Object.values(PACK_PATHS)) if (p !== '/clinic') { fs.mkdirSync(`${OUT}${p}`, { recursive: true }); fs.copyFileSync('clinic.html', `${OUT}${p}/index.html`); }

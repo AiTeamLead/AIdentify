@@ -618,9 +618,10 @@ async function saveAiFrom(f) {
 // ---------- Onboarding: one question at a time (Typeform-style), fits the screen ----------
 // All steps live in one <form data-act="profile">, so the submit handler, the AI-key fields and the model
 // auto-load keep working. Moving between steps only toggles classes; typed values are kept in `ob`.
-const OB_ICONS = { dental: '🦷', aesthetic: '✨', coach: '🧭', realestate: '🏠', studio: '💪', home: '🛋️', institute: '🎓', other: '➕' };
+const OB_ICONS = { marketing: '📣', dental: '🦷', aesthetic: '✨', coach: '🧭', realestate: '🏠', studio: '💪', home: '🛋️', institute: '🎓', other: '➕' };
 const OB_CITIES = ['Hyderabad', 'Bengaluru', 'Mumbai', 'Delhi', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad'];
 let ob = null;
+function tidyOb(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
 function obInit() {
   if (ob) return ob;
   const p = (state && state.profile) || {};
@@ -699,11 +700,23 @@ function obPaintPreview() {
   const pv = root.querySelector('.ob-preview'); if (pv && ob) { pv.innerHTML = obPreviewHtml(); obMarkShown(); }
   for (const id of ['biz', 'city', 'services', 'audience']) {
     const c = root.querySelector(`[data-cheer="${id}"]`); if (c) c.textContent = obCheer(id);
-    const w = root.querySelector(`[name="${id}"]`); const iw = w && w.closest('.ob-iw'); if (iw) iw.classList.toggle('valid', !!String(ob[id] || '').trim());
+    const w = root.querySelector(`[name="${id}"]`); const iw = w && w.closest('.ob-iw'); if (iw) iw.classList.toggle('valid', obCheck(id));
+    if (id === 'biz') { const n = root.querySelector('[data-count="biz"]'); if (n) n.textContent = String(tidyOb(ob.biz)).length + '/60'; }
   }
 }
 function obSetTags(field, list) {
-  const uniq = []; for (const t of list) { const v = String(t).replace(/,/g, ' ').trim().slice(0, 80); if (v && !uniq.some((u) => u.toLowerCase() === v.toLowerCase())) uniq.push(v); }
+  const V = globalThis.OBV;
+  const kind = field === 'services' ? 'service' : 'audience';
+  const max = V ? V.LIMITS[field === 'services' ? 'services' : 'audiences'] : 20;
+  const uniq = [];
+  let errMsg = '';
+  for (const t of list) {
+    if (!V) { const v = String(t).replace(/,/g, ' ').trim().slice(0, 80); if (v && !uniq.some((u) => u.toLowerCase() === v.toLowerCase())) uniq.push(v); continue; }
+    const r = V.addChip(uniq, t, kind, max);
+    if (!r.ok) { errMsg = r.error; continue; }
+    uniq.splice(0, uniq.length, ...r.list);
+  }
+  if (errMsg) { const box = root.querySelector('.ob-msg'); if (box) { box.textContent = errMsg; box.hidden = false; } }
   ob[field] = uniq.join(', ').slice(0, 400);
   const box = root.querySelector(`[data-tags="${field}"]`);
   if (box) { const tmp = document.createElement('div'); tmp.innerHTML = obTagsHtml(field, box.querySelector('.ob-tag-in').placeholder); box.replaceWith(tmp.firstElementChild); }
@@ -738,7 +751,7 @@ function profileView() {
   const form = `<form class="ob-form" data-act="profile" novalidate>
     ${roleStep}
     ${step('biz', { q: `What’s the name of your ${esc(typeName.toLowerCase())}?`, sub: 'This is how your posts and messages sign off.',
-      html: `<div class="ob-iw${String(ob.biz).trim() ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="80" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheer('biz'))}</p>` })}
+      html: `<div class="ob-iw${obCheck('biz') ? ' valid' : ''}"><input class="ob-input" name="biz" maxlength="60" value="${esc(ob.biz)}" placeholder="Type the name here…" autocomplete="organization"><span class="ob-okic" aria-hidden="true">✓</span></div><p class="ob-countline"><span data-count="biz">${String(tidyOb(ob.biz)).length}/60</span></p><p class="ob-cheer" data-cheer="biz" aria-live="polite">${esc(obCheck('biz') ? obCheer('biz') : '')}</p>` })}
     ${step('city', { q: `Where is <em>${esc(nameFor)}</em>?`, sub: 'Posts and review requests mention the city.',
       html: `<div class="ob-iw${String(ob.city).trim() ? ' valid' : ''}"><input class="ob-input" name="city" maxlength="80" value="${esc(ob.city)}" placeholder="City" autocomplete="address-level2" list="obCities"><span class="ob-okic" aria-hidden="true">✓</span></div><datalist id="obCities">${OB_CITIES.map((c) => `<option value="${esc(c)}"></option>`).join('')}</datalist><p class="ob-cheer" data-cheer="city" aria-live="polite">${esc(obCheer('city'))}</p>${obChips('city', OB_CITIES)}` })}
     ${step('services', { q: 'What do you offer?', sub: 'Type a service and press <b>Enter</b> or comma. Tap a suggestion to add it.',
@@ -811,10 +824,20 @@ function obRestore(k) {
   const key = f.querySelector('[name="key"]'); if (key && k.key) key.value = k.key;
 }
 // Stepper state: 'ok' (green ✓), 'bad' (red !), 'now' (current), '' (still to come)
+function obCheck(id) {
+  const V = globalThis.OBV;
+  if (!ob) return false;
+  if (!V) return !!String(ob[id] || '').trim();
+  if (id === 'biz') return V.validateBusinessName(ob.biz).ok;
+  if (id === 'city') return V.validateLocation(ob.city, { places: ob.places || [] }).ok;
+  if (id === 'services') { const list = obList(ob.services); return list.length > 0 && list.length <= V.LIMITS.services && list.every((x) => V.validateService(x).ok); }
+  if (id === 'audience') { const list = obList(ob.audience); return list.length > 0 && list.length <= V.LIMITS.audiences && list.every((x) => V.validateAudience(x).ok); }
+  return true;
+}
 function obStepOk(id) {
   if (!ob) return false;
   if (id === 'role') return !!ob.role && (ob.role !== 'other' || !!String(ob.businessType || '').trim());
-  if (['biz', 'city', 'services', 'audience'].includes(id)) return !!String(ob[id] || '').trim();
+  if (['biz', 'city', 'services', 'audience'].includes(id)) return obCheck(id);
   return true; // AI key is optional; review has nothing to check
 }
 function obStatus(k, id, at) {
@@ -866,7 +889,15 @@ function obValid(form) {
     if (!ob.role) return say('Please select a business category to continue.');
     if (ob.role === 'other' && !ob.businessType.trim()) return say('Type what kind of business it is.', '[name="businessType"]');
   }
-  if (['biz', 'city', 'services', 'audience'].includes(id) && !String(ob[id] || '').trim()) return say(id === 'services' ? 'Add at least one service.' : id === 'audience' ? 'Add at least one group of customers.' : 'This one is needed to set up your team.', ['services', 'audience'].includes(id) ? `[data-tags="${id}"]` : `[name="${id}"]`);
+  if (['biz', 'city', 'services', 'audience'].includes(id) && !obCheck(id)) {
+    const V = globalThis.OBV;
+    const msg = !V ? 'This one is needed to set up your team.'
+      : id === 'biz' ? V.validateBusinessName(ob.biz).error
+      : id === 'city' ? V.validateLocation(ob.city, { places: ob.places || [] }).error
+      : id === 'services' ? (obList(ob.services).length ? 'Enter a valid service name.' : 'Add at least one service.')
+      : (obList(ob.audience).length ? 'Describe a valid target audience.' : 'Add at least one group of customers.');
+    return say(msg, ['services', 'audience'].includes(id) ? `[data-tags="${id}"]` : `[name="${id}"]`);
+  }
   delete ob.bad[id];
   return true;
 }
@@ -1867,6 +1898,7 @@ root.addEventListener('input', (e) => { if (e.target.id === 'chatIn') chatDraft 
   if (location.hash === '#signup') { mode = 'create'; history.replaceState(null, '', location.pathname); }
   if (location.hash === '#forgot') { mode = 'forgot'; history.replaceState(null, '', location.pathname); }
   if (hash.get('as_reset')) { resetTok = hash.get('as_reset'); mode = 'reset'; token = ''; sessionStorage.removeItem('aaas_clinic_token'); history.replaceState(null, '', location.pathname); }
+  try { globalThis.OBV = await import('/vendor/onboarding.js'); } catch (e) { /* validation stays on the server */ }
   try { meta = await (await fetch('/api/clinic/meta')).json(); } catch { /* offline */ }
   if (!token) { captureReturn(); const ep = entryPack(); if (ep) { if (location.pathname !== ep.path || location.hash) history.replaceState(null, '', ep.path); document.title = 'AIdentify · ' + ep.title; } else toRoot(); }
   window.addEventListener('popstate', () => { if (!ob || (state && state.role)) return; const i = onboardingStepFromPath(); if (i >= 0 && i !== ob.step) obShow(i, { quiet: true }); });

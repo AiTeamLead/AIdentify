@@ -90,6 +90,9 @@ async function serve(req, res) {
     if (req.method === 'GET' && url.pathname === '/board.html') { // groups + task boards (shown inside the Groups tab)
       return send(res, 200, await fs.readFile(path.join(dir, 'board.html')), 'text/html; charset=utf-8');
     }
+    if (req.method === 'GET' && url.pathname === '/vendor/onboarding.js') {
+      return send(res, 200, await fs.readFile(path.join(dir, 'lib/validation/onboarding.js')), 'text/javascript; charset=utf-8');
+    }
     if (req.method === 'GET' && /^\/onboarding\/step\/[1-7]$/.test(url.pathname)) {
       return send(res, 200, await fs.readFile(path.join(dir, 'clinic.html')), 'text/html; charset=utf-8');
     }
