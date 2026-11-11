@@ -69,6 +69,10 @@ async function serve(req, res) {
     if (req.method === 'GET' && (url.pathname === '/v2' || url.pathname === '/landing-v2.html')) {
       return send(res, 200, applyPriceTokens(await fs.readFile(path.join(dir, 'landing-v2.html'), 'utf8')), 'text/html; charset=utf-8');
     }
+    if (req.method === 'GET' && (url.pathname === '/privacy' || url.pathname === '/privacy.html' || url.pathname === '/terms' || url.pathname === '/terms.html' || url.pathname === '/deletion' || url.pathname === '/deletion.html')) {
+      const file = url.pathname.replace(/^\//, '').replace(/\.html$/, '') + '.html';
+      return send(res, 200, await fs.readFile(path.join(dir, file)), 'text/html; charset=utf-8');
+    }
     if (req.method === 'GET' && (url.pathname === '/white-label' || url.pathname === '/white-label.html')) {
       return send(res, 200, await fs.readFile(path.join(dir, 'white-label.html')), 'text/html; charset=utf-8');
     }

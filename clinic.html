@@ -447,7 +447,7 @@ const dayKey = (iso) => { const t = Date.parse(iso); if (!t) return ''; return n
 const hello = () => { const h = Number(new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Kolkata', hour:'numeric', hourCycle:'h23' }).format(new Date())); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 const PILL = { new:'New', booked:'Booked', closed:'Closed', completed:'Completed', noshow:'No-show', cancelled:'Cancelled', pending:'Waiting', approved:'Approved', rejected:'Skipped', scheduled:'On calendar', draft:'Draft', queued:'Queued', paid:'Paid', unpaid:'Unpaid', overdue:'Overdue' };
 const pill = (s) => `<span class="pill ${esc(s)}">${esc(PILL[s] || s || '')}</span>`;
-const SCREENS = ['dash','front','recall','reviews','social','insights','billing','approvals','connections','pricing','usage','privacy','visit','settings','setup'];
+const SCREENS = ['dash','front','crm','recall','reviews','social','insights','billing','approvals','connections','pricing','usage','privacy','skills','visit','settings','setup'];
 
 let token = sessionStorage.getItem('aaas_clinic_token') || '';
 let meta = { demoLogin:false };
@@ -975,7 +975,9 @@ function side() {
     <nav class="nav">
       ${item('dash','Dashboard')}
       ${item('front','Front Desk')}
+      ${item('crm','CRM')}
       ${item('social','Social Media')}
+      ${item('skills','Skills')}
       ${item('billing','Billing & Invoicing')}
       ${item('approvals','Approvals', pending?`<span class="badge">${pending}</span>`:'')}
       ${item('settings','Settings')}
@@ -1074,7 +1076,9 @@ function dash() {
         <p style="margin-top:14px"><button class="btn" type="button" data-act="go" data-screen="setup">15-minute setup</button></p>
       </section>
     </div>
-    ${checklistCard()}${tourHtml()}`;
+    ${checklistCard()}
+    <section class="card" style="padding:16px;margin-top:16px"><h2 style="margin-top:0">This week</h2><p>${esc((state.summary && state.summary.text) || 'No weekly summary yet. Owner Insights can refresh it.')}</p>${state.demo ? '<p><span class="pill">SAMPLE</span> Sample rows are tagged until you import your own.</p>' : ''}</section>
+    ${tourHtml()}`;
 }
 function tourHtml() {
   if (!state || !state.role || screen !== 'dash' || botMode) return '';
@@ -1115,7 +1119,53 @@ function chiefPage() {
   const threads = (state && state.threads) || [];
   return `<section class="chief" aria-label="Chief" style="display:grid;grid-template-columns:220px minmax(0,1fr);min-height:70vh"><aside class="thread-side" aria-label="Chats" style="border-right:1px solid var(--line);padding:12px"><button class="btn" type="button" data-act="thread-new">New chat</button><ul style="list-style:none;padding:0;margin:12px 0">${threads.map((t) => `<li style="margin:8px 0"><button type="button" data-act="thread-open" data-id="${esc(t.id)}" ${chiefThread === t.id ? 'aria-current="true"' : ''}>${esc(t.title || 'Chat')}</button> <button type="button" class="btn-ghost" data-act="thread-rename" data-id="${esc(t.id)}">Rename</button> <button type="button" class="btn-ghost" data-act="thread-del" data-id="${esc(t.id)}">Delete</button></li>`).join('') || '<li class="small">No saved chats yet.</li>'}</ul></aside><div><header><b>Chief</b><span>${esc(state.biz || '')}. Answers come from this account’s records. Drafts still need approval. A failed publish is quoted, not called a success.</span> <button class="btn-ghost" type="button" data-act="go" data-screen="dash">Dashboard</button></header>
     <div class="log">${chatLog.map((m) => `<div class="bubble ${m.r}">${m.r === 'a' ? chatMd(m.t) : esc(m.t)}</div>`).join('')}${chatBusy ? '<div class="small">Checking the records…</div>' : ''}</div>
+    <p><button class="btn-ghost" type="button" data-act="chat-edit">Edit last message</button></p>
     <form data-act="chat"><input id="chatIn" name="message" value="${esc(chatDraft)}" placeholder="Ask about leads, approvals or payments" autocomplete="off"><button class="btn" type="submit">Send</button></form></div></section>`;
+}
+let crmBox = { tab: 'board' };
+function crmPage() {
+  if (!crmBox.loaded && !crmBox.loading) {
+    crmBox.loading = true;
+    Promise.all([api('/api/crm'), api('/api/crm/contacts'), api('/api/crm/deals'), api('/api/crm/companies'), api('/api/crm/tasks')]).then(([d, c, de, co, t]) => {
+      crmBox = { ...crmBox, loaded: true, loading: false, d, contacts: c.items || [], deals: de.items || [], companies: co.items || [], tasks: t.items || [], err: '' };
+      if (screen === 'crm') render();
+    }).catch((e) => { crmBox.loading = false; crmBox.err = e.message; if (screen === 'crm') render(); });
+  }
+  if (!crmBox.loaded) return `${banner()}<h1>CRM</h1><p class="sub">Loading contacts and deals…</p>`;
+  if (crmBox.err) return `${banner()}<h1>CRM</h1><p class="banner">${esc(crmBox.err)}</p>`;
+  const dash = (crmBox.d && crmBox.d.dashboard) || {};
+  const stages = (crmBox.d && crmBox.d.stages) || [];
+  const q = String(crmBox.q || '').toLowerCase();
+  const vis = (list, fields) => (list || []).filter((x) => !q || fields.some((f) => String(x[f] || '').toLowerCase().includes(q)));
+  const board = stages.map((s) => {
+    const mine = vis(crmBox.deals, ['title']).filter((x) => x.stage === s.id);
+    return `<section class="kanban-col" style="min-width:180px"><header><b>${esc(s.name)}</b> <span class="small">${mine.length}</span></header>${mine.map((deal) => `<article class="draft"><b>${esc(deal.title)}</b><div class="small">${inr(deal.value)}</div>${stages.filter((n) => n.id !== s.id).slice(0, 3).map((n) => `<button class="btn-ghost" type="button" data-act="crm-stage" data-id="${esc(deal.id)}" data-stage="${esc(n.id)}">${esc(n.name)}</button>`).join(' ')}</article>`).join('')}</section>`;
+  }).join('');
+  const rows = vis(crmBox.contacts, ['name', 'email', 'phone']).map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(c.email || '')}</td><td>${esc(c.phone || '')}</td><td>${(c.tags || []).map((t) => `<span class="pill">${esc(t.name || t)}</span>`).join(' ')}</td><td><button class="btn-ghost" type="button" data-act="crm-open" data-id="${esc(c.id)}">Timeline</button></td></tr>`).join('');
+  const open = crmBox.open || null;
+  const timeline = open ? `<section class="card" style="padding:12px;margin-top:12px"><h2 style="margin-top:0">${esc(open.item.name)}</h2><p class="small">${esc(open.item.phone || '')} ${esc(open.item.email || '')}</p><form data-act="crm-note"><input type="hidden" name="contactId" value="${esc(open.item.id)}"><label>Note<textarea name="body" required></textarea></label><button class="btn" type="submit">Add note</button></form><form data-act="crm-task"><input type="hidden" name="contactId" value="${esc(open.item.id)}"><label>Follow-up<input name="title" required placeholder="Call them"></label><button class="btn-ghost" type="submit">Save follow-up</button></form>${(open.activities || []).map((a) => `<p><span class="pill">${esc(a.kind)}</span> ${esc(a.body || '')}</p>`).join('') || '<p class="small">No notes yet.</p>'}</section>` : '';
+  return `${banner()}<h1>CRM</h1><p class="sub">Contacts, companies and deals stay in AIdentify. Nothing is synced to Salesforce. A message still waits for your approval.</p>
+    <div class="kpis"><div class="tile"><div class="k">Pipeline</div><div class="v">${inr(dash.pipelineValue || 0)}</div></div><div class="tile"><div class="k">Follow-ups due</div><div class="v">${esc(dash.followUpsDue || 0)}</div></div><div class="tile"><div class="k">Contacts</div><div class="v">${esc(dash.contacts || 0)}</div></div></div>
+    <div class="row-actions"><button class="btn" type="button" data-act="crm-tab" data-tab="board">Board</button> <button class="btn-ghost" type="button" data-act="crm-tab" data-tab="list">List</button> <button class="btn-ghost" type="button" data-act="crm-export">Export CSV</button></div>
+    <form class="form" data-act="crm-add"><label>Contact name<input name="name" required></label><label>Phone<input name="phone"></label><label>Email<input name="email"></label><label>Tags<input name="tags" placeholder="retainer"></label><div><button class="btn" type="submit">Add contact</button></div></form>
+    <form class="form" data-act="crm-import"><label class="wide">Import CSV<textarea name="csv" rows="3" placeholder="type,name,email,phone&#10;contact,Meera Shah,meera@client.example,919800011133"></textarea></label><div><button class="btn" type="submit">Import</button></div></form>
+    <label>Search<input id="crmQ" value="${esc(crmBox.q || '')}" data-act="crm-q"></label>
+    ${crmBox.tab === 'list' ? `<div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Tags</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="5">No contacts yet.</td></tr>'}</tbody></table></div>` : `<div class="kanban" style="display:flex;gap:12px;overflow:auto">${board}</div>`}
+    ${timeline}`;
+}
+let skillBox = { loaded: false, items: [], edit: null };
+function skillsPage() {
+  if (!skillBox.loaded && !skillBox.loading) {
+    skillBox.loading = true;
+    api('/api/agents/skills').then((d) => { skillBox.loaded = true; skillBox.loading = false; skillBox.items = d.skills || []; if (screen === 'skills') render(); }).catch((e) => { skillBox.loading = false; skillBox.err = e.message; if (screen === 'skills') render(); });
+  }
+  const edit = skillBox.edit || { name: '', description: '', body: '', aid: '' };
+  const agents = (state.agents || []).map((a) => `<option value="${esc(a.key)}" ${edit.aid === a.key ? 'selected' : ''}>${esc(a.name)}</option>`).join('');
+  const rows = !skillBox.loaded ? '<p class="small">Loading skills…</p>' : ((skillBox.items || []).map((k) => `<article class="draft"><b>${esc(k.name)}</b> <span class="small">${esc(k.description || '')}</span><p>${esc(String(k.body || '').slice(0, 280))}</p><div class="row-actions"><button class="btn-ghost" type="button" data-act="skill-edit" data-id="${esc(k.id)}">Edit</button><button class="btn-danger" type="button" data-act="skill-del" data-id="${esc(k.id)}">Delete</button></div></article>`).join('') || '<p class="small">No skills yet.</p>');
+  return `${banner()}<h1>Skills</h1><p class="sub">Instructions an agent can reuse. Attach one to an agent, then ask Chief to use it. Nothing is sent from this page.</p>
+    ${skillBox.err ? `<p class="banner">${esc(skillBox.err)}</p>` : ''}
+    <form class="stack" data-act="skill-save"><input type="hidden" name="id" value="${esc(edit.id || '')}"><label>Name<input name="name" required value="${esc(edit.name || '')}"></label><label>What it is for<input name="description" value="${esc(edit.description || '')}"></label><label>Attach to<select name="aid"><option value="">Any agent</option>${agents}</select></label><label>Instructions<textarea name="body" rows="6" required>${esc(edit.body || '')}</textarea></label><button class="btn" type="submit">${edit.id ? 'Save skill' : 'Create skill'}</button></form>
+    ${rows || '<p class="small">No skills yet.</p>'}`;
 }
 function softwareCard() {
   const s = state.stats || {};
@@ -1315,13 +1365,17 @@ function billing() {
     <button class="btn-ghost" type="button" data-act="print" data-id="${inv.id}">Print</button>
     <button class="btn-ghost" type="button" data-act="pdf" data-id="${inv.id}" data-number="${esc(inv.number)}">PDF</button>
   </td></tr>`).join('');
-  return `${agentHead(a)}<p class="sub">Manual invoices. GST stays blank unless you type a percent. There is no GSTIN. Each invoice and its reminder draft includes a payment link: a Razorpay test link when those keys are set, otherwise a UPI link. The sample business can simulate the paid webhook. Nothing is sent, and AaaS does not take the payment itself.</p>
+  return `${agentHead(a)}<p class="sub">Invoices are numbered per business, like INV-${new Date().getFullYear()}-0001. Add a GSTIN and CGST, SGST or IGST when they apply. Pay uses Razorpay, including UPI, when test keys are set. Nothing is collected until that payment succeeds.</p>
     <form class="form" data-act="add-inv">
       <label>Person<select name="patientId">${opts}</select></label>
       <label>Description<input name="desc" required placeholder="${esc((state.labels&&state.labels.service)||'What this invoice is for')}"></label>
       <label>Qty<input name="qty" type="number" min="1" value="1"></label>
       <label>Rate ₹<input name="rate" type="number" min="0" value="1500"></label>
       <label>GST % (optional)<input name="gst" placeholder="Leave blank"></label>
+      <label>GSTIN<input name="gstin" value="${esc((state.profile&&state.profile.gstin)||'')}" placeholder="22AAAAA0000A1Z5"></label>
+      <label>CGST %<input name="cgst" placeholder="Leave blank"></label>
+      <label>SGST %<input name="sgst" placeholder="Leave blank"></label>
+      <label>IGST %<input name="igst" placeholder="Leave blank"></label>
       <label>Due<input name="due" type="date"></label>
       <label>UPI ID<input name="upi" value="${esc((state.profile&&state.profile.upi)||'')}" placeholder="name@upi"></label>
       <label class="wide">Payment link text<input name="payLink" value="${esc((state.profile&&state.profile.payLink)||'')}" placeholder="upi://pay?pa=name@upi"></label>
@@ -1352,10 +1406,11 @@ function usage() {
     </div>
     <h2>By agent</h2><div class="kpis">${agents || '<p class="small">No runs yet.</p>'}</div>
     <h2>Runs</h2><div class="scroll"><table><thead><tr><th>Agent</th><th>In</th><th>Out</th><th>Rupees</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="5">No runs yet.</td></tr>'}</tbody></table></div>
-    <p class="small">${esc(u.note||'')}</p>`;
+    <p class="small">${esc(u.note||'')}</p>
+    ${state.cost ? `<section class="card" style="padding:14px"><h2 style="margin-top:0">Monthly model estimate</h2><p>${esc(state.cost.note || '')}</p><p><b>₹${esc(state.cost.inr)}</b> <span class="small">about $${esc(state.cost.usd)} · drafts on ${esc(state.cost.cheapModel)}, Chief on ${esc(state.cost.strongModel)}</span></p></section>` : ''}`;
 }
 function privacy() {
-  return `${banner()}<h1>Your data</h1><p class="sub">This workspace is for the owner of ${esc(state.biz || 'this business')}. Records of ${esc((state.labels&&state.labels.who)||'people')} stay on this account. Another customer cannot read them.</p>
+  return `${banner()}<h1>Your data</h1><p class="sub">This workspace is for the owner of ${esc(state.biz || 'this business')}. Records of ${esc((state.labels&&state.labels.who)||'people')} stay on this account. Another customer cannot read them. <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/deletion">Delete my data</a></p>
     <article class="draft"><b>Human approval</b><p>Enquiries, reminders, review requests, posts and payment reminders are drafts. Approve records your OK. Reject skips it. Neither one sends an email, a text, or a post.</p></article>
     <article class="draft"><b>Export</b><p>Download the records in this account as JSON. The public form token is left out.</p><button class="btn" type="button" data-act="export">Download my data</button></article>
     <form class="draft stack" data-act="wipe"><b>Delete the records</b><p class="small">Removes this team’s ${esc((state.labels&&state.labels.who)||'people')}, invoices, drafts and form from this account. Your sign-in stays. Type “delete my data”.</p><input name="confirm" placeholder="delete my data"><button class="btn-danger" type="submit">Delete my data</button></form>
@@ -1371,7 +1426,12 @@ function settings() {
     ? `Your own ${k.name} key (${k.hint}). Model: ${k.model}. ${k.label || ''}`
     : `${k.label || 'Save your AI key in Settings. Agent calls stay off until then.'}${k.model && k.source === 'demo' ? ' Model: ' + k.model + '.' : ''}`;
   const opts = (k.providers || []).map((p) => `<option value="${esc(p.id)}" ${k.provider===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+  const integrations = ['Gmail', 'Google Calendar', 'WhatsApp', 'Facebook Page', 'Instagram', 'LinkedIn', 'X'];
   return `${banner()}<h1>Settings</h1><p class="sub">Reminder rhythm for this business, the wording you taught the drafts, and the AI key those drafts use.</p>
+    <section class="card stack" style="padding:14px"><b>Integrations</b><p class="small">Connect, reconnect, or disconnect. Disconnect removes the token stored on this account. Live provider revoke needs that provider’s keys.</p>
+      ${integrations.map((name) => `<div class="draft"><b>${esc(name)}</b><div class="row-actions"><button class="btn-ghost" type="button" data-act="go" data-screen="connections">Connect</button><button class="btn-ghost" type="button" data-act="integ-disconnect" data-id="${esc(name.toLowerCase().replace(/ .*/, ''))}">Disconnect</button></div></div>`).join('')}
+      <form class="form" data-act="fb-page"><label>Facebook Page id<input name="pageId" placeholder="After you connect a Page"></label><label>Page name<input name="pageName"></label><div><button class="btn" type="submit">Save Page</button></div></form>
+    </section>
     <form class="card stack" data-act="ai-key" style="padding:14px">
       <b>AI key</b>
       <p class="small" role="status">${esc(using)}</p>
@@ -1542,7 +1602,7 @@ function render() {
   else if (state.role && !advanced) body = `<div class="bot-on">${botSwitch()}${chiefPage()}</div>`;
   else if (!state.role) body = screen === 'setup' && wiz === 'call' ? setupView() : profileView();
   else {
-    const page = { dash, front, recall, reviews, social, insights, billing, approvals, connections, pricing, usage, privacy, visit, settings, setup: setupView, chat: chiefPage }[screen === 'visit' && !state.visitKit ? 'dash' : screen] || dash;
+    const page = { dash, front, crm: crmPage, recall, reviews, social, insights, billing, approvals, connections, pricing, usage, privacy, skills: skillsPage, visit, settings, setup: setupView, chat: chiefPage }[screen === 'visit' && !state.visitKit ? 'dash' : screen] || dash;
     body = `<div class="app">${side()}<main class="main" data-screen="${esc(screen)}">${page()}</main></div>${botSwitch()}${drawerHtml()}${chiefTip()}<button class="chat-fab bot${miniOpen ? ' open' : ''}${chiefTipShown() ? ' pulse' : ''}" type="button" data-act="chief-mini" aria-expanded="${miniOpen ? 'true' : 'false'}" aria-controls="chiefMini">${ROBOT}<span>Chief</span></button>`;
   }
   if (state && state.role) body += upgradeModal();
@@ -1651,6 +1711,81 @@ async function act(name, el) {
       const r = await api('/api/clinic/social/festival-due', {});
       flash('Drafted ' + ((r.drafted || []).length) + ' festival posts. They wait in Approvals.');
       await reload(); return;
+    }
+    if (name === 'crm-tab') { crmBox.tab = el.dataset.tab; render(); return; }
+    if (name === 'crm-stage') {
+      await api('/api/crm/deals/' + el.dataset.id, { stage: el.dataset.stage });
+      crmBox.loaded = false; render(); return;
+    }
+    if (name === 'crm-export') {
+      const r = await fetch('/api/crm/export', { headers: { authorization: 'Bearer ' + token } });
+      const text = await r.text();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' })); a.download = 'aidentify-crm.csv'; a.click();
+      return;
+    }
+    if (name === 'crm-open') {
+      crmBox.open = await api('/api/crm/contacts/' + el.dataset.id);
+      render(); return;
+    }
+    if (name === 'crm-add') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      await api('/api/crm/contacts', f);
+      crmBox.loaded = false; flash('Contact saved. Nothing was sent.'); render(); return;
+    }
+    if (name === 'crm-import') {
+      const csv = new FormData(el).get('csv');
+      const r = await api('/api/crm/import', { csv });
+      crmBox.loaded = false; flash('Imported ' + (r.contacts || 0) + ' contacts.'); render(); return;
+    }
+    if (name === 'crm-note') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      await api('/api/crm/activities', { contactId: f.contactId, kind: 'note', body: f.body });
+      crmBox.open = await api('/api/crm/contacts/' + f.contactId);
+      flash('Note saved.'); render(); return;
+    }
+    if (name === 'crm-task') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      await api('/api/crm/agent/remind', f);
+      flash('Follow-up saved. Nothing was sent.'); render(); return;
+    }
+    if (name === 'skill-save') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      await api('/api/agents/skills', f);
+      skillBox = { loaded: false, items: [], edit: null };
+      flash('Skill saved.'); render(); return;
+    }
+    if (name === 'skill-edit') {
+      skillBox.edit = (skillBox.items || []).find((k) => k.id === el.dataset.id) || null;
+      render(); return;
+    }
+    if (name === 'integ-disconnect') {
+      await api('/api/connectors/disconnect', { c: el.dataset.id }).catch(() => {});
+      await api('/api/clinic/integrations', { id: el.dataset.id, op: 'disconnect' });
+      flash(el.dataset.id + ' disconnected on this account.');
+      return;
+    }
+    if (name === 'fb-page') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      await api('/api/clinic/integrations', { id: 'facebook', op: 'page', pageId: f.pageId, pageName: f.pageName });
+      flash('Facebook Page saved. Posts still wait for approval.');
+      return;
+    }
+    if (name === 'skill-del') {
+      await api('/api/agents/skills/delete', { id: el.dataset.id });
+      skillBox.loaded = false; flash('Skill deleted.'); render(); return;
+    }
+    if (name === 'chat-edit') {
+      const last = [...chatLog].reverse().find((m) => m.r === 'u');
+      if (!last) return;
+      const next = window.prompt('Edit your last message', last.t);
+      if (!next || !next.trim()) return;
+      const i = chatLog.lastIndexOf(last);
+      chatLog = chatLog.slice(0, i);
+      el = { dataset: {} };
+      const form = document.createElement('form');
+      const input = document.createElement('input'); input.name = 'message'; input.value = next.trim(); form.appendChild(input);
+      name = 'chat';
+      await act('chat', form); return;
     }
     if (name === 'drawer') { drawer = { kind: el.dataset.kind, id: el.dataset.id }; render(); return; }
     if (name === 'drawer-close') { drawer = null; render(); return; }
@@ -1810,7 +1945,7 @@ async function act(name, el) {
     }
     else if (name === 'add-inv') {
       const f = Object.fromEntries(new FormData(el).entries());
-      await api('/api/clinic/invoices', { patientId: Number(f.patientId), items: [{ desc: f.desc, qty: Number(f.qty||1), rate: Number(f.rate||0) }], gst: f.gst, due: f.due ? new Date(f.due + 'T18:00:00+05:30').toISOString() : '', upi: f.upi, payLink: f.payLink });
+      await api('/api/clinic/invoices', { patientId: Number(f.patientId), items: [{ desc: f.desc, qty: Number(f.qty||1), rate: Number(f.rate||0) }], gst: f.gst, gstin: f.gstin, cgst: f.cgst, sgst: f.sgst, igst: f.igst, due: f.due ? new Date(f.due + 'T18:00:00+05:30').toISOString() : '', upi: f.upi, payLink: f.payLink });
       flash('Invoice saved. Nothing was collected.');
     }
     else if (name === 'paid') { await api('/api/clinic/invoices/update', { id: Number(el.dataset.id), status: el.dataset.status }); flash(el.dataset.status==='paid' ? 'Marked paid. The dashboard uses paid invoices.' : 'Marked unpaid.'); }
