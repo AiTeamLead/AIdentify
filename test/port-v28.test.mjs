@@ -26,7 +26,7 @@ test('featured pack is digital marketing and the cost meter is an estimate', () 
   assert.match(fs.readFileSync(new URL('../terms.html', import.meta.url), 'utf8'), /Razorpay/);
   assert.doesNotMatch(fs.readFileSync(new URL('../terms.html', import.meta.url), 'utf8'), /6302381884-w772@ibl/);
   assert.match(fs.readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'), /\/api\/cron\/festivals/);
-  assert.match(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'), /"version": "2.9.0"/);
+  assert.match(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'), /"version": "2.9.1"/);
   assert.match(fs.readFileSync(new URL('../config/chief-prompt.txt', import.meta.url), 'utf8'), /Chief/);
 });
 

@@ -979,7 +979,9 @@ function side() {
       ${item('social','Social Media')}
       ${item('skills','Skills')}
       ${item('billing','Billing & Invoicing')}
+      ${item('usage','Usage')}
       ${item('approvals','Approvals', pending?`<span class="badge">${pending}</span>`:'')}
+      ${item('privacy','Your data')}
       ${item('settings','Settings')}
     </nav>
     <div class="grow"></div>
@@ -1428,6 +1430,7 @@ function settings() {
   const opts = (k.providers || []).map((p) => `<option value="${esc(p.id)}" ${k.provider===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
   const integrations = ['Gmail', 'Google Calendar', 'WhatsApp', 'Facebook Page', 'Instagram', 'LinkedIn', 'X'];
   return `${banner()}<h1>Settings</h1><p class="sub">Reminder rhythm for this business, the wording you taught the drafts, and the AI key those drafts use.</p>
+    <p class="row-actions"><button class="btn-ghost" type="button" data-act="go" data-screen="usage">Usage</button> <button class="btn-ghost" type="button" data-act="go" data-screen="privacy">Your data</button></p>
     <section class="card stack" style="padding:14px"><b>Integrations</b><p class="small">Connect, reconnect, or disconnect. Disconnect removes the token stored on this account. Live provider revoke needs that provider’s keys.</p>
       ${integrations.map((name) => `<div class="draft"><b>${esc(name)}</b><div class="row-actions"><button class="btn-ghost" type="button" data-act="go" data-screen="connections">Connect</button><button class="btn-ghost" type="button" data-act="integ-disconnect" data-id="${esc(name.toLowerCase().replace(/ .*/, ''))}">Disconnect</button></div></div>`).join('')}
       <form class="form" data-act="fb-page"><label>Facebook Page id<input name="pageId" placeholder="After you connect a Page"></label><label>Page name<input name="pageName"></label><div><button class="btn" type="submit">Save Page</button></div></form>

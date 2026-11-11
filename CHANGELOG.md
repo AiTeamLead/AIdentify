@@ -5,6 +5,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-11-11
+
+### Added
+- Clinic sidebar and Settings link to Usage and to Your data.
+
 ## [2.9.0] - 2026-11-11
 
 ### Added
