@@ -70,5 +70,18 @@ test('signup through a verified festival post, with the publisher mocked', { ski
     await page.getByRole('button', { name: 'Social Media' }).click();
     await page.locator('.post', { hasText: 'example.test/posts/mock-post-1' }).first().waitFor({ timeout: 15000 });
     assert.match(await page.locator('.post', { hasText: 'Bhai Dooj' }).first().innerText(), /published/);
+    await page.getByRole('button', { name: 'CRM', exact: true }).click();
+    await page.getByRole('button', { name: 'Add contact' }).waitFor();
+    await page.locator('form[data-act="crm-add"] input[name="name"]').fill('Asha Rao');
+    await page.locator('form[data-act="crm-add"] input[name="phone"]').fill('919800011122');
+    await page.locator('form[data-act="crm-add"] button[type="submit"]').click();
+    await page.getByText('Contact saved').waitFor();
+    await page.getByRole('button', { name: 'Skills' }).click();
+    await page.getByText('No skills yet.').waitFor();
+    await page.locator('form[data-act="skill-save"] input[name="name"]').fill('Audit follow-up');
+    await page.locator('form[data-act="skill-save"] textarea[name="body"]').fill('Draft a follow-up. Do not send it.');
+    await page.locator('form[data-act="skill-save"] button[type="submit"]').click();
+    await page.getByText('Skill saved').waitFor();
+    await page.locator('article.draft', { hasText: 'Audit follow-up' }).first().waitFor();
   } finally { await browser.close(); await s.stop(); }
 });
