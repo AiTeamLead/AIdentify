@@ -147,6 +147,10 @@
     {
       "path": "/api/cron/tick",
       "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/cron/festivals",
+      "schedule": "15 3 * * *"
     }
   ],
   "redirects": [

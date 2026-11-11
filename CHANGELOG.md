@@ -5,6 +5,15 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-11-11
+
+### Added
+- Native CRM (contacts, companies, deals, timeline, CSV) with no external CRM sync.
+- DPDP draft pages for privacy, terms, and a deletion request, linked from the landing footer.
+- WhatsApp QR worker ingest into the CRM timeline, plus the Cloud API inbound path.
+- Skills screen to create, edit, delete, and attach a skill to an agent.
+- Festival drafts on a daily Vercel cron as well as the Social button.
+
 ## [2.7.0] - 2026-10-28
 
 ### Added
