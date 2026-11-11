@@ -93,7 +93,10 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
   const rewrite = (src) => vercel.rewrites.find((r) => r.source === src);
   assert.equal(rewrite('/v1').destination, '/waitlist.html');
   assert.equal(rewrite('/v2').destination, '/landing-v2.html');
-  assert.equal(rewrite('/white-label').destination, '/white-label.html');
+    assert.equal(rewrite('/white-label').destination, '/white-label.html');
+    assert.equal(rewrite('/privacy').destination, '/privacy.html');
+    assert.equal(rewrite('/terms').destination, '/terms.html');
+    assert.equal(rewrite('/deletion').destination, '/deletion.html');
   assert.equal(vercel.rewrites.some((r) => r.source === '/' || r.source === '/index.html'), false);
   const build = (env) => execFileSync(process.execPath, ['scripts/vercel-build.mjs'], { cwd: ROOT, env: { ...process.env, ...env } });
   const pub = (name) => fs.readFileSync(path.join(ROOT, 'public', name), 'utf8');
@@ -109,8 +112,8 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
     assert.equal(pub('index.html'), applyPriceTokens(read('landing-v2.html')));
     assert.notEqual(pub('index.html'), read('waitlist.html'));
     assert.equal(pub('landing-v2.html'), applyPriceTokens(read('landing-v2.html')));
-    for (const f of ['white-label.html', 'landing-v2.css', 'landing-v2.js', 'waitlist.html']) {
-      assert.equal(pub(f), read(f));
+    for (const f of ['white-label.html', 'landing-v2.css', 'landing-v2.js', 'waitlist.html', 'privacy.html', 'terms.html', 'deletion.html', 'clinic.html', 'home.css', 'home.js', 'clinic-theme.css', 'vendor/onboarding.js']) {
+      assert.equal(pub(f), f === 'vendor/onboarding.js' ? read('lib/validation/onboarding.js') : read(f));
     }
   } finally {
     fs.rmSync(path.join(ROOT, 'public'), { recursive: true, force: true });

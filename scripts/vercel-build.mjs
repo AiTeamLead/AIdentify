@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import { applyPriceTokens } from '../lib/pricing.js';
 const OUT = 'public';
-const PAGES = ['index.html', 'home.html', 'setup.html', 'settings.html', 'board.html', 'waitlist.html', 'landing-v2.html', 'white-label.html', 'clinic.html'];
+const PAGES = ['index.html', 'home.html', 'setup.html', 'settings.html', 'board.html', 'waitlist.html', 'landing-v2.html', 'white-label.html', 'clinic.html', 'privacy.html', 'terms.html', 'deletion.html'];
 const ASSETS = ['landing-v2.css', 'landing-v2.js', 'clinic-theme.css', 'home.css', 'home.js'];
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });

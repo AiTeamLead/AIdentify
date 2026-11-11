@@ -70,6 +70,18 @@
     {
       "source": "/white-label",
       "destination": "/white-label.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/deletion",
+      "destination": "/deletion.html"
     }
   ],
   "headers": [
