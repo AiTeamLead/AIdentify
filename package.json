@@ -1,0 +1,47 @@
+{
+  "name": "aidentify",
+  "version": "2.13.0",
+  "private": true,
+  "description": "AaaS: open-source Agents as a Service platform. Create AI agent workers, connect tools and build connectors.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "browser:login": "node scripts/browser-login.mjs",
+    "check": "node scripts/check.mjs",
+    "update": "bash install.sh --update",
+    "social:snapshot": "node scripts/social-snapshot.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "test:clinic": "node --test test/clinic.test.mjs",
+    "db:migrate-from-file": "node scripts/db-migrate.mjs from-file",
+    "db:export-to-file": "node scripts/db-migrate.mjs to-file",
+    "e2e": "node test/e2e/run.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@neondatabase/serverless": "^1.2.0",
+    "@slack/bolt": "^4.7.3",
+    "@whiskeysockets/baileys": "^6.7.24",
+    "imapflow": "2.0.6",
+    "nodemailer": "^6.9.16",
+    "pg": "^8.23.1",
+    "playwright": "^1.55.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.5"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "productName": "AaaS",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aidendify/AaaS.git"
+  },
+  "homepage": "https://github.com/aidendify/AaaS#readme",
+  "bugs": {
+    "url": "https://github.com/aidendify/AaaS/issues"
+  },
+  "license": "UNLICENSED",
+  "optionalDependencies": {
+    "cloudflared": "^0.7.3"
+  }
+}
