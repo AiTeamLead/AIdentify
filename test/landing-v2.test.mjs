@@ -33,6 +33,13 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   assert.match(productHome, /More Time for Customers\. Less Time on Repetitive Work\./);
   assert.match(productHome, /Get Started in Five Simple Steps\./);
   assert.match(productHome, /Everything Your Business Needs to Stay Organised\./);
+  assert.match(productHome, /src="\/assets\/landing\/dashboard-reference\.png" width="1484" height="768"/);
+  const chiefFeature = productHome.match(/<h3>Chief – Your AI Business Assistant<\/h3>[\s\S]*?<figure class="shot">([\s\S]*?)<\/figure>/)?.[1] || '';
+  assert.match(chiefFeature, /<figcaption><span>Dashboard<\/span><span>Aesthetic clinic<\/span><\/figcaption>\s*<img src="\/assets\/landing\/dashboard\.png" width="1481" height="768" alt="Aesthetic clinic dashboard showing monthly revenue, payments due, today's appointments, open enquiries, lead pipeline and schedule\." loading="lazy">/);
+  const crmFeature = productHome.match(/<h3>Business CRM<\/h3>[\s\S]*?<figure class="shot">([\s\S]*?)<\/figure>/)?.[1] || '';
+  assert.match(crmFeature, /<figcaption><span>CRM<\/span><span>Aesthetic clinic<\/span><\/figcaption>\s*<img src="\/assets\/landing\/crm\.png" width="1486" height="768" alt="Aesthetic clinic CRM showing client and lead records with contact details, source and recent activity\." loading="lazy">/);
+  const approvalsFeature = productHome.match(/<h3>Approvals Centre<\/h3>[\s\S]*?<figure class="shot">([\s\S]*?)<\/figure>/)?.[1] || '';
+  assert.match(approvalsFeature, /<figcaption><span>Approvals<\/span><span>Aesthetic clinic<\/span><\/figcaption>\s*<img src="\/assets\/landing\/approvals\.png" width="1464" height="768" alt="Aesthetic clinic approvals screen showing a review request with a message draft, WhatsApp link, and Save edit, Approve, and Reject controls\." loading="lazy">/);
   assert.match(productHome, /Will AI send messages automatically/);
   assert.doesNotMatch(productHome, /href="\/white-label"|href="\/v1"/);
   assert.match(productHome, /Get Started Free/);
@@ -47,7 +54,7 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   assert.equal([...onboarding.matchAll(/class="setup-shot"/g)].length, 1, 'show one large screenshot at a time');
   assert.equal([...onboarding.matchAll(/data-setup-step/g)].length, 9, 'provide selectors for seven steps, setup progress, and team ready');
   const homeJs = read('home.js');
-  for (const image of ['onboarding-user-step-1.webp', 'onboarding-user-step-2.webp', 'onboarding-user-step-3.webp', 'onboarding-user-step-4.webp', 'onboarding-user-step-5.webp', 'onboarding-user-step-6.webp', 'onboarding-user-step-7.webp', 'onboarding-user-ready.webp', 'onboarding-ready-cropped.webp']) {
+  for (const image of ['onboarding-carousel-step-1.png', 'onboarding-carousel-step-2.png', 'onboarding-carousel-step-3.png', 'onboarding-carousel-step-4.png', 'onboarding-carousel-step-5.png', 'onboarding-carousel-step-6.png', 'onboarding-carousel-step-7.png', 'onboarding-user-ready.webp', 'onboarding-carousel-ready.png']) {
     assert.match(onboarding, new RegExp(`data-src="/assets/landing/${image}"`));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'landing', image)), image);
   }
@@ -107,9 +114,13 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
       assert.match(html, /class="brand-ai">AI<\/span>/, f);
       assert.match(html, /class="brand-rest">dentify<\/span>/, f);
     }
-    for (const f of ['home.css', 'home.js', 'assets/landing/chief.png']) assert.ok(fs.existsSync(path.join(ROOT, 'public', f)), f);
-    for (const f of ['onboarding-user-step-1.webp', 'onboarding-user-step-2.webp', 'onboarding-user-step-3.webp', 'onboarding-user-step-4.webp', 'onboarding-user-step-5.webp', 'onboarding-user-step-6.webp', 'onboarding-user-step-7.webp', 'onboarding-user-ready.webp']) {
+    for (const f of ['home.css', 'home.js', 'assets/landing/chief.png', 'assets/landing/dashboard.png', 'assets/landing/dashboard-reference.png', 'assets/landing/crm.png', 'assets/landing/approvals.png']) assert.ok(fs.existsSync(path.join(ROOT, 'public', f)), f);
+    assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', 'dashboard.png')), fs.readFileSync(path.join(ROOT, 'assets', 'landing', 'dashboard.png')), 'Vercel output includes the updated dashboard image');
+    assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', 'crm.png')), fs.readFileSync(path.join(ROOT, 'assets', 'landing', 'crm.png')), 'Vercel output includes the updated CRM image');
+    assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', 'approvals.png')), fs.readFileSync(path.join(ROOT, 'assets', 'landing', 'approvals.png')), 'Vercel output includes the updated approvals image');
+    for (const f of ['onboarding-carousel-step-1.png', 'onboarding-carousel-step-2.png', 'onboarding-carousel-step-3.png', 'onboarding-carousel-step-4.png', 'onboarding-carousel-step-5.png', 'onboarding-carousel-step-6.png', 'onboarding-carousel-step-7.png', 'onboarding-user-ready.webp', 'onboarding-carousel-ready.png']) {
       assert.ok(fs.existsSync(path.join(ROOT, 'public', 'assets', 'landing', f)), f);
+      assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', f)), fs.readFileSync(path.join(ROOT, 'assets', 'landing', f)), `Vercel output includes ${f}`);
     }
     assert.equal(pub('app.html'), read('index.html'), 'the workplace app moves to /app');
     build({ AIDENTIFY_SITE: 'landing' });
