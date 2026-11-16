@@ -47,6 +47,10 @@ async function serve(req, res) {
   const url = new URL(req.url, 'http://x');
   const ip = req.socket.remoteAddress || 'local';
   try {
+    const homeSectionPath = url.pathname.replace(/\/+$/, '');
+    if (req.method === 'GET' && ['/why-aidentify', '/benefits', '/how-it-works', '/who-its-for', '/features', '/faq'].includes(homeSectionPath)) {
+      return send(res, 200, await fs.readFile(path.join(dir, 'home.html'), 'utf8'), 'text/html; charset=utf-8');
+    }
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/app' || url.pathname === '/app.html')) {
       // "/" is the public home page (home.html); Sign in opens /Aesthetic (each account then goes to its own industry page). The workplace app lives at /app; Bot Mode frames it with ?bot=1.
       const workplace = url.pathname.startsWith('/app') || url.searchParams.get('bot') === '1';

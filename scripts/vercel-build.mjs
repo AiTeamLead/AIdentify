@@ -22,6 +22,10 @@ if (fs.existsSync('zips')) { fs.mkdirSync(`${OUT}/zips`); for (const z of fs.rea
 // "/" is the public home page; Sign in opens /clinic (the owner sign-in). The workplace app is /app (Bot Mode frames /app?bot=1).
 fs.writeFileSync(`${OUT}/app.html`, fs.readFileSync('index.html'));
 fs.writeFileSync(`${OUT}/index.html`, fs.readFileSync('home.html'));
+for (const p of ['why-aidentify', 'benefits', 'how-it-works', 'who-its-for', 'features', 'faq']) {
+  fs.mkdirSync(`${OUT}/${p}`, { recursive: true });
+  fs.copyFileSync('home.html', `${OUT}/${p}/index.html`);
+}
 // Landing project (aidentify.vercel.app): v2 is the home page. v1 stays at /v1 (waitlist.html).
 if (process.env.AIDENTIFY_SITE === 'landing') fs.writeFileSync(`${OUT}/index.html`, applyPriceTokens(fs.readFileSync('landing-v2.html', 'utf8')));
 console.log('public/:', fs.readdirSync(OUT).join(', '));

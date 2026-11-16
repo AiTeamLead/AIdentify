@@ -36,6 +36,13 @@ test('each pack path serves the app and the account reports its own path', async
     // "/" is the public home page whose Sign in opens /clinic; the workplace app is at /app and still answers /?bot=1 (Bot Mode frame)
     const homePage = await (await fetch(s.base + '/')).text();
     assert.match(homePage, /Run Your Business Smarter\. Let AI Handle the Repetitive Work\./); assert.match(homePage, /href="\/Aesthetic">Sign in/); assert.match(homePage, /href="\/Aesthetic#signup">Get Started Free/);
+    for (const route of ['/why-aidentify', '/benefits', '/how-it-works', '/who-its-for', '/features', '/faq']) {
+      for (const path of [route, `${route}/`]) {
+        const response = await fetch(s.base + path);
+        assert.equal(response.status, 200, path);
+        assert.match(await response.text(), /<script src="\/home\.js"><\/script>/, path);
+      }
+    }
     const logo = await fetch(s.base + '/logos/aidentify.png');
     assert.equal(logo.status, 200);
     assert.equal(logo.headers.get('content-type'), 'image/png');

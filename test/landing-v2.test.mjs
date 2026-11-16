@@ -10,6 +10,7 @@ import { BUSINESS_TYPES } from '../lib/waitlist.js';
 import { applyPriceTokens, SELF_HOSTED_INR, HOSTED_INR, SETUP_INR } from '../lib/pricing.js';
 
 const read = (name) => fs.readFileSync(path.join(ROOT, name), 'utf8');
+const SECTION_ROUTES = [['/why-aidentify', 'problem'], ['/benefits', 'benefits'], ['/how-it-works', 'how'], ['/who-its-for', 'who'], ['/features', 'features'], ['/faq', 'faq']];
 
 test('landing v2 reuses the waitlist business types, with no default on the main page', () => {
   const js = read('landing-v2.js');
@@ -43,8 +44,17 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   assert.match(productHome, /Will AI send messages automatically/);
   assert.doesNotMatch(productHome, /href="\/white-label"|href="\/v1"/);
   assert.match(productHome, /Get Started Free/);
+  assert.equal([...productHome.matchAll(/href="\/features">Explore the Platform<\/a>/g)].length, 2, 'explore links open the features page');
   assert.equal([...productHome.matchAll(/role="tab" id="tab-/g)].length, 7, 'show all industries as tabs');
   assert.match(productHome, /role="tablist" aria-label="Industries"/);
+  const primaryNav = productHome.match(/<nav class="nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '';
+  const mobileNav = productHome.match(/<details class="mob"[^>]*>([\s\S]*?)<\/details>/)?.[1] || '';
+  const homeJs = read('home.js');
+  for (const [route, section] of SECTION_ROUTES) {
+    assert.ok(primaryNav.includes(`href="${route}"`), `desktop navigation links to ${route}`);
+    assert.ok(mobileNav.includes(`href="${route}"`), `mobile navigation links to ${route}`);
+    assert.ok(homeJs.includes(`['${route}', ['${section}',`), `home page displays ${section} on ${route}`);
+  }
   const homeCss = read('home.css');
   assert.match(homeCss, /\.tabs\s*\{\s*display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(4,/);
   assert.match(homeCss, /@media \(max-width: 900px\)[\s\S]*?\.tabs\s*\{\s*grid-template-columns:\s*repeat\(3,/);
@@ -53,7 +63,6 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   assert.doesNotMatch(productHome, /assets\/landing\/onboarding\.png/);
   assert.equal([...onboarding.matchAll(/class="setup-shot"/g)].length, 1, 'show one large screenshot at a time');
   assert.equal([...onboarding.matchAll(/data-setup-step/g)].length, 9, 'provide selectors for seven steps, setup progress, and team ready');
-  const homeJs = read('home.js');
   for (const image of ['onboarding-carousel-step-1.png', 'onboarding-carousel-step-2.png', 'onboarding-carousel-step-3.png', 'onboarding-carousel-step-4.png', 'onboarding-carousel-step-5.png', 'onboarding-carousel-step-6.png', 'onboarding-carousel-step-7.png', 'onboarding-user-ready.webp', 'onboarding-carousel-ready.png']) {
     assert.match(onboarding, new RegExp(`data-src="/assets/landing/${image}"`));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'landing', image)), image);
@@ -118,6 +127,9 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
     assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', 'dashboard.png')), fs.readFileSync(path.join(ROOT, 'assets', 'landing', 'dashboard.png')), 'Vercel output includes the updated dashboard image');
     assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', 'crm.png')), fs.readFileSync(path.join(ROOT, 'assets', 'landing', 'crm.png')), 'Vercel output includes the updated CRM image');
     assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', 'approvals.png')), fs.readFileSync(path.join(ROOT, 'assets', 'landing', 'approvals.png')), 'Vercel output includes the updated approvals image');
+    for (const [route] of SECTION_ROUTES) {
+      assert.equal(fs.readFileSync(path.join(ROOT, 'public', route.slice(1), 'index.html'), 'utf8'), read('home.html'), `Vercel output serves the home content at ${route}`);
+    }
     for (const f of ['onboarding-carousel-step-1.png', 'onboarding-carousel-step-2.png', 'onboarding-carousel-step-3.png', 'onboarding-carousel-step-4.png', 'onboarding-carousel-step-5.png', 'onboarding-carousel-step-6.png', 'onboarding-carousel-step-7.png', 'onboarding-user-ready.webp', 'onboarding-carousel-ready.png']) {
       assert.ok(fs.existsSync(path.join(ROOT, 'public', 'assets', 'landing', f)), f);
       assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'assets', 'landing', f)), fs.readFileSync(path.join(ROOT, 'assets', 'landing', f)), `Vercel output includes ${f}`);
