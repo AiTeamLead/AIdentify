@@ -19,8 +19,11 @@ button { cursor:pointer; }
 .side::-webkit-scrollbar-thumb { background:#b7c1cd; border-radius:10px; border:2px solid #f1f4f8; min-height:40px; }
 .side::-webkit-scrollbar-thumb:hover { background:#8f9bab; }
 .brand { display:flex; gap:10px; align-items:center; padding:0 8px 16px; }
-.mark { width:28px; height:28px; border-radius:8px; background:var(--blue); color:#fff; display:grid; place-items:center; font-weight:700; font-size:14px; }
-.brand b { display:block; font-size:15px; }
+.brand-logo { width:36px; height:36px; object-fit:contain; flex:none; }
+.brand-name { display:block; font-size:15px; font-weight:700; }
+.brand .brand-ai, .brand .brand-rest { display:inline; font-size:inherit; font-weight:inherit; }
+.brand .brand-ai { color:#2f2a86; }
+.brand .brand-rest { color:var(--ink); }
 .brand span { display:block; color:var(--muted); font-size:12px; font-weight:400; }
 .nav { display:flex; flex-direction:column; gap:2px; flex:none; }
 .side > * { flex:none; }
@@ -249,7 +252,6 @@ table { min-width:520px; }
 .ob-head { position:relative; padding:clamp(14px, 2.6vh, 26px) clamp(20px, 4vw, 56px) clamp(14px, 2.4vh, 24px); background:#f7f7f9; border-bottom:1px solid #e9eaf2;
   background-image:radial-gradient(#dcdfeb 1px, transparent 1px); background-size:18px 18px; }
 .ob-headrow { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-.ob-brand .mark { background:var(--primary); color:#fff; }
 .ob-h { font-size:clamp(24px, 2.6vw, 34px); line-height:1.15; letter-spacing:-.02em; margin:clamp(8px, 1.6vh, 16px) 0 4px; color:var(--ink); }
 .ob-h span { background:linear-gradient(90deg, #2f2a86, #0e8f62); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .ob-lead { margin:0; color:var(--muted); font-size:14.5px; line-height:1.5; max-width:720px; }
@@ -597,7 +599,7 @@ function loginView() {
   const hero = meta.hero || "A small team's work, without hiring one";
   const cur = entryPack();
   return `<div class="landing"><section class="hero">
-    <div class="brand"><div class="mark">A</div><div><b>AIdentify</b><span>${cur ? esc(cur.title) : 'For the owner'}</span></div></div>
+    <div class="brand"><img class="brand-logo" src="/brand/aidentify-logo.svg" alt="" width="36" height="36"><div><b class="brand-name"><span class="brand-ai">AI</span><span class="brand-rest">dentify</span></b><span>${cur ? esc(cur.title) : 'For the owner'}</span></div></div>
     <h1>${esc(hero)}</h1>
     <p class="sub">${cur ? esc(cur.blurb) + ' ' : ''}A personal AI team for a small business: daily sales, follow-up, marketing and billing. Not an enterprise suite. You approve anything that would leave the building.</p>
     ${domainsCard(cur)}
@@ -883,7 +885,7 @@ function profileView() {
     <div class="ob-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
     <header class="ob-head">
       <div class="ob-headrow">
-        <div class="brand ob-brand"><div class="mark">A</div><div><b>AIdentify</b><span>${esc(pk ? (ob.role === 'other' && ob.businessType ? ob.businessType : pk.title) : 'Your AI team')}</span></div></div>
+        <div class="brand ob-brand"><img class="brand-logo" src="/brand/aidentify-logo.svg" alt="" width="36" height="36"><div><b class="brand-name"><span class="brand-ai">AI</span><span class="brand-rest">dentify</span></b><span>${esc(pk ? (ob.role === 'other' && ob.businessType ? ob.businessType : pk.title) : 'Your AI team')}</span></div></div>
         <p class="ob-foot">About 2 minutes · <button type="button" class="ob-link" data-act="go" data-screen="setup" data-wiz="call">Prefer a setup call?</button> · <button type="button" class="ob-link" data-act="logout">Sign out</button></p>
       </div>
       <h1 class="ob-h">Let’s build your team${nm.ok ? ` for <span>${esc(nm.value)}</span>` : ''}.</h1>
@@ -1069,7 +1071,7 @@ function tabBar(scr, list) {
 function side() {
   const pending = (state.pending || []).length;
   return `<aside class="side">
-    <div class="brand"><div class="mark">A</div><div><b>AIdentify</b><span>${esc(state.biz || '')}</span></div></div>
+    <div class="brand"><img class="brand-logo" src="/brand/aidentify-logo.svg" alt="" width="36" height="36"><div><b class="brand-name"><span class="brand-ai">AI</span><span class="brand-rest">dentify</span></b><span>${esc(state.biz || '')}</span></div></div>
     <nav class="nav" aria-label="Main">
       ${NAV.map(([id, label]) => `<button type="button" data-act="go" data-screen="${id}" data-tour="${id}" ${screen === id ? 'aria-current="page"' : ''}>${esc(label)}${id === 'approvals' && pending ? `<span class="badge">${pending}</span>` : ''}</button>`).join('')}
     </nav>

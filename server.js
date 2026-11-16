@@ -75,6 +75,12 @@ async function serve(req, res) {
     if (req.method === 'GET' && url.pathname === '/onboarding-rules.js') { // field rules shared by the page and the server
       return send(res, 200, await fs.readFile(path.join(dir, 'lib', 'onboarding-rules.js')), 'text/javascript; charset=utf-8');
     }
+    if (req.method === 'GET' && url.pathname === '/brand/aidentify-logo.svg') {
+      return send(res, 200, await fs.readFile(path.join(dir, 'brand', 'aidentify-logo.svg')), 'image/svg+xml; charset=utf-8');
+    }
+    if (req.method === 'GET' && url.pathname === '/logos/aidentify.png') {
+      return send(res, 200, await fs.readFile(path.join(dir, 'logos', 'aidentify.png')), 'image/png');
+    }
     if (req.method === 'GET' && url.pathname === '/clinic-theme.css') {
       return send(res, 200, await fs.readFile(path.join(dir, 'clinic-theme.css')), 'text/css; charset=utf-8');
     }

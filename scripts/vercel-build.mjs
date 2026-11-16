@@ -17,7 +17,7 @@ fs.copyFileSync('lib/onboarding-rules.js', `${OUT}/onboarding-rules.js`); // the
 // one clinic page per industry (/Realestate, /Institute, …), generated from the packs so new packs get a URL too
 const { PACK_PATHS } = await import('../lib/clinic-packs.js');
 for (const p of Object.values(PACK_PATHS)) if (p !== '/clinic') { fs.mkdirSync(`${OUT}${p}`, { recursive: true }); fs.copyFileSync('clinic.html', `${OUT}${p}/index.html`); }
-for (const d of ['logos', 'assets']) if (fs.existsSync(d)) fs.cpSync(d, `${OUT}/${d}`, { recursive: true, filter: (s) => !/README\.md$/.test(s) });
+for (const d of ['logos', 'assets', 'brand']) if (fs.existsSync(d)) fs.cpSync(d, `${OUT}/${d}`, { recursive: true, filter: (s) => !/README\.md$/.test(s) });
 if (fs.existsSync('zips')) { fs.mkdirSync(`${OUT}/zips`); for (const z of fs.readdirSync('zips')) if (/^[a-z-]+\.zip\.txt$/.test(z)) fs.copyFileSync(`zips/${z}`, `${OUT}/zips/${z}`); }
 // "/" is the public home page; Sign in opens /clinic (the owner sign-in). The workplace app is /app (Bot Mode frames /app?bot=1).
 fs.writeFileSync(`${OUT}/app.html`, fs.readFileSync('index.html'));

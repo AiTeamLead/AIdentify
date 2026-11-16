@@ -36,6 +36,14 @@ test('each pack path serves the app and the account reports its own path', async
     // "/" is the public home page whose Sign in opens /clinic; the workplace app is at /app and still answers /?bot=1 (Bot Mode frame)
     const homePage = await (await fetch(s.base + '/')).text();
     assert.match(homePage, /Run Your Business Smarter\. Let AI Handle the Repetitive Work\./); assert.match(homePage, /href="\/Aesthetic">Sign in/); assert.match(homePage, /href="\/Aesthetic#signup">Get Started Free/);
+    const logo = await fetch(s.base + '/logos/aidentify.png');
+    assert.equal(logo.status, 200);
+    assert.equal(logo.headers.get('content-type'), 'image/png');
+    assert.deepEqual(Buffer.from(await logo.arrayBuffer()).subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    const mark = await fetch(s.base + '/brand/aidentify-logo.svg');
+    assert.equal(mark.status, 200);
+    assert.match(mark.headers.get('content-type'), /^image\/svg\+xml/);
+    assert.match(await mark.text(), /<svg[\s\S]*aria-label="AIdentify"/);
     for (const a of ['/home.css', '/home.js', '/assets/landing/chief.png', '/assets/landing/dashboard.png', '/assets/landing/crm.png', '/assets/landing/approvals.png', '/assets/landing/onboarding-user-step-1.webp', '/assets/landing/onboarding-user-step-2.webp', '/assets/landing/onboarding-user-step-3.webp', '/assets/landing/onboarding-user-step-4.webp', '/assets/landing/onboarding-user-step-5.webp', '/assets/landing/onboarding-user-step-6.webp', '/assets/landing/onboarding-user-step-7.webp', '/assets/landing/onboarding-user-ready.webp', '/assets/landing/onboarding-ready-cropped.webp']) assert.equal((await fetch(s.base + a)).status, 200, a);
     for (const p of ['/app', '/?bot=1', '/app?bot=1&mini=1']) assert.match(await (await fetch(s.base + p)).text(), /const botMode=/, p);
     const tok = (await s.api('/api/auth/signup', { email: 'route@example.com', name: 'R', password: PW })).d.token;

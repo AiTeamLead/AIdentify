@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="AIdentify">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B5BF5"/>
+      <stop offset="1" stop-color="#2F2A86"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7DD3FC"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <clipPath id="c"><circle cx="512" cy="512" r="500"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect width="1024" height="1024" fill="url(#g)"/>
+    <rect x="512" y="0" width="512" height="1024" fill="url(#sky)"/>
+    <path fill="#17182B" d="M512 0 L640 0 C720 40 770 120 782 215 C788 262 790 300 800 338
+      C806 360 800 372 806 392 C826 430 858 470 872 500 C880 518 868 530 846 534
+      C834 537 826 544 830 556 C834 568 828 576 820 584 C830 594 830 606 820 616
+      C812 626 812 640 816 660 C822 694 800 712 760 716 C726 720 704 732 700 770
+      C696 820 712 900 760 1024 L512 1024 Z"/>
+  </g>
+  <path d="M250 742 L404 300 L558 742" fill="none" stroke="#FFFFFF" stroke-width="104" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="404" cy="604" r="46" fill="#10B981"/>
+</svg>

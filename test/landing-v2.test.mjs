@@ -23,7 +23,10 @@ test('landing v2 reuses the waitlist business types, with no default on the main
   const main = read('landing-v2.html');
   const wl = read('white-label.html');
   const productHome = read('home.html');
-  assert.match(productHome, /aria-label="AIdentify home"[^>]*>[\s\S]*?AIdentify<\/a>/);
+  const homeBrand = productHome.match(/<a class="brand"[^>]*>([\s\S]*?)<\/a>/)?.[1] || '';
+  assert.match(homeBrand, /src="\/brand\/aidentify-logo\.svg"/);
+  assert.match(homeBrand, /class="brand-ai">AI<\/span>/);
+  assert.match(homeBrand, /class="brand-rest">dentify<\/span>/);
   assert.match(productHome, /Run Your Business Smarter\. Let AI Handle the Repetitive Work\./);
   assert.match(productHome, /Growing a Business Is Hard When Everything Depends on You\./);
   assert.match(productHome, /Meet Your AI Business Team\./);
@@ -96,6 +99,14 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
   try {
     build({ AIDENTIFY_SITE: '' });
     assert.equal(pub('index.html'), read('home.html'), 'product build serves the home page at /; Sign in opens /clinic');
+    assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'logos', 'aidentify.png')), fs.readFileSync(path.join(ROOT, 'logos', 'aidentify.png')), 'Vercel output includes the AIdentify logo unchanged');
+    assert.deepEqual(fs.readFileSync(path.join(ROOT, 'public', 'brand', 'aidentify-logo.svg')), fs.readFileSync(path.join(ROOT, 'brand', 'aidentify-logo.svg')), 'Vercel output includes the AIdentify mark unchanged');
+    for (const f of ['index.html', 'clinic.html', 'app.html', 'landing-v2.html', 'waitlist.html', 'white-label.html']) {
+      const html = pub(f);
+      assert.match(html, /src="\/brand\/aidentify-logo\.svg"/, f);
+      assert.match(html, /class="brand-ai">AI<\/span>/, f);
+      assert.match(html, /class="brand-rest">dentify<\/span>/, f);
+    }
     for (const f of ['home.css', 'home.js', 'assets/landing/chief.png']) assert.ok(fs.existsSync(path.join(ROOT, 'public', f)), f);
     for (const f of ['onboarding-user-step-1.webp', 'onboarding-user-step-2.webp', 'onboarding-user-step-3.webp', 'onboarding-user-step-4.webp', 'onboarding-user-step-5.webp', 'onboarding-user-step-6.webp', 'onboarding-user-step-7.webp', 'onboarding-user-ready.webp']) {
       assert.ok(fs.existsSync(path.join(ROOT, 'public', 'assets', 'landing', f)), f);
@@ -103,6 +114,8 @@ test('landing build serves v2 at / and keeps v1 as waitlist.html', () => {
     assert.equal(pub('app.html'), read('index.html'), 'the workplace app moves to /app');
     build({ AIDENTIFY_SITE: 'landing' });
     assert.equal(pub('index.html'), applyPriceTokens(read('landing-v2.html')));
+    assert.match(pub('index.html'), /class="brand-ai">AI<\/span>/);
+    assert.match(pub('index.html'), /class="brand-rest">dentify<\/span>/);
     assert.notEqual(pub('index.html'), read('waitlist.html'));
     assert.equal(pub('landing-v2.html'), applyPriceTokens(read('landing-v2.html')));
     for (const f of ['white-label.html', 'landing-v2.css', 'landing-v2.js', 'waitlist.html']) {

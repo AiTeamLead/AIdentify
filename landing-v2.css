@@ -9,6 +9,7 @@
   --bd: #d4cbbd;
   --soft: #f7f3eb;
   --accent: #0c5c4a;
+  --logo-blue: #2f2a86;
   --accent-ink: #f3fbf7;
   --hl: rgba(12, 92, 74, .1);
   --err: #9f1239;
@@ -27,6 +28,7 @@
   --bd: rgba(246, 241, 231, .2);
   --soft: #26231e;
   --accent: #7ddec0;
+  --logo-blue: #a3a0ff;
   --accent-ink: #06281f;
   --hl: rgba(125, 222, 192, .12);
   --err: #fda4af;
@@ -93,6 +95,10 @@ h1, h2 { font-family: var(--serif); font-weight: 560; letter-spacing: -.03em; li
 }
 .top .wrap { min-height: 68px; display: flex; align-items: center; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; letter-spacing: -.03em; font-size: 18px; }
+.brand-logo { width: 36px; height: 36px; object-fit: contain; flex: none; }
+.brand-name { font-weight: 700; letter-spacing: -.03em; }
+.brand-ai { color: var(--logo-blue); }
+.brand-rest { color: var(--ink); }
 .navdesk { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .navdesk a, .mob a {
   color: var(--mute);
