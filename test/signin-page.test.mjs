@@ -11,7 +11,7 @@ let pw = null; try { pw = await import('playwright'); } catch { /* not installed
 
 test('sign-in password has an accessible show/hide control', () => {
   const src = fs.readFileSync(path.join(ROOT, 'clinic.html'), 'utf8');
-  assert.match(src, /<b>AIdentify<\/b>/);
+  assert.match(src, /<b class="brand-name"><span class="brand-ai">AI<\/span><span class="brand-rest">dentify<\/span><\/b>/);
   assert.doesNotMatch(src, /<b>AaaS<\/b>/);
   assert.match(src, /class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"/);
   assert.match(src, /input\.type = visible \? 'text' : 'password'/);
