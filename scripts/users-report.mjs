@@ -16,9 +16,13 @@ function loadEnv() {
   const f = process.env.AIDENTIFY_ENV_FILE || path.join(ROOT, '.env');
   if (!fs.existsSync(f)) return;
   for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (!m || (process.env[m[1]] ?? '') !== '') continue;
-    let v = m[2].trim(); if (/^(['"]).*\1$/.test(v)) v = v.slice(1, -1); process.env[m[1]] = v;
+    const equals = line.indexOf('=');
+    if (equals < 0) continue;
+    const key = line.slice(0, equals).trim();
+    if (!/^[A-Z0-9_]+$/.test(key) || (process.env[key] ?? '') !== '') continue;
+    let value = line.slice(equals + 1).trim();
+    if (value.length >= 2 && (value[0] === '"' || value[0] === "'") && value[value.length - 1] === value[0]) value = value.slice(1, -1);
+    process.env[key] = value;
   }
 }
 const ist = (ms) => (ms ? new Date(Number(ms) + 5.5 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) : '');

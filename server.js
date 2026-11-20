@@ -16,8 +16,17 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 try {
   const txt = await fs.readFile(process.env.AIDENTIFY_ENV_FILE || path.join(dir, '.env'), 'utf8'); // AIDENTIFY_ENV_FILE: tests use their own
   for (const line of txt.replace(/^\uFEFF/, '').split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/(^|\s+)#.*$/, '').replace(/^["']|["']$/g, ''); // drop inline # comments
+    const equals = line.indexOf('=');
+    if (equals < 0) continue;
+    const key = line.slice(0, equals).trim();
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(key) || process.env[key]) continue;
+    let value = line.slice(equals + 1).trim();
+    for (let i = 0; i < value.length; i++) {
+      if (value[i] === '#' && (i === 0 || /\s/.test(value[i - 1]))) { value = value.slice(0, i); break; }
+    }
+    if (value[0] === '"' || value[0] === "'") value = value.slice(1);
+    if (value[value.length - 1] === '"' || value[value.length - 1] === "'") value = value.slice(0, -1);
+    process.env[key] = value; // drop inline # comments
   }
 } catch { /* no .env file: fine */ }
 
@@ -26,8 +35,25 @@ try {
 // obvious mistakes here, once, before anything reads it, and say so in the log.
 { const raw = String(process.env.APP_URL || '').trim();
   if (raw) {
-    const m = raw.match(/(https?):\/{2}([^\s/?#]+)(\/[^\s?#]*)?\/*\s*$/i);
-    let fixed = m ? (m[1].toLowerCase() + '://' + m[2].toLowerCase() + (m[3] || '').replace(/\/+$/, '')) : (/^[a-z0-9.-]+\.[a-z]{2,}(:\d+)?$/i.test(raw) ? 'https://' + raw.toLowerCase() : raw);
+    const lower = raw.toLowerCase();
+    const httpsAt = lower.indexOf('https://'), httpAt = lower.indexOf('http://');
+    const start = httpsAt < 0 ? httpAt : httpAt < 0 ? httpsAt : Math.min(httpsAt, httpAt);
+    let fixed = raw;
+    if (start >= 0) {
+      const scheme = lower.slice(start, start + 8) === 'https://' ? 'https://' : 'http://';
+      const rest = raw.slice(start + scheme.length);
+      let end = rest.length;
+      for (const delimiter of ['/', '?', '#', ' ', '\t', '\r', '\n']) {
+        const at = rest.indexOf(delimiter);
+        if (at >= 0 && at < end) end = at;
+      }
+      const host = rest.slice(0, end), suffix = rest.slice(end);
+      if (host && !/[?#\s]/.test(suffix) && (!suffix || suffix[0] === '/')) {
+        let cleanSuffix = suffix;
+        while (cleanSuffix.endsWith('/')) cleanSuffix = cleanSuffix.slice(0, -1);
+        fixed = scheme + host.toLowerCase() + cleanSuffix;
+      }
+    } else if (/^[a-z0-9.-]+\.[a-z]{2,}(:\d+)?$/i.test(raw)) fixed = 'https://' + raw.toLowerCase();
     if (fixed !== raw) { console.warn(`NOTE: APP_URL in .env was "${raw}". Using "${fixed}". Correct the line in .env to: APP_URL=${fixed}`); process.env.APP_URL = fixed; }
     process.env.APP_URL_RAW = raw;
   } }
@@ -58,7 +84,8 @@ async function serve(req, res) {
   const url = new URL(req.url, 'http://x');
   const ip = req.socket.remoteAddress || 'local';
   try {
-    const homeSectionPath = url.pathname.replace(/\/+$/, '');
+    let homeSectionPath = url.pathname;
+    while (homeSectionPath.endsWith('/')) homeSectionPath = homeSectionPath.slice(0, -1);
     if (req.method === 'GET' && ['/why-aidentify', '/benefits', '/how-it-works', '/who-its-for', '/features', '/faq'].includes(homeSectionPath)) {
       return send(res, 200, await fs.readFile(path.join(dir, 'home.html'), 'utf8'), 'text/html; charset=utf-8');
     }

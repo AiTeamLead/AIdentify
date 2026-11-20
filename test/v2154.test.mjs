@@ -16,6 +16,14 @@ const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', process.env
 function memStore() { const m = new Map(); return { m, get: async (k) => (m.has(k) ? { v: m.get(k) } : null), put: async (k, v) => { m.set(k, v); } }; }
 const lock = async (_e, fn) => fn();
 
+test('X share text removes internal media paths', () => {
+  const html = fs.readFileSync(new URL('../clinic.html', import.meta.url), 'utf8');
+  const source = html.match(/function xText\(p\) \{[^\n]*\}/);
+  assert.ok(source);
+  const xText = new Function(source[0] + '\nreturn xText;')();
+  assert.equal(xText({ text: 'Post /api/media/18b1708a31de4981da3c0fd61dd96db2.jpg now' }), 'Post  now');
+});
+
 test('Chief: one post + one approval with the picture; approve → publishing now with THAT picture; no loop', async () => {
   const st = memStore(), email = 'loop@example.com';
   st.m.set('as_clinic:' + email, JSON.stringify({ role: 'marketing', biz: 'Bright', posts: [], drafts: [], patients: [], appointments: [], enquiries: [], invoices: [] }));

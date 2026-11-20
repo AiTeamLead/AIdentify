@@ -1401,7 +1401,7 @@ function scheduledPosts() {
 }
 // X for free: X's API charges per post, so without an X app the owner posts it in one tap (text ready, picture saved)
 function postPic(p) { return String(p.image || p.media || '').trim() || (String(p.text || '').match(/(https?:\/\/\S+?\.(?:png|jpe?g|webp)|\/api\/media\/[a-f0-9]{32}\.(?:png|jpg|webp))/i) || [])[0] || ''; }
-function xText(p) { return String(p.text || '').split('\n').filter((l) => !/^\s*Image attached by the user:/i.test(l)).join('\n').replace(/\S*\/api\/media\/\S+/g, '').trim().slice(0, 280); }
+function xText(p) { return String(p.text || '').split('\n').filter((l) => !/^\s*Image attached by the user:/i.test(l)).join('\n').split(/(\s+)/).filter((part) => { const marker = part.toLowerCase().indexOf('/api/media/'); return marker < 0 || marker + 11 === part.length; }).join('').trim().slice(0, 280); }
 function xShare(p) {
   if (!(p.platforms || []).some((n) => /^x$|twitter|^x \(/i.test(String(n)))) return '';
   const u = p.publish, xr = u && (u.per || []).find((x) => /^x$|twitter|^x \(/i.test(String(x.network)));

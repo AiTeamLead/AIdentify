@@ -2,6 +2,12 @@
 // and the playbook walks the agent through find → read → comment (approval) → save_lead.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { draftReply } from '../lib/engage.js';
+
+test('reply drafting accepts ordinary text containing "mock" away from the start', async () => {
+  const result = await draftReply({ biz: 'Clinic' }, { kind: 'reply', network: 'X', author: 'A', text: 'Nice work' }, async () => 'Our mockup is ready to see.');
+  assert.equal(result, 'Our mockup is ready to see.');
+});
 
 test('sign-in pages of the social networks are recognised', async () => {
   const { loginWall } = await import('../lib/browser.js');

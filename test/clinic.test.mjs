@@ -61,6 +61,7 @@ test('WhatsApp links are click-to-chat URLs and CSV rows parse', () => {
   const rows = parseCsv('type,name,phone,email,last_visit,value\npatient,Asha Rao,919000000111,asha@example.com,2026-10-01,1200\n');
   assert.equal(rows[0].name, 'Asha Rao');
   assert.equal(rows[0].type, 'patient');
+  assert.equal(parseCsv('Customer #,Mobile Number\nAsha,9876543210\n')[0].name, 'Asha');
 });
 
 test('dental team: seeded numbers, CRUD, approvals, import, form, and chat', async () => {

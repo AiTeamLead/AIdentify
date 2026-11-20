@@ -24,8 +24,13 @@ export const mask = (u) => String(u).replace(/(\/\/[^:/@]+:)[^@]*@/, '$1****@');
 function envFileValue(key) {
   if (!fs.existsSync(ENV_FILE)) return '';
   for (const line of fs.readFileSync(ENV_FILE, 'utf8').split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (m && m[1] === key) { let v = m[2].trim(); if (/^(['"]).*\1$/.test(v)) v = v.slice(1, -1); return v; }
+    const equals = line.indexOf('=');
+    if (equals < 0) continue;
+    const name = line.slice(0, equals).trim();
+    if (name !== key || !/^[A-Z0-9_]+$/.test(name)) continue;
+    let value = line.slice(equals + 1).trim();
+    if (value.length >= 2 && (value[0] === '"' || value[0] === "'") && value[value.length - 1] === value[0]) value = value.slice(1, -1);
+    return value;
   }
   return '';
 }
@@ -33,7 +38,8 @@ function envFileValue(key) {
 export function writeEnvUrl(file, url) {
   const txt = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const line = 'DATABASE_URL=' + url;
-  const out = /^\s*DATABASE_URL\s*=.*$/m.test(txt) ? txt.replace(/^\s*DATABASE_URL\s*=.*$/m, line) : txt + (txt.endsWith('\n') || !txt ? '' : '\n') + line + '\n';
+  const databaseLine = /^[ \t]*DATABASE_URL[ \t]*=[^\r\n]*$/m;
+  const out = databaseLine.test(txt) ? txt.replace(databaseLine, line) : txt + (txt.endsWith('\n') || !txt ? '' : '\n') + line + '\n';
   fs.writeFileSync(file, out);
 }
 
