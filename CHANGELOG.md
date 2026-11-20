@@ -5,6 +5,94 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.15.5] - 2026-11-20 — PostgreSQL set up: accounts, sign-ins, records
+
+### Added
+- `npm run db:setup` (local) and `scripts/setup-postgres.sh` (EC2); PostgreSQL in docker-compose.
+- Readable views `aaas_users`, `aaas_businesses`, `aaas_enquiries`, `aaas_leads`, `aaas_posts` (no secrets).
+- `aaas_logins`: every sign-up and sign-in recorded. `npm run users` (list / CSV). Guide docs/POSTGRES.md.
+
+## [2.15.4] - 2026-11-20 — Chief posting loop fixed, X through the app's browser
+
+### Fixed
+- Chief no longer loops creating images/approvals: `publish_social_post` = one post with its picture + one approval;
+  approve publishes it; repeats return the existing post. Approved drafts publish whatever the wording, with the picture.
+
+### Added
+- X through the app's browser: sign in once in a live view (Integrations › X), approved posts go out with text +
+  picture, link captured, picture checked (post deleted if missing). 10/day, 90 s apart. X app (API) still used first.
+
+## [2.15.3] - 2026-11-19 — LinkedIn text + picture through Composio
+
+### Fixed
+- LinkedIn picture posts work through the Composio connection: LinkedIn's own steps over Composio's proxy (upload →
+  AVAILABLE → post with media → read back → delete if the picture is missing). Composio's post tool is not used.
+  Held with the reason when the picture can't reach LinkedIn; never text-only. Own LinkedIn app still preferred if set.
+
+## [2.15.2] - 2026-11-19 — LinkedIn pictures through your own LinkedIn app
+
+### Fixed
+- LinkedIn posts carry the picture: LinkedIn's own upload → wait until ready → post with media → read back; a post that
+  lost its picture is deleted and reported. Composio's LinkedIn post tool (drops pictures) is no longer used for them.
+- Chief cannot attach LinkedIn pictures with Composio tools; picture posts go through approval and the app.
+- LinkedIn text escaping (brackets no longer cut posts); hashtags stay clickable.
+
+### Added
+- Direct LinkedIn sign-in (`LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`), optional `LINKEDIN_ORG_ID` for a company Page.
+
+## [2.15.1] - 2026-11-19 — X direct connect, LinkedIn pictures, Engagement
+
+### Fixed
+- X connects with your own X app directly (`X_CLIENT_ID` / `X_CLIENT_SECRET`, OAuth 2.0 + PKCE), on localhost and the domain.
+- LinkedIn posts carry the picture: uploaded as a Composio file and attached by the app itself. Never text-only.
+- Composio tools called by the AI get real picture files instead of links (Facebook / Instagram).
+
+### Added
+- X posting with the picture, replies, mentions and keyword search (`lib/social.js`).
+- Social Media › Engagement (`lib/engage.js`): drafted replies to comments, auto-reply rules, leads from comments into
+  Enquiries and follow-up, comments on other business posts (X / LinkedIn) capped at 10 a day.
+
+## [2.15.0] - 2026-11-18 — fixes from the 18 Nov test round (issues.pdf), X free posting
+
+### Fixed
+- Approvals: several posts approved at once are all kept; no more "approval no longer exists" (per-account queue, `lib/appr-store.js`).
+- Chief keeps an attached picture across the conversation and never asks "which image".
+- Posts are never text-only: 3 image models, then a locally designed card.
+- Chief no longer opens a browser sign-in for a social network connected through Composio.
+- Mobile numbers: exactly 10 digits (6–9 start) on every field and every server endpoint.
+- X: free one-tap *Post on X* for every approved post (no X app needed); Connect explains instead of showing X's error; automatic posting uses the owner's own X app (paid by X, ~$0.015/post).
+
+### Added
+- Approve a post = publish now in the background (or on its date); per-network result and links on Social Media; Publish now / Try again.
+- Integrations notes for Facebook's "Published by" label and X developer app setup.
+
+## [2.14.0] - 2026-11-17 — fixes from the Monday test round (Issues on Monday.pdf)
+
+### Fixed
+- Sign-in: one show-password eye (the browser's own eye is hidden on every page).
+- Settings: Business phone and Toll-free accept exactly 10 digits (a pasted +91 number becomes its 10 digits).
+- Composio "Invalid redirect URI": the server's APP_URL was `http:https://…`. The app now corrects such typos at start-up, logs the fix, and explains it if Composio refuses. The same broken address made post images unreachable (LinkedIn text-only, Facebook/X failing).
+- Approving a draft now really sends it: WhatsApp from the owner's own number (QR), else the paid WhatsApp API, else email from the owner's Gmail. Each draft says beforehand where approving sends it, and afterwards "✓ Sent" or exactly why not.
+- Delete my data asks in a pop-up first, and also removes the deleted drafts' approval requests.
+- CSV import: accepts everyday column names (Customer name, Mobile number, Email ID…), semicolon/tab files, explains Excel-shortened phone numbers, then opens CRM with the result.
+- The same mobile number in a new enquiry is warned ("This mobile number already exists: …") with Open lead / Add to their record.
+- Invoices refuse absurd amounts (over ₹10 crore or 1000 units).
+- Chief opens instantly (loaded in the background) and answers "enquiries", "drafts", "unpaid invoices" from records.
+
+### Added
+- Billing: Edit for unpaid invoices, several lines per invoice, and a UPI QR & link window (QR with amount and invoice number, Open in UPI app, Copy, Send on WhatsApp).
+- Redesigned invoice PDF and print page: header band, bill-to, items table, CGST/SGST, amount in words, Paid/Due stamp, scannable UPI QR.
+- Front Desk › Catalogue (moved from Settings). Follow-ups lists every new enquiry and has Draft message, like Reviews & Referrals.
+- Booking: all services and catalogue items, plus "Other service…" to type any other.
+- Other business: services, customers, offers and a dashboard that fit what the owner typed (pet clinic, bakery, CA, salon, garage… 26 kinds). Every dashboard gets a "Your services" table.
+- Settings › Integrations: Gmail by app password (no Composio needed; works on localhost).
+- Usage: costs per agent and per call, marked exact (from OpenRouter) or estimate.
+- Social Media › Approved posts › Publish now with Chief (with the picture). Chief's AI answers now use the business knowledge (services, catalogue prices, offers, contacts, skills, current numbers).
+- docs/LOCAL-TESTING.md: test WhatsApp, Gmail, Composio and posting on localhost, then on the domain.
+
+### Removed
+- Dashboard setup checklist (all industries).
+
 ## [2.13.0] - 2026-11-13 — lead workflow for every industry
 
 ### Added

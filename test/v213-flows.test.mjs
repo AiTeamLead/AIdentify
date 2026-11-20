@@ -58,7 +58,7 @@ test('a lead goes from enquiry to won in every industry', { timeout: 240000 }, a
       const phone = '9198765432' + String(10 + n);
       const e = await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi Kumar', phone, channel: st0.flow.words.channels[0], message: need }, tok);
       assert.equal(e.status, 200, role + ' enquiry ' + e.text);
-      assert.equal((await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi', phone, channel: 'Phone' }, tok)).d.existing, true, role + ' no duplicate lead');
+      assert.equal((await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi', phone, channel: 'Phone' }, tok)).status, 409, role + ' duplicate number warned');
       let st = (await req(s, 'GET', '/api/clinic', undefined, tok)).d;
       assert.equal(st.flow.leads.length, 1, role);
       const id = st.flow.leads[0].id;

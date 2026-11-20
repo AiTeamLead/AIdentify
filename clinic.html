@@ -6,6 +6,8 @@
 <title>AIdentify · Clinic team</title>
 <link rel="stylesheet" href="/clinic-theme.css">
 <style>
+input[type=password]::-ms-reveal, input[type=password]::-ms-clear { display:none; width:0; height:0; }
+
 * { box-sizing:border-box; }
 html,body { margin:0; height:100%; }
 body { font:15px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; color:var(--ink); background:var(--bg); }
@@ -444,6 +446,8 @@ table { min-width:520px; }
 .modal { position:fixed; z-index:31; top:50%; left:50%; transform:translate(-50%,-50%); width:min(520px, calc(100vw - 24px)); max-height:calc(100vh - 32px); overflow:auto; padding:20px; }
 .modal h2 { margin-top:0; }
 .modal.wide { width:min(760px, calc(100vw - 24px)); }
+.inv-line { display:grid; grid-template-columns:1fr 80px 130px; gap:8px; align-items:end; } .inv-lines { display:grid; gap:6px; }
+.pay-box { text-align:center; } a.btn, a.btn-ghost { text-decoration:none; display:inline-flex; align-items:center; } .pay-qr { display:block; margin:8px auto; border:1px solid var(--line); border-radius:10px; padding:6px; background:#fff; } .pay-box .row-actions { justify-content:center; flex-wrap:wrap; }
 .pill.hot { background:#fde8e8; color:#b42318; } .pill.warm { background:#fff3d6; color:#93600a; } .pill.cold { background:#e6f0ff; color:#1d4ed8; }
 .funnel { display:grid; gap:6px; margin:6px 0 18px; } .funnel div { display:grid; grid-template-columns:130px 1fr 44px; gap:10px; align-items:center; font-size:13px; }
 .funnel i { display:block; height:14px; border-radius:7px; background:var(--accent, #2563eb); min-width:4px; } .funnel b { text-align:right; }
@@ -580,7 +584,7 @@ async function api(path, body) {
   catch (e) { throw new Error('The server could not be reached. Check your internet connection, or that the server is running, and try again.'); } // was a bare “Failed to fetch”
   const d = await r.json().catch(() => ({}));
   if (r.status === 401) { const had = !!token && !/\/api\/auth\/(login|signup)$/.test(path); token = ''; localStorage.removeItem('aaas_clinic_token'); state = null; screen = 'login'; if (had) { mode = 'signin'; notice = 'Your session expired. Sign in to continue — your progress is saved.'; dropBot(); toRoot(); } throw new Error(had ? 'Your session expired. Sign in to continue.' : (d.message || 'Your email or password is incorrect.')); }
-  if (!r.ok) { const e = new Error(d.message || 'That did not work.'); e.fields = d.fields || null; e.code = d.error || ''; throw e; }
+  if (!r.ok) { const e = new Error(d.message || 'That did not work.'); e.fields = d.fields || null; e.code = d.error || ''; e.existing = d.existing || null; throw e; }
   return d;
 }
 function flash(m) { toast = m; setTimeout(() => { if (toast === m) { toast = ''; const t = root.querySelector('.toast'); if (t) t.remove(); } }, 4000); }
@@ -836,7 +840,7 @@ function obAiLine() {
 function profileView() {
   obInit();
   const steps = obSteps(), at = Math.min(ob.step, steps.length - 1), total = steps.length;
-  const pk = obPack(), sug = (pk && pk.suggest) || {}, L = R.LIMITS;
+  const pk = obPack(), kit = ob.role === 'other' && R.clean(ob.businessType) ? R.kitFor(ob.businessType) : null, sug = kit ? { services: kit.services, audience: kit.audience, offers: kit.offers } : ((pk && pk.suggest) || {}), L = R.LIMITS;
   const typeName = ob.role === 'other' ? (ob.businessType || 'business') : ((pk && pk.title) || 'business');
   const nm = R.bizName(ob.biz), nameFor = nm.ok ? nm.value : 'your business';
   const idx = (id) => steps.findIndex((x) => x.id === id) + 1;
@@ -867,12 +871,12 @@ function profileView() {
       html: `${obLocHtml()}${obErr('city')}<p class="ob-cheer" data-cheer="city" aria-live="polite">${esc(obCheer('city'))}</p><p class="ob-lab2">Popular cities</p>${obChips('locations', R.POPULAR)}<p class="ob-note"><button type="button" class="ob-link" data-ob-other>+ Other (type your town or area)</button></p><p class="ob-note">Many branches in one city? Add them in bulk later in Settings › Business profile.</p>` })}
     ${step('services', { q: 'What do you offer?', sub: `Tap the services you provide, or type your own and press <b>Enter</b>. Up to ${L.service.count}, ${L.service.max} characters each.`,
       html: `${obTagsHtml('services', 'e.g. ' + ((sug.services || [])[0] || 'Consultation'), 'Add a service', L.service.max)}${obErr('services')}<p class="ob-cheer" data-cheer="services" aria-live="polite">${esc(obCheer('services'))}</p>
-        <p class="ob-lab2">Suggested for ${esc((pk && pk.title.toLowerCase()) || 'your business')}</p>${obChips('services', sug.services || [])}
+        <p class="ob-lab2">Suggested for ${esc(kit ? (R.clean(ob.businessType).toLowerCase()) : (pk && pk.title.toLowerCase()) || 'your business')}</p>${obChips('services', sug.services || [])}
         <div class="ob-offers"><p class="ob-lab2">Offers to start with <small>(optional · used in posts and as invoice discounts)</small></p>${obChips('offers', [...(sug.offers || []), ...ob.offers])}
         ${obTagsHtml('offers', 'Add your own offer…', 'Add an offer', L.offer.max)}${obErr('offers')}</div>` })}
     ${step('audience', { q: 'Who do you want to reach?', sub: `Tap the customers that fit, or type your own. Nothing is selected for you. Up to ${L.audience.count}.`,
       html: `${obTagsHtml('audience', 'e.g. ' + ((sug.audience || [])[0] || 'Families nearby'), 'Add a customer group', L.audience.max)}${obErr('audience')}<p class="ob-cheer" data-cheer="audience" aria-live="polite">${esc(obCheer('audience'))}</p>
-        <p class="ob-lab2">Recommended for ${esc((pk && pk.title.toLowerCase()) || 'your business')}</p>${obChips('audience', sug.audience || [])}` })}
+        <p class="ob-lab2">Recommended for ${esc(kit ? R.clean(ob.businessType).toLowerCase() : (pk && pk.title.toLowerCase()) || 'your business')}</p>${obChips('audience', sug.audience || [])}` })}
     ${step('ai', { q: 'Connect your AI', sub: 'Agents run on your own key and you pay the provider directly. Press OK to check the key. You can skip this and add it later in Settings › AI & API key.',
       html: `<div class="ob-ai">${aiKeyFields('profile')}</div><p class="ob-ai-status" data-ai-status role="status" aria-live="polite" hidden></p>${obErr('ai')}` }, { ok: 'Check key & continue', skip: 'Skip for now' })}
     ${step('review', { q: 'All set? Here’s your team brief.', sub: 'Check it once. Your team is created as soon as you confirm.',
@@ -1005,7 +1009,7 @@ function setupView() {
   const call = `<form class="form" data-act="setup-call" style="margin-top:16px"><h2>Book a setup call</h2><p class="small">About 15 minutes with a person. This saves the request in your account. Nothing is emailed.</p>
     ${booked ? `<p class="small" role="status">Saved for ${esc(booked.name)} · ${esc(booked.phone)} · ${esc(booked.when)}. Nothing was emailed.</p>` : ''}
     <label>Name<input name="name" required value="${esc((booked && booked.name) || '')}"></label>
-    <label>Phone<input name="phone" required value="${esc((booked && booked.phone) || '')}" placeholder="9198…"></label>
+    <label>Phone<input name="phone" required inputmode="numeric" maxlength="16" data-digits10 value="${esc((booked && booked.phone) || '')}" placeholder="10-digit mobile, e.g. 9876543210"></label>
     <label>A time that suits you<input name="when" required value="${esc((booked && booked.when) || '')}" placeholder="Tuesday 11:00"></label>
     <label class="wide">Note<input name="note" placeholder="What you want help with"></label>
     <div><button class="btn" type="submit">Book a setup call</button></div></form>`;
@@ -1026,7 +1030,7 @@ function setupView() {
     <div><button class="btn" type="submit">Save import</button> <button class="btn-ghost" type="button" data-act="setup-skip">Skip</button> <button class="btn-ghost" type="button" data-act="sync-eka">Sync Eka.care</button></div></form>
     <p class="small">Eka.care stays Available, connect with credentials, until the server has keys. The sample business shows Connected (demo). Sync does not email anyone.</p>`;
   else if (Number(wiz) === 4) body = `<h1>Connect WhatsApp</h1>${head}<p class="sub">${wa.configured ? 'Official WhatsApp (' + esc(wa.provider) + ') is on. Approved drafts can send the template ' + esc(wa.template) + '. Opt-out is honoured.' : 'No provider key is set. Drafts keep a click-to-chat link. Nothing is sent.'}</p>
-    <form class="stack" data-act="setup-wa"><label>Business WhatsApp number<input name="phone" required placeholder="9198…"></label>
+    <form class="stack" data-act="setup-wa"><label>Business WhatsApp number (10 digits)<input name="phone" required inputmode="numeric" maxlength="16" data-digits10 placeholder="9876543210"></label>
     <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ack" value="yes" style="width:auto" required> I understand nothing goes out until I approve it.</label>
     <button class="btn" type="submit">Continue</button></form>`;
   else if (Number(wiz) === 5) body = `<h1>A tone sample</h1>${head}<p class="sub">One message in your voice. Later drafts lean on it.</p>
@@ -1124,6 +1128,7 @@ function dash() {
     ${hasFlow() ? `<section class="card" style="padding:16px;margin-bottom:18px"><h2 style="margin-top:0">Lead pipeline</h2>
       <div class="kpis">${tile('Hot leads', state.flow.report.hot, 'Act today', 'front', 'enquiries')}${tile('Warm leads', state.flow.report.warm, 'Follow up every 3 days', 'front', 'enquiries')}${tile('Cold leads', state.flow.report.cold, 'Monthly check-in', 'front', 'enquiries')}${tile('Follow-ups due', state.flow.report.dueToday, 'Open the pipeline', 'front', 'enquiries')}${tile(FW().won, state.flow.report.won, crore(state.flow.report.wonValue) + ' · ' + state.flow.report.conversion + '% of leads', 'front', 'enquiries')}</div>
       ${funnelHtml()}${Object.keys(state.flow.report.lostReasons).length ? '<p class="small">Lost: ' + Object.entries(state.flow.report.lostReasons).map(([k, n]) => esc(k) + ' ' + n).join(' · ') + '</p>' : ''}</section>` : ''}
+    ${servicesCard()}
     <div class="home-grid">
       <section>
         <h2>Today’s schedule</h2>
@@ -1142,7 +1147,32 @@ function dash() {
         <p class="small">Each step drafts the next message for you. Anything that would leave the business waits in Approvals.</p>
       </section>
     </div>
-    ${checklistCard()}`;
+`;
+}
+// Dashboard › Your services: built from this business's own services and catalogue (an "Other" business gets the
+// words that fit what the owner typed: a pet clinic sees vaccinations, a bakery sees orders).
+function servicesCard() {
+  const P = state.profile || {}, now = Date.now(), m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+  const kit = state.role === 'other' ? R.kitFor((state.profile && state.profile.businessType) || state.roleTitle) : null;
+  const cat = ((state.flow && state.flow.catalogue) || []).filter((x) => x.status !== 'sold');
+  const names = [...new Set([...R.split(P.services), ...cat.map((x) => x.title)])].slice(0, 8);
+  if (!names.length) return '';
+  const same = (a, b) => String(a || '').toLowerCase().includes(String(b || '').toLowerCase().slice(0, 18)) || String(b || '').toLowerCase().includes(String(a || '').toLowerCase().slice(0, 18));
+  const appts = state.appointments || [], invs = state.invoices || [];
+  const rows = names.map((n) => {
+    const booked = appts.filter((a) => same(a.service, n) && Date.parse(a.at) >= m0.getTime()).length;
+    const upcoming = appts.filter((a) => same(a.service, n) && a.status === 'booked' && Date.parse(a.at) >= now).length;
+    const paid = invs.filter((i) => i.state === 'paid' && Date.parse(i.paidAt || i.issuedAt) >= m0.getTime() && (i.items || []).some((it) => same(it.desc, n))).reduce((s, i) => s + (i.items || []).filter((it) => same(it.desc, n)).reduce((t, it) => t + it.qty * it.rate, 0), 0);
+    const price = (cat.find((x) => x.title === n) || {}).price;
+    return { n, booked, upcoming, paid, price };
+  });
+  const top = rows.slice().sort((a, b) => b.paid - a.paid || b.booked - a.booked)[0];
+  const focus = kit ? kit.focus : null;
+  return `<section class="card" style="padding:16px;margin-bottom:18px"><h2 style="margin-top:0">Your ${esc(kit ? kit.label : 'services')}${kit ? ' at a glance' : ''}</h2>
+    ${focus ? `<div class="kpis">${[[focus[0], appts.filter((a) => a.status === 'booked' && Date.parse(a.at) >= now && Date.parse(a.at) < now + 7 * 864e5).length, 'Next 7 days', 'front', 'appointments'], ['Follow-ups due', (state.stats && state.stats.recallsDue) || 0, 'Draft a message from Follow-ups', 'front', 'followups'], [cap(kit.who) + ' on file', (state.patients || []).length, 'Open CRM', 'crm', ''], ['Services offered', names.length, 'Front Desk › Catalogue', 'front', 'catalogue']].map(([k, v, h, sc, tb]) => `<button class="tile" type="button" data-act="go" data-screen="${sc}" data-tab="${tb}"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="hint">${esc(h)}</div></button>`).join('')}</div>` : ''}
+    <div class="scroll"><table><thead><tr><th>Service</th><th>Price</th><th>Booked this month</th><th>Coming up</th><th>Paid this month</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr><td><b>${esc(r.n)}</b>${top && r === top && (r.paid || r.booked) ? ' <span class="pill approved">Top</span>' : ''}</td><td>${r.price ? inr(r.price) : '<span class="small">Add in Catalogue</span>'}</td><td>${r.booked}</td><td>${r.upcoming}</td><td>${inr(r.paid)}</td></tr>`).join('')}
+    </tbody></table></div></section>`;
 }
 function agentHead(agent, title) {
   return `<h1>${esc(title || agent.name)}</h1><p class="sub">${esc(agent.d)}</p>`;
@@ -1155,10 +1185,10 @@ function front() {
   const a = state.agents.find((x) => x.key === 'front'), L = Lb(), v = visitWord();
   const open = (state.enquiries || []).filter((e) => e.status === 'new').length + ((state.waInbox && state.waInbox.triage) || []).length;
   const upcoming = (state.appointments || []).filter((x) => x.status === 'booked').length;
-  const body = { enquiries: hasFlow() ? frontPipeline : frontEnq, appointments: frontAppt, followups: frontFollow, reviews: frontReviews }[tabs.front] || (hasFlow() ? frontPipeline : frontEnq);
+  const body = { enquiries: hasFlow() ? frontPipeline : frontEnq, appointments: frontAppt, followups: frontFollow, reviews: frontReviews, catalogue: hasFlow() ? setCatalogue : frontFollow }[tabs.front] || (hasFlow() ? frontPipeline : frontEnq);
   return `<h1>Front Desk</h1><p class="sub">${esc(a.label || 'Enquiries and bookings')} for ${esc(state.biz || 'your business')}. ${esc(cap(L.who || 'customers'))} move from enquiry to ${esc(v)}, invoice, review and follow-up here.</p>
     <div class="primary-row" data-tour="frontbtns"><button class="btn big" type="button" data-act="modal" data-kind="enquiry">+ New enquiry</button><button class="btn big" type="button" data-act="modal" data-kind="appointment">+ ${esc(cap(bookAct()))}</button></div>
-    ${tabBar('front', [['enquiries', hasFlow() ? 'Pipeline' : 'Enquiries', hasFlow() ? state.flow.report.dueToday + ((state.waInbox && state.waInbox.triage) || []).length : open], ['appointments', cap(plural(v)), upcoming], ['followups', 'Follow-ups'], ['reviews', 'Reviews & Referrals']])}
+    ${tabBar('front', [['enquiries', hasFlow() ? 'Pipeline' : 'Enquiries', hasFlow() ? state.flow.report.dueToday + ((state.waInbox && state.waInbox.triage) || []).length : open], ['appointments', cap(plural(v)), upcoming], ['followups', 'Follow-ups', hasFlow() ? (state.flow.leads || []).filter((l) => !['won', 'lost'].includes(l.stage) && (l.due || l.stage === 'new')).length : (state.enquiries || []).filter((e) => e.status === 'new' || e.status === 'open').length], ['reviews', 'Reviews & Referrals'], ...(hasFlow() ? [['catalogue', 'Catalogue', state.flow.report.available]] : [])])}
     ${body()}`;
 }
 function waInboxHtml() {
@@ -1188,8 +1218,8 @@ function frontPipeline() {
   const order = { hot: 0, warm: 1, cold: 2 };
   const list = all.filter(pick).sort((a, b) => (Number(b.due) - Number(a.due)) || (order[a.category] - order[b.category]) || (b.score - a.score));
   const f = (id, label, n) => `<button type="button" class="chipf${leadFilter === id ? ' on' : ''}" data-act="lead-filter" data-f="${id}">${label}${n ? ' (' + n + ')' : ''}</button>`;
-  const empty = F.catalogue.length ? 'No leads in this list. Use “+ New enquiry” to add one.' : `No leads yet. First add your ${FW().items} in Settings › Catalogue, then use “+ New enquiry”.`;
-  return `${waInboxHtml()}${F.catalogue.length ? '' : `<p class="notice">Your catalogue is empty, so leads cannot be matched to ${FW().items} yet. <button class="btn-ghost" type="button" data-act="go" data-screen="settings" data-tab="catalogue">Add ${FW().items}</button></p>`}
+  const empty = F.catalogue.length ? 'No leads in this list. Use “+ New enquiry” to add one.' : `No leads yet. First add your ${FW().items} in Front Desk › Catalogue, then use “+ New enquiry”.`;
+  return `${waInboxHtml()}${F.catalogue.length ? '' : `<p class="notice">Your catalogue is empty, so leads cannot be matched to ${FW().items} yet. <button class="btn-ghost" type="button" data-act="go" data-screen="front" data-tab="catalogue">Add ${FW().items}</button></p>`}
     <div class="filters">${f('open', 'Open', R0.open)}${f('due', 'Due today', R0.dueToday)}${f('hot', 'Hot', R0.hot)}${f('warm', 'Warm', R0.warm)}${f('cold', 'Cold', R0.cold)}${f('won', FW().won, R0.won)}${f('lost', 'Lost', R0.lost)}${f('all', 'All')}</div>
     <div class="scroll"><table><thead><tr><th>Lead</th><th>Looking for</th><th>Score</th><th>Stage</th><th>Next step</th></tr></thead><tbody>
       ${list.slice(0, 40).map((l) => `<tr><td><button class="link" type="button" data-act="lead-open" data-id="${l.id}"><b>${esc(l.name)}</b></button>${l.demo ? ' <span class="pill">SAMPLE</span>' : ''}${l.optOut ? ' <span class="pill">Do not contact</span>' : ''}<div class="small">${esc(l.phone)} · ${esc(l.channel)}</div></td>
@@ -1286,7 +1316,7 @@ function frontAppt() {
 }
 function peopleTable(list, act) {
   if (!list.length) return '<p class="small">Nobody in this list.</p>';
-  return `<div class="scroll"><table><thead><tr><th>Name</th><th>Last ${esc(visitWord())}</th><th>Value</th><th></th></tr></thead><tbody>${list.slice(0, 25).map((p) => `<tr><td>${esc(p.name)}${p.demo ? ' <span class="pill">SAMPLE</span>' : ''}<div class="small">${esc(p.phone)}</div></td><td>${esc(when(p.lastVisit))}</td><td>${inr(p.value)}</td><td><button class="btn" type="button" data-act="${act}" data-id="${p.id}">Draft follow-up</button></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="scroll"><table><thead><tr><th>Name</th><th>Last ${esc(visitWord())}</th><th>Value</th><th></th></tr></thead><tbody>${list.slice(0, 25).map((p) => `<tr><td>${esc(p.name)}${p.demo ? ' <span class="pill">SAMPLE</span>' : ''}<div class="small">${esc(p.phone)}</div></td><td>${esc(when(p.lastVisit))}</td><td>${inr(p.value)}</td><td class="row-actions"><button class="btn" type="button" data-act="${act}" data-id="${p.id}">Draft follow-up</button><button class="btn-ghost" type="button" data-act="modal" data-kind="msg" data-patient="${p.id}">Draft message</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 function frontFollow() {
   const a = state.agents.find((x) => x.key === 'recall');
@@ -1295,7 +1325,16 @@ function frontFollow() {
   const barV = Number(Lb().highValue) || 20000;
   const high = (state.patients || []).filter((p) => Number(p.value) >= barV);
   const drafts = (state.drafts || []).filter((d) => d.agent === 'recall');
-  return `<p class="sub">${esc(a.d)}</p><div class="split"><section><h2>${esc(Lb().recall || 'Gone quiet')}</h2>${peopleTable(lapsed, 'recall')}</section><section><h2>High value</h2>${peopleTable(high, 'recall')}</section></div>
+  // every new enquiry is followed up here too, not only in the Pipeline
+  const leads = hasFlow() ? (state.flow.leads || []).filter((l) => !['won', 'lost'].includes(l.stage)) : [];
+  const enqs = hasFlow() ? [] : (state.enquiries || []).filter((e) => e.status === 'new' || e.status === 'open');
+  const order = (l) => (l.due ? 0 : 1);
+  const newRows = hasFlow()
+    ? leads.sort((x, y) => order(x) - order(y) || Date.parse(y.at) - Date.parse(x.at)).slice(0, 30).map((l) => `<tr><td><button class="link" type="button" data-act="lead-open" data-id="${l.id}"><b>${esc(l.name)}</b></button>${l.optOut ? ' <span class="pill">Do not contact</span>' : ''}<div class="small">${esc(l.phone)} · ${esc(l.channel)}</div></td><td>${esc(l.stageName)}${l.due ? '<div class="small" style="color:#b42318">Follow-up due</div>' : ''}</td><td><span class="pill ${esc(l.category)}">${esc(cap(l.category))} ${l.score}</span></td><td class="row-actions">${l.optOut ? '' : `<button class="btn" type="button" data-act="modal" data-kind="msg" data-lead="${l.id}">Draft message</button>`}<button class="btn-ghost" type="button" data-act="lead-open" data-id="${l.id}">${esc(l.next.label || 'Open')}</button></td></tr>`).join('')
+    : enqs.slice(0, 30).map((e) => `<tr><td><b>${esc(e.name)}</b><div class="small">${esc(e.phone)} · ${esc(e.channel)}</div></td><td>${esc(e.message || '')}</td><td>${esc(when(e.at))}</td><td class="row-actions"><button class="btn" type="button" data-act="modal" data-kind="msg" data-enquiry="${e.id}">Draft message</button></td></tr>`).join('');
+  return `<p class="sub">${esc(a.d)}</p>
+    <section><h2>New enquiries to follow up</h2>${newRows ? `<div class="scroll"><table><thead><tr><th>Name</th><th>${hasFlow() ? 'Stage' : 'Asked'}</th><th>${hasFlow() ? 'Score' : 'When'}</th><th></th></tr></thead><tbody>${newRows}</tbody></table></div>` : '<p class="small">No open enquiries. New ones appear here and in the Pipeline.</p>'}</section>
+    <div class="split"><section><h2>${esc(Lb().recall || 'Gone quiet')}</h2>${peopleTable(lapsed, 'recall')}</section><section><h2>High value</h2>${peopleTable(high, 'recall')}</section></div>
     <h2>Follow-up drafts</h2>${drafts.map(draftCard).join('') || '<p class="small">No drafts yet.</p>'}${rulesBox(a)}`;
 }
 function frontReviews() {
@@ -1314,7 +1353,71 @@ function social() {
     <h2>Draft a post</h2>
     <form class="form" data-act="social"><label class="wide">Topic<input name="topic" required maxlength="200" placeholder="${esc(Lb().example || 'What to say this week')}"></label><label>Put it on<input name="when" type="date" min="${esc(todayIST())}"></label><div class="wide">${netChecks('platforms')}</div><div style="align-self:end"><button class="btn" type="submit">Create draft</button></div></form>
     <p class="small">Connect Instagram, Facebook Page, LinkedIn and X in Settings › Integrations. Chief publishes an approved post through the connected account and reports the real result.</p>
+    ${scheduledPosts()}
+    ${engagement()}
     ${(state.drafts || []).filter((d) => d.agent === 'social').map(draftCard).join('')}${rulesBox(a)}`;
+}
+// Approved posts: published on the connected accounts (Chief does it, with the picture) and the result shown here.
+// Engagement: replies to comments on your posts, leads from comments, comments on other posts (you press Send)
+function engagement() {
+  const g = state.engage; if (!g) return '';
+  const n = g.networks || {}, any = n.x || n.facebook || n.instagram || n.linkedin;
+  const kind = { reply: 'Reply to a comment', followup: 'Follow-up', comment: 'Comment on a post' };
+  const open = (g.items || []).filter((i) => ['pending', 'failed', 'sending'].includes(i.status));
+  const done = (g.items || []).filter((i) => ['sent', 'skipped'].includes(i.status)).slice(0, 8);
+  const card = (i) => `<article class="draft" data-engage="${i.id}"><div class="row-head"><b>${esc(kind[i.kind] || 'Reply')}</b> <span class="pill">${esc(i.network)}</span>${i.lead ? ' <span class="pill approved">Lead → Enquiries</span>' : ''}${i.status === 'failed' ? ' <span class="pill overdue">Not sent</span>' : ''}${i.status === 'sending' ? ' <span class="pill">Sending…</span>' : ''}</div>
+    <p class="small">${esc(i.author || '')}${i.post ? ` · <a class="link" href="${esc(i.post)}" target="_blank" rel="noopener">open post</a>` : ''}</p>
+    <p style="white-space:pre-line">“${esc(String(i.text || '').slice(0, 400))}”</p>
+    ${i.status === 'failed' ? `<p class="small bad">${esc(i.result || '')}</p>` : ''}
+    <label class="wide">Your ${i.kind === 'comment' ? 'comment' : 'reply'}<textarea data-engage-text="${i.id}" maxlength="1000" rows="2">${esc(i.draft || '')}</textarea></label>
+    <div class="row-actions"><button class="btn" type="button" data-act="engage-send" data-id="${i.id}" ${i.status === 'sending' ? 'disabled' : ''}>${i.status === 'failed' ? 'Try again' : 'Send'}</button><button class="btn-ghost" type="button" data-act="engage-skip" data-id="${i.id}">Skip</button></div></article>`;
+  const nets = [n.facebook && 'Facebook Page', n.instagram && 'Instagram', n.x && 'X', n.linkedin && 'LinkedIn'].filter(Boolean).join(', ');
+  return `<h2>Engagement</h2>
+    <p class="small">${any ? `Checking ${esc(nets)} every 15 minutes (Facebook and Instagram every hour). New comments on your posts get a drafted reply here; anyone asking about price, booking or details is added to Enquiries and followed up. Nothing is sent until you press Send, unless you turn on an auto-reply below.` : 'Connect Facebook Page, Instagram, X or LinkedIn in Settings › Integrations to see and answer comments here.'}${g.lastRun ? ' Last check: ' + esc(new Date(g.lastRun).toLocaleString()) + '.' : ''}</p>
+    ${g.lastError ? `<p class="small bad">${esc(g.lastError)}</p>` : ''}
+    <div class="row-actions"><button class="btn-ghost" type="button" data-act="engage-check" ${any ? '' : 'disabled'}>Check comments now</button></div>
+    ${open.length ? open.map(card).join('') : `<p class="small">${any ? 'No new comments waiting.' : ''}</p>`}
+    <details class="draft"><summary><b>Comment on another business post</b> <span class="small">(X or LinkedIn · ${esc(String(g.sentToday || 0))}/${esc(String(g.cap || 10))} today)</span></summary>
+      <form class="form" data-act="engage-comment"><label class="wide">Post link<input name="url" required maxlength="400" placeholder="https://x.com/…/status/… or https://www.linkedin.com/feed/update/…"></label><label class="wide">What the post says (optional, helps the draft)<input name="text" maxlength="600"></label><button class="btn" type="submit">Draft a comment</button></form>
+      <p class="small">Facebook and Instagram do not allow comments on other accounts’ posts through their API. Comments are capped at ${esc(String(g.cap || 10))} a day so the account is not flagged as spam.</p></details>
+    <details class="draft"><summary><b>Engagement settings</b></summary>
+      <form class="form" data-act="engage-settings">
+        <label class="wide">X keywords to find business posts (comma separated, checked every 6 hours)<input name="keywords" maxlength="200" value="${esc(g.keywords || '')}" placeholder="e.g. dentist Hyderabad, teeth whitening"></label>
+        <label class="check"><input type="checkbox" name="thanks" ${g.auto && g.auto.thanks ? 'checked' : ''}> Auto-reply to thank-you comments</label>
+        <label class="check"><input type="checkbox" name="leads" ${g.auto && g.auto.leads ? 'checked' : ''}> Auto-reply to people asking about price / booking</label>
+        <button class="btn" type="submit">Save</button></form>
+      ${n.x ? `<p class="small">X today: ${esc(String((g.xToday || {}).reads || 0))} reads, ${esc(String((g.xToday || {}).posts || 0))} posts (X charges per read and per post).</p>` : ''}</details>
+    ${done.length ? `<details><summary class="small">Recently answered (${done.length})</summary>${done.map((i) => `<p class="small">${i.status === 'sent' ? '✓' : '–'} ${esc(i.network)} · ${esc(i.author || '')}: ${esc(String(i.draft || '').slice(0, 140))}${i.status === 'sent' && /^https?:/.test(i.result || '') ? ` · <a class="link" href="${esc(i.result)}" target="_blank" rel="noopener">view</a>` : ''}</p>`).join('')}</details>` : ''}`;
+}
+function scheduledPosts() {
+  const list = (state.posts || []).filter((p) => ['scheduled', 'published'].includes(p.status) && !p.demo).slice(0, 12);
+  if (!list.length) return '';
+  const res = (p) => { const u = p.publish; if (!u) return Date.parse(p.at) > Date.now() + 2 * 3600e3 ? `<p class="small">Publishes on ${esc(when(p.at))}.</p>` : '';
+    if (u.status === 'publishing') return '<p class="small"><b>Publishing…</b> Chief is posting it with the picture. This page updates by itself.</p>';
+    return `<div class="small" style="margin-top:6px"><b>${u.status === 'published' ? '✓ Published' : u.status === 'manual' ? 'Ready for you to post on X' : u.status === 'partial' ? 'Partly published' : 'Not published'}</b> · ${esc(when(new Date(u.at).toISOString()))}${(u.per || []).map((x) => `<div>${x.ok ? '✓' : x.manual ? '→' : '✗'} ${esc(x.manual ? 'X: not connected through the X API, so post it yourself (free) with Post on X below.' : (x.line || x.network))}</div>`).join('')}${(u.links || []).map((l) => `<div><a class="link" href="${esc(l)}" target="_blank" rel="noopener">${esc(l)}</a></div>`).join('')}${!(u.per || []).some((x) => x.line) && u.answer ? `<div style="white-space:pre-line">${esc(u.answer)}</div>` : ''}</div>`; };
+  return `<h2>Approved posts</h2>${list.map((p) => `<article class="draft"><b>${esc(when(p.at))}</b> ${pill(p.status === 'published' ? 'published' : 'scheduled')} <span class="small">${esc((p.platforms || []).join(', '))}</span><p style="white-space:pre-line">${esc(String(p.text || '').slice(0, 600))}</p>
+    ${res(p)}<div class="row-actions">${xShare(p)}${p.publish && p.publish.status === 'publishing' ? '' : `<button class="btn${p.publish && p.publish.status === 'published' ? '-ghost' : ''}" type="button" data-act="post-publish" data-id="${p.id}">${p.publish ? (p.publish.status === 'published' ? 'Publish again' : 'Try again') : 'Publish now'}</button>`}</div></article>`).join('')}
+    <p class="small">Approved posts go out by themselves: right away, or on their date. Connect the accounts first in Settings › Integrations (Composio).</p>`;
+}
+// X for free: X's API charges per post, so without an X app the owner posts it in one tap (text ready, picture saved)
+function postPic(p) { return String(p.image || p.media || '').trim() || (String(p.text || '').match(/(https?:\/\/\S+?\.(?:png|jpe?g|webp)|\/api\/media\/[a-f0-9]{32}\.(?:png|jpg|webp))/i) || [])[0] || ''; }
+function xText(p) { return String(p.text || '').split('\n').filter((l) => !/^\s*Image attached by the user:/i.test(l)).join('\n').replace(/\S*\/api\/media\/\S+/g, '').trim().slice(0, 280); }
+function xShare(p) {
+  if (!(p.platforms || []).some((n) => /^x$|twitter|^x \(/i.test(String(n)))) return '';
+  const u = p.publish, xr = u && (u.per || []).find((x) => /^x$|twitter|^x \(/i.test(String(x.network)));
+  if (xr && xr.ok) return '';
+  const pic = postPic(p);
+  return `<a class="btn" href="https://x.com/intent/post?text=${encodeURIComponent(xText(p))}" target="_blank" rel="noopener" data-xshare="1">Post on X (free)</a>${pic ? `<a class="btn-ghost" href="${esc(pic)}" download target="_blank" rel="noopener">Save picture</a>` : ''}<span class="small" style="flex-basis:100%">X opens with the text ready${pic ? ': attach the saved picture and press Post' : ': press Post'}. Free, no X app needed.</span>`;
+}
+let pollT = null;
+function pollPublishing() { clearTimeout(pollT); pollT = null; if (!(state.posts || []).some((p) => p.publish && p.publish.status === 'publishing')) return; pollT = setTimeout(async () => { pollT = 'busy'; try { state = await api('/api/clinic'); render(); } catch { /* next time */ } pollPublishing(); }, 8000); }
+function askChief(text) {
+  miniOpen = true; render();
+  const m = document.getElementById('chiefMini'), f = m && m.querySelector('iframe'); if (!f) return;
+  let n = 0; const send = () => { n++; try { f.contentWindow.postMessage({ type: 'aaas-ask', text }, location.origin); } catch { /* not ready */ } };
+  const ack = (e) => { if (e.origin === location.origin && e.data && e.data.type === 'aaas-ask-ok') { clearInterval(t); window.removeEventListener('message', ack); } };
+  window.addEventListener('message', ack);
+  const t = setInterval(() => { if (n > 40) { clearInterval(t); window.removeEventListener('message', ack); return; } send(); }, 500); send();
 }
 // Billing: invoice -> payment link -> paid -> reminder. Offers picked at onboarding apply as a discount.
 function billing() {
@@ -1322,8 +1425,9 @@ function billing() {
   const inv = state.invoices || [];
   const due = inv.filter((i) => i.state !== 'paid'), over = inv.filter((i) => i.state === 'overdue');
   const sum = (l) => l.reduce((s, i) => s + Number(i.total || 0), 0);
-  const rows = inv.slice(0, 25).map((i) => `<tr><td>${esc(i.number)}${i.demo ? ' <span class="pill">SAMPLE</span>' : ''}<div class="small">${esc(pname(i.patientId))}${i.offer ? ' · ' + esc(i.offer) : ''}</div>${i.payLink ? `<div class="small"><a class="link" href="${esc(i.payLink)}"${String(i.payLink).startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${i.payMode === 'razorpay' ? 'Payment link' : 'UPI link'}</a></div>` : ''}</td><td>${inr(i.total)}${Number(i.discount) ? `<div class="small">after ${inr(i.discount)} off</div>` : ''}</td><td>${pill(i.state)}</td><td class="row-actions">
+  const rows = inv.slice(0, 25).map((i) => `<tr><td>${esc(i.number)}${i.demo ? ' <span class="pill">SAMPLE</span>' : ''}<div class="small">${esc(pname(i.patientId))}${i.offer ? ' · ' + esc(i.offer) : ''}</div>${i.payLink || i.upi ? `<div class="small"><button class="link" type="button" data-act="modal" data-kind="pay" data-inv="${i.id}">${i.payMode === 'razorpay' ? 'Payment link & UPI QR' : 'UPI QR & link'}</button></div>` : `<div class="small"><button class="link" type="button" data-act="go" data-screen="settings" data-tab="business">Add your UPI ID</button></div>`}</td><td>${inr(i.total)}${Number(i.discount) ? `<div class="small">after ${inr(i.discount)} off</div>` : ''}</td><td>${pill(i.state)}</td><td class="row-actions">
     <button class="${i.state === 'paid' ? 'btn-ghost' : 'btn'}" type="button" data-act="paid" data-id="${i.id}" data-status="${i.state === 'paid' ? 'unpaid' : 'paid'}">${i.state === 'paid' ? 'Mark unpaid' : 'Mark paid'}</button>
+    ${i.state !== 'paid' ? `<button class="btn-ghost" type="button" data-act="modal" data-kind="invoice" data-edit="${i.id}">Edit</button>` : ''}
     ${i.state !== 'paid' ? `<button class="btn-ghost" type="button" data-act="remind-inv" data-id="${i.id}">Queue reminder</button>` : `<button class="btn-ghost" type="button" data-act="review" data-id="${i.patientId}">Ask for review</button>`}
     ${state.demo && i.state !== 'paid' ? `<button class="btn-ghost" type="button" data-act="pay-sim" data-id="${i.id}">Simulate payment</button>` : ''}
     <button class="btn-ghost" type="button" data-act="pdf" data-id="${i.id}" data-number="${esc(i.number)}">PDF</button>
@@ -1350,12 +1454,13 @@ function modalHtml() {
   if (modal.kind === 'lead') { [title, body] = leadModal(); }
   else if (modal.kind === 'catfill') { title = 'Prices for your services'; body = `<form class="stack" data-act="cat-fill-save" novalidate><p class="small">Type the usual price for each. Leave one empty to skip it. You can change these later.</p>${modal.list.map((x, i) => `<label>${esc(x)}<input name="p_${i}" inputmode="numeric" maxlength="12" placeholder="Price in ₹"></label>`).join('')}<div class="err" data-modal-err></div><div class="row-actions"><button class="btn" type="submit">Add to catalogue</button><button class="btn-ghost" type="button" data-act="modal-close">Cancel</button></div></form>`; }
   else if (modal.kind === 'enquiry') {
-    title = 'New enquiry';
+    title = 'New enquiry'; const fv = modal.form || {}, dp = modal.dup;
     body = `<form class="stack" data-act="add-enq" novalidate>
-      <label>Name<input name="name" required maxlength="60" autocomplete="off"></label>
-      <label>Phone<input name="phone" required inputmode="tel" maxlength="16" placeholder="98480 12345"></label>
-      <label>Channel<select name="channel">${(hasFlow() ? FW().channels : ['Phone', 'WhatsApp', 'Website', 'Instagram', 'Facebook', 'LinkedIn', 'Walk-in', 'Referral']).map((x) => '<option>' + esc(x) + '</option>').join('')}</select></label>
-      <label>What they asked<input name="message" maxlength="300" placeholder="${esc(Lb().enquiryHint || 'What they want')}"></label>
+      <label>Name<input name="name" required maxlength="60" autocomplete="off" value="${esc(fv.name || '')}"></label>
+      <label>Phone (10-digit mobile)<input name="phone" required inputmode="numeric" maxlength="16" data-digits10 placeholder="9848012345" value="${esc(fv.phone || '')}"${dp ? ' aria-invalid="true"' : ''}></label>
+      ${dp ? `<div class="notice dup-warn" role="alert"><b>⚠ ${esc(modal.dupMsg)}</b><div class="row-actions" style="margin-top:8px">${dp.leadId ? `<button class="btn" type="button" data-act="lead-open" data-id="${dp.leadId}">Open ${esc(dp.name)}’s lead</button>` : dp.patientId ? `<button class="btn" type="button" data-act="go" data-screen="crm">Open CRM</button>` : ''}<button class="btn-ghost" type="button" data-act="dup-add">Add this enquiry to their record</button></div></div>` : ''}
+      <label>Channel<select name="channel">${(hasFlow() ? FW().channels : ['Phone', 'WhatsApp', 'Website', 'Instagram', 'Facebook', 'LinkedIn', 'Walk-in', 'Referral']).map((x) => '<option' + (fv.channel === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('')}</select></label>
+      <label>What they asked<input name="message" maxlength="300" placeholder="${esc(Lb().enquiryHint || 'What they want')}" value="${esc(fv.message || '')}"></label>
       <div class="err" data-modal-err></div>
       <div class="row-actions"><button class="btn" type="submit">Save enquiry</button><button class="btn-ghost" type="button" data-act="modal-close">Cancel</button></div></form>`;
   } else if (modal.kind === 'appointment') {
@@ -1364,27 +1469,55 @@ function modalHtml() {
     body = `<form class="stack" data-act="add-appt" novalidate>
       ${enq ? `<input type="hidden" name="enquiryId" value="${esc(enq.id)}"><p class="small">From the enquiry by <b>${esc(enq.name)}</b> (${esc(enq.phone)}). They are added to your ${esc(Lb().who || 'people')} and the enquiry is marked booked.</p>`
         : `<label>Who<select name="patientId" data-who><option value="">New person…</option>${opts(modal.patient || (people[0] && people[0].id))}</select></label>
-      <div class="newp" data-newp ${people.length && !modal.newPerson ? 'hidden' : ''}><label>Name<input name="newName" maxlength="60"></label><label>Phone<input name="newPhone" inputmode="tel" maxlength="16" placeholder="98480 12345"></label></div>`}
+      <div class="newp" data-newp ${people.length && !modal.newPerson ? 'hidden' : ''}><label>Name<input name="newName" maxlength="60"></label><label>Phone<input name="newPhone" inputmode="numeric" maxlength="16" data-digits10 placeholder="10-digit mobile"></label></div>`}
       ${whenFields('')}
-      <label>Service${svcs.length ? `<select name="service" required>${svcs.map((x) => `<option>${esc(x)}</option>`).join('')}</select>` : `<input name="service" maxlength="40" required placeholder="Add your services in Settings › Business profile">`}</label>
+      ${(() => { const cat = ((state.flow && state.flow.catalogue) || []).filter((x) => x.status === 'available'); const all = [...new Set([...svcs, ...cat.map((x) => x.title)])]; const fee = Object.fromEntries(cat.map((x) => [x.title, x.price])); return `<label>Service <span class="small">(pick one, or choose “Other service” and type it)</span><select name="service" data-svc-pick>${all.map((x) => `<option value="${esc(x)}" data-fee="${fee[x] || ''}">${esc(x)}${fee[x] ? ' · ' + inr(fee[x]) : ''}</option>`).join('')}<option value="__other" ${all.length ? '' : 'selected'}>Other service…</option></select></label><label data-svc-other ${all.length ? 'hidden' : ''}>Other service<input name="serviceOther" maxlength="60" placeholder="Type the service, for example ${esc(Lb().service || 'Consultation')}"></label><p class="small">Add it to Settings › Business profile › Services to see it in this list next time.</p>`; })()}
       <label>Fee ₹<input name="fee" type="number" min="0" step="1" value="0"></label>
       <div class="err" data-modal-err></div>
       <div class="row-actions"><button class="btn" type="submit">Save booking</button><button class="btn-ghost" type="button" data-act="modal-close">Cancel</button></div></form>`;
   } else if (modal.kind === 'invoice') {
     const ap = modal.appt ? (state.appointments || []).find((x) => String(x.id) === String(modal.appt)) : null;
     const offers = (P.offers && P.offers.length ? P.offers.map((o) => o.label) : R.split(P.offer));
-    title = 'New invoice';
+    const ed = modal.edit ? (state.invoices || []).find((x) => String(x.id) === String(modal.edit)) : null;
+    const cat = ((state.flow && state.flow.catalogue) || []).filter((x) => x.status !== 'sold');
+    const priceOf = Object.fromEntries(cat.map((x) => [x.title, x.price]));
+    const lines = modal.lines || (ed ? ed.items.map((it) => ({ desc: it.desc, qty: it.qty, rate: it.rate })) : [ { desc: ap ? ap.service : '', qty: 1, rate: ap ? ap.fee : (Number(modal.amount) || '') }]);
+    const sugg = [...new Set([...(ap && ap.service ? [ap.service] : []), ...svcs, ...cat.map((x) => x.title)])];
+    title = ed ? 'Edit ' + ed.number : 'New invoice';
     body = `<form class="stack" data-act="add-inv" novalidate>
-      ${ap ? `<input type="hidden" name="appointmentId" value="${esc(ap.id)}">` : ''}
-      <label>Bill to<select name="patientId" required>${opts(ap ? ap.patientId : '')}</select></label>
-      <label>Description${svcs.length ? `<select name="desc" required>${[...new Set([...(ap && ap.service ? [ap.service] : []), ...svcs])].map((x) => `<option>${esc(x)}</option>`).join('')}</select>` : `<input name="desc" required maxlength="120" value="${esc(ap ? ap.service : '')}">`}</label>
-      <div class="two"><label>Qty<input name="qty" type="number" min="1" step="1" value="1"></label><label>Rate ₹<input name="rate" type="number" min="0" step="1" value="${esc(ap ? ap.fee : 0)}"></label></div>
-      <label>Offer / coupon<select name="offer"><option value="">No offer</option>${offers.map((o) => `<option>${esc(o)}</option>`).join('')}</select></label>
-      <div class="two"><label>GST % (optional)<input name="gst" inputmode="decimal" maxlength="5" placeholder="e.g. 18"></label><label>Due<input name="due" type="date"></label></div>
-      <label>UPI ID<input name="upi" maxlength="80" value="${esc(P.upi || '')}" placeholder="name@upi"></label>
+      ${ed ? `<input type="hidden" name="editId" value="${esc(ed.id)}">` : ''}${ap ? `<input type="hidden" name="appointmentId" value="${esc(ap.id)}">` : ''}
+      <label>Bill to<select name="patientId" required>${opts(ed ? ed.patientId : ap ? ap.patientId : modal.patient)}</select></label>
+      <datalist id="invSvc">${sugg.map((x) => `<option value="${esc(x)}">${priceOf[x] ? inr(priceOf[x]) : ''}</option>`).join('')}</datalist>
+      <div class="inv-lines">${lines.map((l, k) => `<div class="inv-line"><label>${k ? '' : 'Description <span class="small">(pick a service or type any other)</span>'}<input name="desc_${k}" list="invSvc" maxlength="120" value="${esc(l.desc || '')}" placeholder="${esc(svcs[0] || 'Service')}" data-price-fill></label><label>${k ? '' : 'Qty'}<input name="qty_${k}" type="number" min="1" max="1000" step="1" value="${esc(l.qty || 1)}"></label><label>${k ? '' : 'Rate ₹'}<input name="rate_${k}" type="number" min="0" max="100000000" step="1" value="${esc(l.rate || '')}"></label></div>`).join('')}</div>
+      ${lines.length < 12 ? `<div><button class="btn-ghost" type="button" data-act="inv-line">+ Add another line</button></div>` : ''}
+      <label>Offer / coupon<select name="offer"><option value="">No offer</option>${offers.map((o) => `<option ${ed && ed.offer === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></label>
+      <div class="two"><label>GST % (optional)<input name="gst" inputmode="decimal" maxlength="5" placeholder="e.g. 18" value="${ed && ed.gst != null ? esc(ed.gst) : ''}"></label><label>Due<input name="due" type="date" value="${ed ? esc(String(ed.dueAt || '').slice(0, 10)) : ''}"></label></div>
+      <label>UPI ID<input name="upi" maxlength="80" value="${esc(ed ? ed.upi || '' : P.upi || '')}" placeholder="name@upi"></label>
       <p class="small">${P.gstin ? 'GSTIN ' + esc(P.gstin) + ' prints on the invoice.' : 'Add your GSTIN in Settings › Business profile to print it on invoices.'} A percent or ₹ offer is taken off before GST.</p>
       <div class="err" data-modal-err></div>
-      <div class="row-actions"><button class="btn" type="submit">Create invoice</button><button class="btn-ghost" type="button" data-act="modal-close">Cancel</button></div></form>`;
+      <div class="row-actions"><button class="btn" type="submit">${ed ? 'Save changes' : 'Create invoice'}</button><button class="btn-ghost" type="button" data-act="modal-close">Cancel</button></div></form>`;
+  } else if (modal.kind === 'msg') {
+    const L = hasFlow() ? (state.flow.leads || []).find((x) => String(x.id) === String(modal.lead)) : null;
+    const E = (state.enquiries || []).find((x) => String(x.id) === String(modal.enquiry));
+    const Pp = (state.people || state.patients || []).find((x) => String(x.id) === String(modal.patient));
+    const who = L || E || Pp; const first = who ? String(who.name).split(' ')[0] : 'there';
+    const W = hasFlow() ? FW() : {};
+    const text = L ? `Hi ${first}, this is ${state.biz || 'us'}. Just checking in${L.req && L.req.need ? ' about ' + L.req.need : ''}. ${W.meet ? 'Would you like to book a ' + W.meet + ' this week?' : 'How can we help?'}` : E ? `Hi ${first}, thank you for contacting ${state.biz || 'us'}${E.message ? ' about ' + E.message : ''}. When would be a good time to talk?` : `Hi ${first}, this is ${state.biz || 'us'}. It has been a while. Would you like to book your next ${visitWord()}?`;
+    title = 'Message to ' + (who ? who.name : '');
+    body = !who ? '<p>That person is not on file.</p>' : `<form class="stack" data-act="msg-draft" novalidate>${L ? `<input type="hidden" name="leadId" value="${L.id}">` : ''}${E ? `<input type="hidden" name="enquiryId" value="${E.id}">` : ''}${Pp ? `<input type="hidden" name="patientId" value="${Pp.id}">` : ''}
+      <p class="small">To ${esc(who.name)} · ${esc(who.phone || who.email || '')}. Edit the words; it waits in Approvals and goes out only when you approve it.</p>
+      <label>Message<textarea name="text" rows="5" maxlength="1000">${esc(text)}</textarea></label>
+      <div class="err" data-modal-err></div>
+      <div class="row-actions"><button class="btn" type="submit">Save draft for approval</button><button class="btn-ghost" type="button" data-act="modal-close">Cancel</button></div></form>`;
+  } else if (modal.kind === 'pay') {
+    const i = (state.invoices || []).find((x) => String(x.id) === String(modal.inv)), pd = modal.pay;
+    title = 'Collect payment' + (i ? ' · ' + i.number : '');
+    body = !i ? '<p>That invoice is not on file.</p>' : !pd ? '<p class="small">Preparing the QR code…</p>' : `<div class="pay-box">
+      <p><b>${inr(i.total)}</b> from ${esc(pname(i.patientId))}${pd.upiId ? ' · to UPI ID <b>' + esc(pd.upiId) + '</b>' : ''}</p>
+      ${pd.qr ? `<img class="pay-qr" src="${pd.qr}" alt="UPI QR code for ${esc(i.number)}" width="220" height="220"><p class="small">The customer scans this with Google Pay, PhonePe, Paytm or any UPI app. The amount and invoice number are filled in.</p>` : '<p class="notice">Add your UPI ID in Settings › Business profile (or on this invoice with Edit) to get a UPI QR code.</p>'}
+      <div class="row-actions">${pd.upi ? `<a class="btn" href="${esc(pd.upi)}">Open in UPI app</a><button class="btn-ghost" type="button" data-act="copy" data-text="${esc(pd.upi)}">Copy UPI link</button>` : ''}${pd.link ? `<a class="btn-ghost" href="${esc(pd.link)}" target="_blank" rel="noopener">Open payment link</a><button class="btn-ghost" type="button" data-act="copy" data-text="${esc(pd.link)}">Copy payment link</button>` : ''}${pd.wa ? `<a class="btn-ghost" href="${esc(pd.wa)}" target="_blank" rel="noopener">Send on WhatsApp</a>` : ''}</div>
+      <p class="small">“Open in UPI app” works on a phone. On a computer, show the QR code or send the link. AIdentify never takes the money: it goes straight to your UPI ID${pd.link ? ' or Razorpay' : ''}.</p></div>
+      <div class="row-actions"><button class="btn-ghost" type="button" data-act="modal-close">Close</button></div>`;
   }
   if (modal.kind === 'festival') {
     title = modal.name + ' posts';
@@ -1398,8 +1531,8 @@ function modalHtml() {
 // ---- Settings: one page, six tabs ----
 function settings() {
   if (tabs.settings === 'plan' || tabs.settings === 'reminders') tabs.settings = tabs.settings === 'plan' ? 'usage' : 'business';
-  const body = { business: setBusiness, catalogue: hasFlow() ? setCatalogue : setBusiness, ai: setAi, integrations: setIntegrations, usage: setUsage, privacy: setPrivacy }[tabs.settings] || setBusiness;
-  return `<h1>Settings</h1>${tabBar('settings', [['business', 'Business profile'], ...(hasFlow() ? [['catalogue', 'Catalogue', state.flow.report.available]] : []), ['ai', 'AI & API key'], ['integrations', 'Integrations'], ['usage', 'Usage'], ['privacy', 'Privacy & data']])}${body()}`;
+  const body = { business: setBusiness, ai: setAi, integrations: setIntegrations, usage: setUsage, privacy: setPrivacy }[tabs.settings] || setBusiness;
+  return `<h1>Settings</h1>${tabBar('settings', [['business', 'Business profile'], ['ai', 'AI & API key'], ['integrations', 'Integrations'], ['usage', 'Usage'], ['privacy', 'Privacy & data']])}${body()}`;
 }
 function setCatalogue() {
   const rows = state.flow.catalogue || [], W = FW();
@@ -1444,7 +1577,7 @@ function setBusiness() {
       <label>Services <span class="small">(comma separated, up to ${L.service.count})</span><input name="services" value="${esc(P.services || '')}" maxlength="900"></label>
       <label>Customers you want to reach <span class="small">(comma separated, up to ${L.audience.count})</span><input name="audience" value="${esc(P.audience || '')}" maxlength="700"></label>
       <label>Offers <span class="small">(comma separated; a % or ₹ amount becomes an invoice discount)</span><input name="offers" value="${esc((P.offers && P.offers.length ? P.offers.map((o) => o.label).join(', ') : P.offer) || '')}" maxlength="500"></label>
-      <div class="two"><label>Business phone<input name="phone" inputmode="tel" maxlength="16" value="${esc(state.phone ? '+' + String(state.phone).replace(/^\+/, '') : '')}"></label><label>Toll-free number<input name="tollFree" inputmode="tel" maxlength="16" value="${esc(P.tollFree || '')}"></label></div>
+      <div class="two"><label>Business phone (10 digits)<input name="phone" inputmode="numeric" maxlength="16" placeholder="9876543210" data-digits10 value="${esc(state.phone ? String(state.phone).replace(/\D/g, '').slice(-10) : '')}"></label><label>Toll-free number (10 digits)<input name="tollFree" inputmode="numeric" maxlength="16" placeholder="1800123456" data-digits10 value="${esc(String(P.tollFree || '').replace(/\D/g, '').slice(-10))}"></label></div>
       <div class="two"><label>Contact email<input name="contactEmail" type="email" maxlength="120" value="${esc(P.contactEmail || '')}"></label><label>Front desk email<input name="frontDeskEmail" type="email" maxlength="120" value="${esc(P.frontDeskEmail || '')}"></label></div>
       <div class="two"><label>Website<input name="website" maxlength="120" value="${esc(P.website || '')}" placeholder="https://"></label><label>GSTIN<input name="gstin" maxlength="15" value="${esc(P.gstin || '')}" placeholder="15 characters"></label></div>
       <label>Address<input name="address" maxlength="120" value="${esc(P.address || '')}"></label>
@@ -1468,13 +1601,69 @@ function setAi() {
 const INTEGRATIONS = [
   ['gmail', 'Gmail', 'Send approved follow-ups and invoices from your own mailbox.'],
   ['gcal', 'Google Calendar', 'Put bookings on your calendar.'],
-  ['cx:facebook', 'Facebook Page', 'Connect a Facebook Page. Personal profiles can’t be posted to by any tool (Meta’s rule).'],
+  ['cx:facebook', 'Facebook Page', 'Connect a Facebook Page. Personal profiles can’t be posted to by any tool (Meta’s rule). Posts are published as your Page. Facebook shows a small “Published by Composio” line only to Page admins, not to your followers; to show your own app name instead, add your own Meta app in Composio › Auth Configs › Facebook.'],
   ['cx:instagram', 'Instagram', 'Needs an Instagram Business or Creator account linked to a Facebook Page. Posts go through the official API.'],
-  ['cx:linkedin', 'LinkedIn', 'Post as yourself or your company page.'],
-  ['cx:twitter', 'X (Twitter)', 'Post and reply from your X account.'],
+  ['cx:linkedin', 'LinkedIn', 'Posts text and picture as yourself (your company Page needs LinkedIn’s Community Management approval, then LINKEDIN_ORG_ID). Works through Composio: the app uploads the picture with LinkedIn’s own steps, posts it and checks the picture is on the post (a post without it is deleted). Your own LinkedIn app is optional.'],
+  ['cx:twitter', 'X (Twitter)', 'Posts with the picture, replies to comments and finds business posts, using your own X app (X blocks Composio’s shared one). At developer.x.com › your App › User authentication settings: OAuth 2.0 on, Type Web App, permissions Read and write, Callback URIs below, Website your domain. Copy the OAuth 2.0 Client ID and Secret into the server .env as X_CLIENT_ID and X_CLIENT_SECRET, restart, press Connect. X charges per post and per read (add credit under Billing). Free alternative: Post on X (free) on Social Media.'],
 ];
 let integ = null, integBusy = '', integMsg = {}, waq = null, waqPoll = 0;
 async function loadWaq() { try { waq = (await api('/api/channels/whatsapp-qr')).whatsapp_qr || {}; } catch (e) { waq = { error: e.message }; } return waq; }
+const OWN_ALIAS = { 'cx:twitter': 'x', 'cx:linkedin': 'li' };
+// LinkedIn with your own LinkedIn app: pictures go through LinkedIn's own upload (Composio's tool drops them)
+function liSetup() {
+  const x = (integ && integ.li) || {}, here = x.callback || (location.origin + '/api/connectors/callback');
+  const live = 'https://phanindramalladi.online/api/connectors/callback';
+  return `<div class="small" style="margin-top:6px">${x.own ? '✓ Your LinkedIn app is set (LINKEDIN_CLIENT_ID). Press Connect (or Reconnect) to use it.' : 'Optional: LinkedIn already posts pictures through Composio. If Composio cannot take the picture, use your own LinkedIn app: 1) linkedin.com/developers › Create app (link it to your company Page) › Products: add “Share on LinkedIn” and “Sign In with LinkedIn using OpenID Connect”. 2) Auth › Authorized redirect URLs: add the URLs below. 3) Copy Client ID and Primary Client Secret into the server .env as LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET, restart, press Connect.'} Redirect URLs: <code>${esc(here)}</code>${here === live ? '' : ` and <code>${esc(live)}</code>`}</div>`;
+}
+// X with your own X app: the two Callback URIs to register at developer.x.com (this computer + the live domain)
+function xSetupApi() {
+  const x = (integ && integ.x) || {}, here = x.callback || (location.origin + '/api/connectors/callback');
+  const live = 'https://phanindramalladi.online/api/connectors/callback';
+  return `<div class="small" style="margin-top:6px">${x.own ? '✓ Your X app is set (X_CLIENT_ID). ' : 'Your X app is not set yet: put X_CLIENT_ID and X_CLIENT_SECRET in the server .env and restart. '}In your X app add these Callback URIs exactly: <code>${esc(here)}</code>${here === live ? '' : ` and <code>${esc(live)}</code>`}</div>`;
+}
+// X: two ways — your X app (API, safe) or signing in once in the app's own browser (no API cost)
+function xSetup() {
+  const xb = (state && state.xBrowser) || {};
+  return xSetupApi() + `<div class="small" style="margin-top:8px"><b>Or post through the app’s browser (no X app, no API cost):</b> ${xb.signedIn ? `✓ Signed in to X as ${esc(xb.handle || '')} in the app’s browser${xb.today ? ' · ' + esc(String(xb.today)) + ' posted today (max 10)' : ''}.` : 'not signed in yet.'}
+    <div class="row-actions" style="margin-top:4px"><button class="btn-ghost" type="button" data-act="xb-open">${xb.signedIn ? 'Open the app’s browser on X' : 'Sign in to X in the app’s browser'}</button>${xb.signedIn ? '<button class="btn-ghost" type="button" data-act="xb-check">Check sign-in</button><button class="btn-ghost" type="button" data-act="xb-forget">Stop using it</button>' : ''}</div>
+    <span class="bad">Warning: X’s rules forbid automating its website. Posting this way can get the X account locked or suspended; your X app (above) is the safe way and is used first when connected. Max 10 posts a day, 90 s apart.</span></div>`;
+}
+// Live view of the app's browser: click on it and type; your password goes only to X
+let xbv = null;
+function xbViewer(open) {
+  if (xbv) { clearInterval(xbv.t); xbv.el.remove(); document.removeEventListener('keydown', xbv.key, true); document.removeEventListener('paste', xbv.paste, true); xbv = null; }
+  if (!open) return;
+  const el = document.createElement('div');
+  el.setAttribute('data-xbv', '1');
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px';
+  el.innerHTML = `<div style="background:#fff;border-radius:12px;max-width:1000px;width:100%;padding:12px;max-height:96vh;overflow:auto">
+    <div class="row-head"><b>The app’s browser — sign in to X</b><span class="small"> Click on the screen, then type with your keyboard (paste works). Your password goes only to X; the app keeps the sign-in, not the password.</span></div>
+    <img data-xbv-img alt="The app’s browser" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;margin:8px 0;min-height:200px;background:#f1f5f9">
+    <div class="row-actions"><button class="btn-ghost" type="button" data-xbv-key="Enter">Enter</button><button class="btn-ghost" type="button" data-xbv-key="Tab">Tab</button><button class="btn-ghost" type="button" data-xbv-key="Backspace">⌫</button><button class="btn" type="button" data-xbv-done>Done, I’m signed in</button><button class="btn-ghost" type="button" data-xbv-close>Close</button><span class="small" data-xbv-msg></span></div></div>`;
+  document.body.appendChild(el);
+  const img = el.querySelector('[data-xbv-img]'), msg = el.querySelector('[data-xbv-msg]');
+  const send = async (ev) => { try { await api('/api/computer/input', { aid: 'assistant', ev }); } catch (e) { msg.textContent = e.message; } };
+  let n = -1;
+  const pull = async () => { try { const f = await api('/api/computer/frame?aid=assistant&since=' + n); if (f && f.img) { img.src = f.img; n = f.n; } } catch (e) { msg.textContent = e.message; } };
+  img.addEventListener('click', (e) => { const r = img.getBoundingClientRect(); send({ type: 'click', x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }).then(pull); });
+  el.querySelectorAll('[data-xbv-key]').forEach((b) => b.addEventListener('click', () => send({ type: 'key', key: b.dataset.xbvKey }).then(pull)));
+  el.querySelector('[data-xbv-close]').addEventListener('click', async () => { xbViewer(false); await api('/api/clinic/xbrowser/done', {}).catch(() => {}); await reload(); });
+  el.querySelector('[data-xbv-done]').addEventListener('click', async () => {
+    msg.textContent = 'Checking…';
+    try { const r = await api('/api/clinic/xbrowser/done', {}); xbViewer(false); flash(r.state && r.state.signedIn ? 'Signed in to X as ' + r.state.handle + '. Approved X posts now go out through the app’s browser.' : 'Not signed in yet. Open it again and finish signing in.'); await reload(); }
+    catch (e) { msg.textContent = e.message; }
+  });
+  const KEYS = /^(Enter|Tab|Backspace|Delete|Escape|ArrowLeft|ArrowRight|ArrowUp|ArrowDown|Home|End)$/;
+  const key = (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.length === 1) { e.preventDefault(); send({ type: 'type', text: e.key }); }
+    else if (KEYS.test(e.key)) { e.preventDefault(); send({ type: 'key', key: e.key }).then(pull); }
+  };
+  const paste = (e) => { const t = (e.clipboardData && e.clipboardData.getData('text')) || ''; if (t) { e.preventDefault(); send({ type: 'type', text: t.slice(0, 500) }).then(pull); } };
+  document.addEventListener('keydown', key, true); document.addEventListener('paste', paste, true);
+  xbv = { el, t: setInterval(pull, 700), key, paste };
+  pull();
+}
 async function loadInteg(force) {
   if (integ && !force) return;
   try { integ = await api('/api/connectors'); if (integ.account) { await api('/api/connectors/account?refresh=1').catch(() => null); integ = await api('/api/connectors'); } } catch (e) { integ = { error: e.message, items: [] }; }
@@ -1485,17 +1674,21 @@ function setIntegrations() {
   if (!integ) { loadInteg(); return '<p class="small">Loading your connections…</p>'; }
   const items = integ.items || [], wa = state.whatsapp || {};
   const row = ([id, name, note]) => {
-    const it = items.find((x) => x.id === id);
+    const it = items.find((x) => OWN_ALIAS[id] && x.id === OWN_ALIAS[id]) || items.find((x) => x.id === id);
     const st = it ? (it.error || it.expired || it.status === 'error' ? ['overdue', 'Error — reconnect'] : ['approved', 'Connected' + (it.acct ? ' as ' + it.acct : '')]) : ['pending', 'Not connected'];
     const m = integMsg[id];
-    return `<div class="draft conn"><div><b>${esc(name)}</b> <span class="pill ${st[0]}">${esc(st[1])}</span><div class="small">${esc(note)}</div>${m ? `<div class="small ${m.err ? 'bad' : ''}" role="status">${esc(m.t)}${m.link ? ` <a class="link" href="${esc(m.link)}" target="_blank" rel="noopener">Open sign-in</a>` : ''}</div>` : ''}</div>
-      <div class="actions">${it ? `<button class="btn-ghost" type="button" data-act="integ-connect" data-id="${esc(id)}" ${integBusy === id ? 'disabled' : ''}>Reconnect</button><button class="btn-danger" type="button" data-act="integ-disconnect" data-id="${esc(id)}" data-name="${esc(name)}" ${integBusy === id ? 'disabled' : ''}>Disconnect</button>` : `<button class="btn" type="button" data-act="integ-connect" data-id="${esc(id)}" ${integBusy === id ? 'disabled' : ''}>${integBusy === id ? 'Connecting…' : 'Connect'}</button>`}</div></div>`;
+    return `<div class="draft conn"><div><b>${esc(name)}</b> <span class="pill ${st[0]}">${esc(st[1])}</span><div class="small">${esc(note)}</div>${id === 'cx:twitter' ? xSetup() : id === 'cx:linkedin' ? liSetup() : ''}${m ? `<div class="small ${m.err ? 'bad' : ''}" role="status">${esc(m.t)}${m.link ? ` <a class="link" href="${esc(m.link)}" target="_blank" rel="noopener">Open sign-in</a>` : ''}</div>` : ''}</div>
+      <div class="actions">${it ? `<button class="btn-ghost" type="button" data-act="integ-connect" data-id="${esc(id)}" ${integBusy === id ? 'disabled' : ''}>Reconnect</button><button class="btn-danger" type="button" data-act="integ-disconnect" data-id="${esc(it.id)}" data-name="${esc(name)}" ${integBusy === id ? 'disabled' : ''}>Disconnect</button>` : `<button class="btn" type="button" data-act="integ-connect" data-id="${esc(id)}" ${integBusy === id ? 'disabled' : ''}>${integBusy === id ? 'Connecting…' : 'Connect'}</button>`}</div></div>`;
   };
   return `<p class="sub">Nothing is connected until you connect it. Disconnect removes the access from this account straight away.</p>
     ${integ.error ? `<p class="err">${esc(integ.error)}</p>` : ''}
     <h2>WhatsApp</h2>
     ${waCard()}
     <h2>Email, calendar and social</h2>${INTEGRATIONS.map(row).join('')}
+    ${items.find((x) => x.id === 'gmail') ? '' : `<details class="draft conn"${integMsg.gmailpw ? ' open' : ''}><summary><b>Gmail without Composio: use an app password</b> <span class="small">(works on your own computer, http://localhost, and on any server)</span></summary>
+      <form class="stack" data-act="gmail-pw" novalidate style="margin-top:10px"><p class="small">1. Turn on 2-Step Verification for your Google account. 2. Open <a class="link" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>, create an app password named “AIdentify”. 3. Paste it here. Approved emails then go out from this Gmail.</p>
+        <div class="two"><label>Gmail address<input name="user" type="email" maxlength="120" placeholder="you@gmail.com" autocomplete="off"></label><label>App password (16 letters)<input name="pass" type="password" maxlength="40" autocomplete="new-password" placeholder="abcd efgh ijkl mnop"></label></div>
+        ${integMsg.gmailpw ? `<div class="small ${integMsg.gmailpw.err ? 'bad' : ''}" role="status">${esc(integMsg.gmailpw.t)}</div>` : ''}<div class="row-actions"><button class="btn" type="submit">Connect Gmail</button></div></form></details>`}
     <p class="small">Social accounts sign in through one managed connector (Composio), the same path for Facebook, Instagram, LinkedIn and X. <button class="btn-ghost" type="button" data-act="integ-refresh">Refresh status</button></p>`;
 }
 // WhatsApp: the free QR link is the main way in. The paid official API is only for bulk marketing.
@@ -1526,7 +1719,7 @@ function setPrivacy() {
     <h2>Your records</h2><p class="small">Bring your existing ${esc(who)} in, and take everything out, from here.</p>
     ${data.map((c) => `<div class="draft conn"><div><b>${esc(c.name)}</b><div class="small">${esc(c.detail)}</div>${c.url ? `<div class="small"><a class="link" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></div>` : ''}</div><div class="actions">${connState(c)}${c.id === 'eka' && (c.status === 'demo' || c.status === 'ready') ? '<button class="btn" type="button" data-act="sync-eka">Sync</button>' : ''}</div></div>`).join('')}
     <p><button class="btn-ghost" type="button" data-act="form-done">I have put the booking form on my site</button></p>
-    <form class="form" data-act="csv"><label class="full">Import a CSV of ${esc(Lb().who || 'people')} <span class="small">(columns: type, name, phone, email, last_visit, value, when, service, status, fee · up to 2000 rows)</span><input name="file" type="file" accept=".csv,text/csv"></label><div><button class="btn" type="submit">Import</button></div></form>
+    <form class="form" data-act="csv"><label class="full">Import a CSV of ${esc(Lb().who || 'people')} <span class="small">(needs a Name column and a Phone or Email column; “Mobile number”, “Customer name”, “Email ID” also work. Optional: last_visit, value, and when, service, status, fee for bookings · up to 2000 rows)</span><input name="file" type="file" accept=".csv,text/csv"></label><div><button class="btn" type="submit">Import</button></div></form>
     <h2>Export and delete</h2>
     <article class="draft"><b>1 · Export</b><p>Download everything in this account as a JSON file.</p><button class="btn" type="button" data-act="export">Download my data</button> <span class="small" data-export-msg role="status"></span></article>
     <form class="draft stack" data-act="wipe" novalidate><b>2 · Delete my data</b><p class="small">Removes this team’s ${esc(who)}, invoices, drafts and form from this account. Your sign-in stays. Type <b>delete my data</b> to confirm.</p><input name="confirm" placeholder="delete my data" autocomplete="off" aria-label="Type delete my data to confirm"><div class="err" data-form-err></div><div><button class="btn-danger" type="submit">Delete my data</button></div></form>
@@ -1626,10 +1819,10 @@ function marketingGuide() {
       'Every lead is in one list with name, phone, channel, what they want, score and stage.',
       'No lead stays on “New enquiry” for more than a day. Ask Chief: “pipeline”.'],
     ['Lead qualification', now, 'Front Desk › Pipeline › open the lead',
-      ['Fill <b>Goals</b>, <b>Budget</b>, <b>Channels they want</b> and <b>When they want to start</b>. If something is missing, a message asking for it is drafted.', 'Press <b>Save and find packages</b>. The lead is matched to your packages (Settings › Catalogue) and ranked. No fit? You are told why and a message asking to adjust scope is drafted.', 'The lead gets a score: <b>Hot</b> (act today), <b>Warm</b> (every 3 days), <b>Cold</b> (monthly).', 'Press <b>Send proposal</b>, record their answer, then <b>Book discovery call</b>. If the slot is taken you get free times to offer.'],
+      ['Fill <b>Goals</b>, <b>Budget</b>, <b>Channels they want</b> and <b>When they want to start</b>. If something is missing, a message asking for it is drafted.', 'Press <b>Save and find packages</b>. The lead is matched to your packages (Front Desk › Catalogue) and ranked. No fit? You are told why and a message asking to adjust scope is drafted.', 'The lead gets a score: <b>Hot</b> (act today), <b>Warm</b> (every 3 days), <b>Cold</b> (monthly).', 'Press <b>Send proposal</b>, record their answer, then <b>Book discovery call</b>. If the slot is taken you get free times to offer.'],
       'A Hyderabad dental clinic wants ' + esc(svc) + ' with ₹25,000 a month, starting this month: Warm or Hot, matched to your ' + esc(svc) + ' package.',
       'Qualified leads have a discovery call on the calendar and your account manager has a note with the brief.',
-      'Add your packages with prices in Settings › Catalogue first; without them nothing can be matched.'],
+      'Add your packages with prices in Front Desk › Catalogue first; without them nothing can be matched.'],
     ['Client onboarding', part, 'Pipeline, then CRM',
       ['After the strategy call press <b>Done, ready to proceed</b>: the lead goes to your sales team with a full brief. Press <b>Contract signed: Closed Won</b> when it is signed, then <b>Create first invoice</b>.', 'The lead is now a client in <b>CRM</b> with phone, calls and invoices.', 'Many clients at once: Settings › Privacy & data › Import a CSV.', 'Keep your services, audiences and offers current in Settings › Business profile: every draft uses them.'],
       'After the call, “Sharma Sweets, Jaipur” is Closed Won, in CRM, with the first invoice.',
@@ -1705,7 +1898,7 @@ function guidePage() {
   if (hasFlow() && !isRE()) { const W = FW(); steps.splice(0, 2,
     ['An enquiry comes in', `${esc(W.channels.slice(0, 4).join(', '))}, or any other way. Front Desk › <b>+ New enquiry</b>, or press <b>Accept</b> on a WhatsApp message. If the number is already ${esc(aAn(W.existing))} or a lead, the enquiry is added to their record. No duplicates.`],
     [`Collect what the ${W.person} wants`, `Open the lead in Front Desk › <b>Pipeline</b> and fill <b>${esc(W.need[0])}</b>, <b>Budget</b>, <b>${esc(W.extra[0])}</b> and <b>${esc(W.timelineLabel)}</b>. If something is missing, a message asking for it is drafted for you.`],
-    [`${cap(W.items)} are matched and ranked`, `On <b>Save and find ${esc(W.items)}</b> the lead is checked against your Catalogue (Settings › Catalogue): first by what they need, then by budget (up to 10% over). Best fit first. If nothing fits you are told why, and a message asking the ${esc(W.person)} to adjust is drafted.`],
+    [`${cap(W.items)} are matched and ranked`, `On <b>Save and find ${esc(W.items)}</b> the lead is checked against your Catalogue (Front Desk › Catalogue): first by what they need, then by budget (up to 10% over). Best fit first. If nothing fits you are told why, and a message asking the ${esc(W.person)} to adjust is drafted.`],
     ['The lead is scored: Hot, Warm or Cold', 'Budget fit, urgency, complete details, WhatsApp consent and interest give a score out of 100. <b>Hot</b> (70+): act today. <b>Warm</b> (40–69): follow up every 3 days. <b>Cold</b>: one check-in a month.'],
     [`Send ${W.send}`, `Press <b>Send ${esc(W.send)}</b>. With WhatsApp consent it is drafted for WhatsApp; without it, for a call or email. Nothing goes out until you approve it in Approvals.`],
     [`Interested? Book the ${W.meet}`, `Record the answer. For a yes, pick the time: the calendar is checked, and if the slot is taken you get free times to offer. On booking, the confirmation and a note for your ${esc(W.notify)} are drafted. Draft the reminder the day before.`],
@@ -1715,7 +1908,7 @@ function guidePage() {
   if (isRE()) steps.splice(0, steps.length,
     ['An enquiry comes in', 'Website, WhatsApp, Facebook, Instagram, LinkedIn, a call or a walk-in. Front Desk › <b>+ New enquiry</b>, or press <b>Accept</b> on a WhatsApp message. If the number is already a lead, the enquiry is added to that lead. No duplicates.'],
     ['Collect what the buyer wants', 'Open the lead in Front Desk › <b>Pipeline</b> and fill budget, locations, BHK, size and when they want to buy. If something is missing, a message asking for it is drafted for you.'],
-    ['Properties are matched and ranked', 'On <b>Save and find properties</b> the lead is checked against your Catalogue (Settings › Catalogue): available, within 10% of budget, right area, right BHK. Best fit first. If nothing fits, you are told which wish blocks it and a message asking the buyer to adjust is drafted.'],
+    ['Properties are matched and ranked', 'On <b>Save and find properties</b> the lead is checked against your Catalogue (Front Desk › Catalogue): available, within 10% of budget, right area, right BHK. Best fit first. If nothing fits, you are told which wish blocks it and a message asking the buyer to adjust is drafted.'],
     ['The lead is scored: Hot, Warm or Cold', 'Budget fit, urgency, complete details, WhatsApp consent and interest give a score out of 100. <b>Hot</b> (70+): act today. <b>Warm</b> (40–69): follow up every 3 days. <b>Cold</b>: one check-in a month.'],
     ['Send the shortlist', 'Press <b>Send shortlist</b>. With WhatsApp consent it is drafted for WhatsApp; without it, for a call or email. Nothing goes out until you approve it in Approvals.'],
     ['Interested? Book the site visit', 'Record the answer. For a yes, pick the property and time: the calendar is checked, and if the slot is taken you get free times to offer. On booking, the confirmation and a note for your sales representative are drafted. Draft the reminder the day before.'],
@@ -1751,12 +1944,13 @@ function setUsage() {
   if (usageLive.error) return `<p class="err">${esc(usageLive.error)}</p><button class="btn-ghost" type="button" data-act="usage-refresh">Try again</button>`;
   const u = usageLive.usage || {}, p = usageLive.provider || {}, k = usageLive.aiKey || {};
   const usd = (n) => (n == null ? '—' : '$' + Number(n).toFixed(4));
-  const rows = (u.runs || []).slice(0, 25).map((r) => `<tr><td>${esc(r.name)}<div class="small">${esc(when(r.at))}</div></td><td>${esc(r.tokensIn)}</td><td>${esc(r.tokensOut)}</td><td>${inr(r.costInr)}<div class="small">${usd(r.costUsd)}</div></td></tr>`).join('');
+  const rows = (u.runs || []).slice(0, 25).map((r) => `<tr><td>${esc(r.name)}<div class="small">${esc(when(r.at))}${r.model ? ' · ' + esc(r.model) : ''}</div></td><td>${esc(Number(r.tokensIn).toLocaleString('en-IN'))}</td><td>${esc(Number(r.tokensOut).toLocaleString('en-IN'))}</td><td>${inr(r.costInr)}<div class="small">${usd(r.costUsd)} · ${r.exact ? 'exact, from OpenRouter' : 'estimate'}</div></td></tr>`).join('');
+  const byA = (u.byAgent || []).filter((r) => r.calls).map((r) => `<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.calls)}</td><td>${esc(Number(r.tokensIn + r.tokensOut).toLocaleString('en-IN'))}</td><td>${inr(r.costInr)}</td></tr>`).join('');
   const prov = p.available
     ? `<div class="kpis"><div class="tile"><div class="k">Spent on this key (OpenRouter)</div><div class="v">${usd(p.usedUsd)}</div><div class="hint">${p.usedInr == null ? '' : inr(p.usedInr) + ' · '}all apps using this key</div></div>
         <div class="tile"><div class="k">This month / today</div><div class="v">${usd(p.monthUsd)} / ${usd(p.todayUsd)}</div><div class="hint">as reported by OpenRouter</div></div>
         <div class="tile"><div class="k">Credit left</div><div class="v">${p.remainingUsd == null ? 'No limit set' : usd(p.remainingUsd)}</div><div class="hint">${p.limitUsd == null ? 'Set a limit on openrouter.ai to cap spend' : 'limit ' + usd(p.limitUsd)}</div></div></div>`
-    : `<p class="small" role="status">${p.reason === 'no_key' ? 'No AI key connected. Add one in Settings › AI & API key.' : p.reason === 'not_reported' ? 'This provider does not report spend for a key. The numbers below are counted from every call this account made.' : p.reason === 'test_key' ? 'Test key: provider spend is not read.' : 'OpenRouter could not be reached just now (' + esc(p.reason || 'unknown') + '). The numbers below are counted by AIdentify.'}</p>`;
+    : `<p class="small" role="status">${p.reason === 'no_key' ? 'No AI key connected yet, so nothing is counted. Add your OpenRouter key in <button class="linkbtn" type="button" data-act="tab" data-screen="settings" data-tab="ai">Settings › AI & API key</button>: this page then shows what OpenRouter says the key has spent (total, this month, today, credit left) and the exact tokens and cost of every call by Chief and each agent.' : p.reason === 'not_reported' ? 'This provider does not report spend for a key. The numbers below are counted from every call this account made.' : p.reason === 'test_key' ? 'Test key: provider spend is not read.' : 'OpenRouter could not be reached just now (' + esc(p.reason || 'unknown') + '). The numbers below are counted by AIdentify.'}</p>`;
   return `<h2>AI usage and cost</h2><p class="sub">${esc(k.label || 'Usage on your own key, paid to your AI provider.')} <button class="btn-ghost" type="button" data-act="usage-refresh">Refresh</button></p>
     ${prov}
     <h2>Counted by AIdentify this month</h2>
@@ -1765,6 +1959,7 @@ function setUsage() {
       <div class="tile"><div class="k">Tokens in / out</div><div class="v">${esc(Number(u.tokensIn || 0).toLocaleString('en-IN'))} / ${esc(Number(u.tokensOut || 0).toLocaleString('en-IN'))}</div><div class="hint">${esc(Number(u.tokens || 0).toLocaleString('en-IN'))} total</div></div>
       <div class="tile"><div class="k">Cost</div><div class="v">${inr(u.costInr || 0)}</div><div class="hint">${usd(u.costUsd)} at ₹${esc(u.inrPerUsd || 84)} per $</div></div>
     </div>
+    ${byA ? `<h2>By agent</h2><div class="scroll"><table><thead><tr><th>Agent</th><th>AI calls</th><th>Tokens</th><th>Cost</th></tr></thead><tbody>${byA}</tbody></table></div><h2>Every call</h2>` : ''}
     <div class="scroll"><table><thead><tr><th>Who used it</th><th>Tokens in</th><th>Tokens out</th><th>Cost</th></tr></thead><tbody>${rows || '<tr><td colspan="4">No AI calls yet this month. Ask Chief a question or draft a post, then press Refresh.</td></tr>'}</tbody></table></div>`;
 }
 function drawerHtml() {
@@ -1790,12 +1985,20 @@ function chiefPage() {
     <div class="log">${chatLog.map((m) => `<div class="bubble ${m.r}">${m.r === 'a' ? chatMd(m.t) : esc(m.t)}</div>`).join('')}${chatBusy ? '<div class="small">Checking the records…</div>' : ''}</div>
     <form data-act="chat"><input id="chatIn" name="message" value="${esc(chatDraft)}" placeholder="Ask about leads, approvals or payments" autocomplete="off"><button class="btn" type="submit">Send</button></form></section>`;
 }
+function destLine(d) {
+  const t = d.dest; if (!t || d.status === 'rejected') return '';
+  if (d.delivery) return `<p class="small"><b>${d.delivery.status === 'sent' ? '✓ Sent' : d.delivery.status === 'blocked' ? 'Not sent' : 'Not sent automatically'}</b>${d.delivery.at ? ' · ' + esc(when(new Date(d.delivery.at).toISOString())) : ''}</p>`;
+  if (d.status !== 'pending') return '';
+  if (d.internal) return `<p class="small">Approving sends this note ${t.channel === 'email' ? 'by email to <b>' + esc(t.to) + '</b>' : t.channel === 'whatsapp' ? 'to your own WhatsApp' : 'nowhere automatically: connect Gmail in Settings › Integrations to have it emailed to you'}.</p>`;
+  return `<p class="small">${t.channel === 'whatsapp' ? 'Approving sends this on <b>WhatsApp</b> to ' + esc(t.name || '') + ' (+' + esc(t.phone) + ') from your own number.' : t.channel === 'email' ? 'Approving sends this by <b>email</b> to ' + esc(t.email) + ' from your Gmail.' : '<b>Approving will not send this automatically.</b> ' + (t.phone || t.email ? 'Connect WhatsApp (free QR) or Gmail in <button class="linkbtn" type="button" data-act="go" data-screen="settings" data-tab="integrations">Settings › Integrations</button>, or use the link below.' : 'There is no phone or email on file for this person.')}</p>`;
+}
 function draftCard(d) {
   const link = String(d.waLink || '').startsWith('https://wa.me/') ? d.waLink : '';
   return `<article class="draft"><b>${esc(d.title)}</b> ${pill(d.status)} ${d.demo?'<span class="pill">DEMO</span>':''}
     <p>${esc(d.body)}</p>
-    ${d.waStatus?`<p class="small">WhatsApp ${esc(d.waStatus)}${d.waProvider?' · '+esc(d.waProvider):''}. Only an approved draft is handed to the provider.</p>`:''}
-    ${link?`<p><a class="link" href="${esc(link)}" target="_blank" rel="noopener">WhatsApp link</a> <span class="small">${(state.whatsapp&&state.whatsapp.configured)?'Click-to-chat stays available.':'Opens on your phone. AaaS does not send it.'}</span></p>`:''}
+    ${destLine(d)}
+    ${d.waStatus?`<p class="small">WhatsApp ${esc(d.waStatus)}${d.waProvider?' · '+esc(d.waProvider):''}.</p>`:''}
+    ${(link || (d.dest && d.dest.email)) && d.status !== 'rejected' ? `<p class="small">Send it yourself: ${link?`<a class="link" href="${esc(link)}" target="_blank" rel="noopener">WhatsApp link</a>`:''}${link && d.dest && d.dest.email ? ' · ' : ''}${d.dest && d.dest.email ? `<a class="link" href="mailto:${esc(d.dest.email)}?subject=${encodeURIComponent((d.title || 'A message').replace(/ for .*$/, '') + ' from ' + (state.biz || ''))}&body=${encodeURIComponent(d.body)}">Email link</a>` : ''}</p>` : ''}
     ${d.status==='pending'?`<form data-act="edit-draft"><input type="hidden" name="id" value="${d.id}"><textarea name="body" rows="3">${esc(d.body)}</textarea><div class="row-actions" style="margin-top:8px"><button class="btn-ghost" type="submit">Save edit</button><button class="btn" type="button" data-act="decide" data-id="${esc(d.approvalId)}" data-decision="approve">Approve</button><button class="btn-danger" type="button" data-act="decide" data-id="${esc(d.approvalId)}" data-decision="reject">Reject</button></div></form>`:''}
     ${d.result?`<p class="small">${esc(d.result)}</p>`:''}
   </article>`;
@@ -1922,9 +2125,15 @@ function miniEl() {
 }
 function syncMini() {
   const can = !!(token && state && state.role && !botMode && advanced);
-  if (!can) { miniOpen = false; const m = document.getElementById('chiefMini'); if (m) { m.hidden = true; setMiniFull(m, false); } if (!token) dropMini(); return; }
+  if (!can) { miniOpen = false; const m = document.getElementById('chiefMini'); if (m) { m.hidden = true; setMiniFull(m, false); } if (!token || botMode) dropMini(); return; } // Bot Mode is the same workplace: never two copies at once
   if (miniOpen) miniEl().hidden = false;
   else { const m = document.getElementById('chiefMini'); if (m) m.hidden = true; }
+  // Chief is a whole workplace page; load it in the background as soon as the app is ready, so opening it is instant
+  if (!miniOpen && !document.getElementById('chiefMini') && !syncMini.pre) {
+    syncMini.pre = true;
+    const go = () => { syncMini.pre = false; if (token && state && state.role && !document.getElementById('chiefMini')) miniEl(); };
+    (window.requestIdleCallback ? (f) => requestIdleCallback(f, { timeout: 2500 }) : (f) => setTimeout(f, 1200))(go);
+  }
 }
 // "Meet Chief" callout beside the Chief button: shown after onboarding and on first visits until dismissed.
 function chiefTipKey() { return 'aaas_chief_tip:' + ((state && state.account) || ''); }
@@ -2008,6 +2217,7 @@ async function reload() {
   if (!state.role && skipProfile) { state = await api('/api/clinic/role', { role: 'dental' }); syncPath(); } // the sample business opens as a dental clinic; it can switch in the sidebar
   if (!state.role) screen = 'profile';
   render();
+  if ((state.posts || []).some((p) => p.publish && p.publish.status === 'publishing') && !pollT) pollPublishing();
 }
 async function act(name, el) {
   try {
@@ -2037,9 +2247,37 @@ async function act(name, el) {
     if (name === 'drawer') { drawer = { kind: el.dataset.kind, id: el.dataset.id }; render(); return; }
     if (name === 'drawer-close') { drawer = null; render(); return; }
     if (name === 'tab') { tabs[el.dataset.screen] = el.dataset.tab; modal = null; try { history.replaceState({ screen, tab: el.dataset.tab }, '', homePath()); } catch (e) {} render(); return; }
-    if (name === 'modal') { modal = { kind: el.dataset.kind, enquiry: el.dataset.enquiry || '', appt: el.dataset.appt || '', patient: el.dataset.patient || '', newPerson: !!el.dataset.new, date: el.dataset.date || '', name: el.dataset.name || '' };
-      if (modal.kind === 'festival' && (state.posts || []).some((p) => p.festival === modal.name && dayKey(p.at) === modal.date && p.status !== 'rejected')) { modal = null; flash(el.dataset.name + ' posts are already drafted. They are in Approvals.'); render(); return; } if (modal.kind === 'invoice' && !(state.patients || []).length) { modal = null; throw new Error('Add a person first: book them from Front Desk.'); } render(); return; }
+    if (name === 'modal') { modal = { kind: el.dataset.kind, lead: el.dataset.kind === 'msg' ? el.dataset.lead || '' : undefined, edit: el.dataset.edit || '', inv: el.dataset.inv || '', amount: el.dataset.amount || '', enquiry: el.dataset.enquiry || '', appt: el.dataset.appt || '', patient: el.dataset.patient || '', newPerson: !!el.dataset.new, date: el.dataset.date || '', name: el.dataset.name || '' };
+      if (modal.kind === 'festival' && (state.posts || []).some((p) => p.festival === modal.name && dayKey(p.at) === modal.date && p.status !== 'rejected')) { modal = null; flash(el.dataset.name + ' posts are already drafted. They are in Approvals.'); render(); return; } if (modal.kind === 'invoice' && !(state.patients || []).length) { modal = null; throw new Error('Add a person first: book them from Front Desk.'); } render(); if (modal.kind === 'pay') { const m = modal; const r = await fetch('/api/clinic/invoices/' + m.inv + '/pay', { headers: { authorization: 'Bearer ' + token } }); const d = await r.json().catch(() => ({})); if (!r.ok) { modal = null; throw new Error((d.error && d.error.message) || d.message || 'That invoice did not open.'); } if (modal === m) { m.pay = d; render(); } } return; }
     if (name === 'modal-close') { modal = null; render(); return; }
+    if (name === 'xb-open') { flash('Opening the app’s browser…'); await api('/api/clinic/xbrowser/open', { home: !!(state.xBrowser && state.xBrowser.signedIn) }); xbViewer(true); return; }
+    if (name === 'xb-check') { const r = await api('/api/clinic/xbrowser/check', {}); flash(r.state.signedIn ? 'Signed in to X as ' + r.state.handle + '.' : 'Not signed in to X in the app’s browser.'); await reload(); return; }
+    if (name === 'xb-forget') { await api('/api/clinic/xbrowser/forget', {}); flash('X posts will no longer go through the app’s browser.'); await reload(); return; }
+    if (name === 'engage-send') {
+      const t = document.querySelector(`[data-engage-text="${el.dataset.id}"]`);
+      const r = await api('/api/clinic/engage/send', { id: Number(el.dataset.id), text: t ? t.value : undefined });
+      flash(r.ok ? 'Sent.' : 'Not sent: ' + (r.result || 'unknown error')); await reload(); return;
+    }
+    if (name === 'engage-skip') { await api('/api/clinic/engage/skip', { id: Number(el.dataset.id) }); await reload(); return; }
+    if (name === 'engage-check') { flash('Checking comments…'); const r = await api('/api/clinic/engage/check', {}); flash(r.found ? r.found + ' new comment' + (r.found > 1 ? 's' : '') + ' to answer.' : 'No new comments.'); await reload(); return; }
+    if (name === 'engage-settings') {
+      const f = new FormData(el); await api('/api/clinic/engage/settings', { keywords: f.get('keywords') || '', auto: { thanks: !!f.get('thanks'), leads: !!f.get('leads') } }); flash('Saved.'); await reload(); return;
+    }
+    if (name === 'engage-comment') {
+      const f = Object.fromEntries(new FormData(el).entries()); await api('/api/clinic/engage/comment', { url: f.url, text: f.text }); flash('Comment drafted. Check it and press Send.'); await reload(); return;
+    }
+    if (name === 'post-publish') {
+      await api('/api/clinic/posts/publish', { id: Number(el.dataset.id) }); flash('Publishing now. The result shows here in a minute or two.'); await reload(); pollPublishing(); return;
+    }
+    if (name === 'post-publish-chief') {
+      const p = (state.posts || []).find((x) => String(x.id) === el.dataset.id); if (!p) throw new Error('That post is no longer on file.');
+      const nets = (p.platforms && p.platforms.length ? p.platforms : ['Instagram']).map((x) => /x \(twitter\)|^x$/i.test(x) ? 'X (Twitter)' : x.replace(/ \/ Facebook/, '')).join(', ');
+      askChief(`Publish this post now. I approved it already in the owner app. Post it on: ${nets}. Make one picture for it first (create_image) and post the picture WITH the text on every network (LinkedIn: upload the image and attach it, never paste the link; Facebook: my Page, photo post; X: upload the media, then post). Then read each post back and give me its link, or the exact error.\n\nPost text:\n${p.text}`);
+      p.published = new Date().toISOString(); render(); return;
+    }
+    if (name === 'dup-add') { modal.dupOk = true; const fm = root.querySelector('form[data-act="add-enq"]'); if (fm) return act('add-enq', fm); return; }
+    if (name === 'inv-line') { const fm = el.closest('form'), f = Object.fromEntries(new FormData(fm).entries()), lines = []; for (let k = 0; f['desc_' + k] !== undefined; k++) lines.push({ desc: f['desc_' + k], qty: f['qty_' + k], rate: f['rate_' + k] }); lines.push({ desc: '', qty: 1, rate: '' }); modal.lines = lines; render(); return; }
+    if (name === 'copy') { try { await navigator.clipboard.writeText(el.dataset.text); flash('Copied.'); } catch { prompt('Copy this:', el.dataset.text); } return; }
     if (name === 'enq-filter') { enqFilter = el.dataset.f; render(); return; }
     if (name === 'lead-filter') { leadFilter = el.dataset.f; render(); return; }
     if (name === 'lead-open') { modal = { kind: 'lead', lead: el.dataset.id }; render(); return; }
@@ -2106,6 +2344,15 @@ async function act(name, el) {
       try { await api('/api/connectors/disconnect', { c: id }); integMsg[id] = { t: 'Disconnected.' }; } catch (e) { integMsg[id] = { t: e.message, err: 1 }; }
       integBusy = ''; integ = null; await loadInteg(true); render(); return;
     }
+    if (name === 'gmail-pw') {
+      const f = Object.fromEntries(new FormData(el).entries());
+      if (!R.email(f.user).ok) throw new Error('Enter your full Gmail address.');
+      if (String(f.pass || '').replace(/\s+/g, '').length < 12) throw new Error('Paste the 16-letter app password from myaccount.google.com/apppasswords.');
+      integMsg.gmailpw = { t: 'Checking with Gmail…' }; render();
+      try { await api('/api/connectors/key', { c: 'gmail', fields: { user: f.user, pass: f.pass } }); integMsg.gmailpw = null; integ = null; flash('Gmail connected. Approved emails now go out from ' + f.user + '.'); await reload(); }
+      catch (e) { integMsg.gmailpw = { t: e.message, err: true }; render(); }
+      return;
+    }
     if (name === 'integ-connect') {
       const id = el.dataset.id; integBusy = id; delete integMsg[id];
       // open the window during the click, so the browser does not block it
@@ -2141,19 +2388,21 @@ async function act(name, el) {
             await wait(3000);
             if (r.poll) { const ck = await api('/api/connectors/account/check?slug=' + encodeURIComponent(r.poll)).catch(() => null); if (ck && ck.connected) { done = true; break; } }
             const cur = await api('/api/connectors').catch(() => null);
-            if (cur && (cur.items || []).some((x) => x.id === id && x.status === 'connected')) { done = true; break; }
+            if (cur && (cur.items || []).some((x) => (x.id === id || OWN_ALIAS[id] === x.id) && x.status === 'connected')) { done = true; break; }
             if (closed() && ++shut > 3) break; // a few more checks after the window closes: the provider can confirm late
           }
           if (done) { integMsg[id] = { t: 'Connected.' }; try { w && w.close(); } catch (e) {} flash('Connected.'); }
           else integMsg[id] = { t: closed() ? 'The sign-in window was closed before it finished. Not connected.' : 'The sign-in was not confirmed in time. Press Refresh status, or Connect to try again.', err: 1 };
         } else { integMsg[id] = { t: 'The server did not return a sign-in link. Not connected.', err: 1 }; try { w && w.close(); } catch (e) {} }
       } catch (e) { integMsg[id] = { t: e.message, err: 1 }; try { w && w.close(); } catch (x) {} }
+      if (id === 'cx:twitter' && integMsg[id] && integMsg[id].err && !/Post on X \(free\)/.test(integMsg[id].t)) integMsg[id].t += ' If X showed “You weren’t able to give access to the App”, X blocked Composio’s shared app. Use Post on X (free) on Social Media, or add your own X app (steps above).';
       integBusy = ''; await loadInteg(true); render(); return;
     }
     if (name === 'save-business') {
       const fd = new FormData(el), f = Object.fromEntries(fd.entries());
       const body = { biz: f.biz, locations: fd.getAll('locations'), services: f.services, audience: f.audience, offers: f.offers, phone: f.phone, tollFree: f.tollFree, contactEmail: f.contactEmail, frontDeskEmail: f.frontDeskEmail, website: f.website, gstin: f.gstin, address: f.address, upi: f.upi, branches: f.branches };
       const chk = R.profile(body, ['biz', 'locations', 'services', 'audience']); if (!chk.ok) throw new Error(chk.message);
+      for (const [k, lab] of [['phone', 'Business phone'], ['tollFree', 'Toll-free number']]) if (R.clean(f[k])) { const r = R.phone10(f[k], lab); if (!r.ok) throw new Error(r.message); }
       if (R.clean(f.gstin) && !/^[0-9]{2}[A-Z0-9]{13}$/i.test(R.clean(f.gstin))) throw new Error('A GSTIN has 15 characters and starts with the 2-digit state code.');
       await api('/api/clinic/profile', body); flash('Business profile saved.'); await reload(); return;
     }
@@ -2197,7 +2446,8 @@ async function act(name, el) {
     if (name === 'setup-wa') {
       const f = Object.fromEntries(new FormData(el).entries());
       if (f.ack !== 'yes') throw new Error('Tick the box. Nothing goes out until you approve it.');
-      wizPhone = f.phone || '';
+      const wp = R.phone(f.phone); if (!wp.ok) throw new Error(wp.message);
+      wizPhone = wp.value.replace(/^\+/, '');
       wiz = 5; screen = 'setup'; render(); return;
     }
     if (name === 'setup-tone') {
@@ -2278,14 +2528,18 @@ async function act(name, el) {
       const f = Object.fromEntries(new FormData(el).entries());
       const nm = R.clean(f.name); if (nm.length < 2 || !/\p{L}/u.test(nm) || R.email(nm).ok) throw new Error('Enter the person’s name.');
       const ph = R.phone(f.phone); if (!ph.ok) throw new Error(ph.message);
-      await api('/api/clinic/enquiries', { name: nm, phone: ph.value.replace(/^\+/, ''), channel: f.channel, message: f.message });
-      modal = null; tabs.front = 'enquiries'; enqFilter = 'open'; flash('Enquiry added.');
+      const payload = { name: nm, phone: ph.value.replace(/^\+/, ''), channel: f.channel, message: f.message, addToExisting: !!modal.dupOk };
+      try { await api('/api/clinic/enquiries', payload); }
+      catch (e) { if (e.code !== 'duplicate_phone') throw e; modal.dup = e.existing || {}; modal.dupMsg = e.message; modal.form = f; render(); return; }
+      modal = null; tabs.front = 'enquiries'; enqFilter = 'open'; flash(payload.addToExisting ? 'Added to the existing record.' : 'Enquiry added.');
     }
     else if (name === 'enq-status') await api('/api/clinic/enquiries/update', { id:Number(el.dataset.id), status:el.dataset.status });
     else if (name === 'enq-del') { if (!confirm('Delete this enquiry?')) return; await api('/api/clinic/enquiries/delete', { id:Number(el.dataset.id) }); }
     else if (name === 'add-appt') {
       const f = Object.fromEntries(new FormData(el).entries());
-      const body = { service: R.clean(f.service), fee: Number(f.fee || 0) };
+      const svc = f.service === '__other' || !f.service ? R.clean(f.serviceOther) : R.clean(f.service);
+      if (svc.length < 2 || !/\p{L}{2,}/u.test(svc)) throw new Error(f.service === '__other' ? 'Type the other service.' : 'Pick a service.');
+      const body = { service: svc, fee: Number(f.fee || 0) };
       f.at = whenOf(f);
       if (!f.at || !Date.parse(f.at)) throw new Error('Pick a date and time.');
       if (Date.parse(f.at) < Date.now() - 5 * 60000) throw new Error('That date and time has already passed. Pick today or a later date.');
@@ -2304,6 +2558,12 @@ async function act(name, el) {
     else if (name === 'appt-status') await api('/api/clinic/appointments/update', { id:Number(el.dataset.id), status:el.dataset.status });
     else if (name === 'appt-del') { if (!confirm('Delete this appointment?')) return; await api('/api/clinic/appointments/delete', { id:Number(el.dataset.id) }); }
     else if (name === 'remind') { await api('/api/clinic/reminders', { appointmentId:Number(el.dataset.id) }); flash('Reminder queued for approval. Nothing was sent.'); }
+    else if (name === 'msg-draft') {
+      const f = Object.fromEntries(new FormData(el).entries()), text = R.clean(f.text);
+      if (text.length < 5 || !/\p{L}{2,}/u.test(text)) throw new Error('Write the message first.');
+      await api('/api/clinic/message/draft', { text, leadId: f.leadId ? Number(f.leadId) : undefined, enquiryId: f.enquiryId ? Number(f.enquiryId) : undefined, patientId: f.patientId ? Number(f.patientId) : undefined });
+      modal = null; flash('Message drafted. It is waiting in Approvals.');
+    }
     else if (name === 'recall') { await api('/api/clinic/recall/draft', { patientId:Number(el.dataset.id) }); flash('Follow-up drafted. It is waiting in Approvals.'); }
     else if (name === 'review') { await api('/api/clinic/reviews/draft', { patientId:Number(el.dataset.id) }); flash('Review request drafted with a WhatsApp link.'); }
     else if (name === 'wa-opt') { await api('/api/clinic/whatsapp/opt', { patientId:Number(el.dataset.id), status:el.dataset.status }); flash(el.dataset.status==='out'?'Opt-out recorded. WhatsApp will not be sent.':'Opt-in recorded. Nothing was sent.'); }
@@ -2347,14 +2607,23 @@ async function act(name, el) {
       flash('Visit notes saved in this account.');
     }
     else if (name === 'add-inv') {
-      const f = Object.fromEntries(new FormData(el).entries());
-      const desc = R.clean(f.desc); if (desc.length < 2 || !/\p{L}/u.test(desc)) throw new Error('Describe what this invoice is for.');
-      const qty = Number(f.qty || 1), rate = Number(f.rate || 0);
-      if (!(qty >= 1)) throw new Error('Quantity must be 1 or more.');
-      if (!(rate > 0)) throw new Error('Enter the rate in rupees.');
+      const f = Object.fromEntries(new FormData(el).entries()), items = [];
+      for (let k = 0; f['desc_' + k] !== undefined; k++) {
+        const desc = R.clean(f['desc_' + k]), qty = Number(f['qty_' + k] || 1), rate = Number(f['rate_' + k] || 0);
+        if (!desc && !rate) continue;
+        if (desc.length < 2 || !/\p{L}/u.test(desc)) throw new Error('Line ' + (k + 1) + ': describe what it is for.');
+        if (!(qty >= 1 && qty <= 1000 && Number.isInteger(qty))) throw new Error('Line ' + (k + 1) + ': quantity must be a whole number from 1 to 1000.');
+        if (!(rate > 0)) throw new Error('Line ' + (k + 1) + ': enter the rate in rupees.');
+        if (rate > 1e8) throw new Error('Line ' + (k + 1) + ': the rate is too large. One invoice can be up to ₹10 crore.');
+        items.push({ desc, qty, rate });
+      }
+      if (!items.length) throw new Error('Add at least one line with a description and a rate.');
+      if (items.reduce((s, it) => s + it.qty * it.rate, 0) > 1e8) throw new Error('The total is too large. One invoice can be up to ₹10 crore.');
       const gst = R.clean(f.gst); if (gst && !(Number(gst) >= 0 && Number(gst) <= 28)) throw new Error('GST is a percent between 0 and 28, or leave it blank.');
-      await api('/api/clinic/invoices', { patientId: Number(f.patientId), appointmentId: f.appointmentId ? Number(f.appointmentId) : undefined, items: [{ desc, qty, rate }], offer: f.offer || '', gst, due: f.due ? new Date(f.due + 'T18:00:00+05:30').toISOString() : '', upi: f.upi });
-      modal = null; if (screen !== 'billing') { screen = 'billing'; setView('billing'); } flash('Invoice created. Share its payment link, then mark it paid.');
+      if (R.clean(f.upi) && !/^[\w.\-]{2,40}@[\w.\-]{2,64}$/.test(R.clean(f.upi))) throw new Error('A UPI ID looks like name@bank (for example ravi@okhdfcbank).');
+      const payload = { patientId: Number(f.patientId), appointmentId: f.appointmentId ? Number(f.appointmentId) : undefined, items, offer: f.offer || '', gst, due: f.due ? new Date(f.due + 'T18:00:00+05:30').toISOString() : '', upi: R.clean(f.upi) };
+      if (f.editId) { await api('/api/clinic/invoices/edit', { id: Number(f.editId), ...payload }); modal = null; flash('Invoice updated. Its payment link and QR now show the new total.'); }
+      else { await api('/api/clinic/invoices', payload); modal = null; if (screen !== 'billing') { screen = 'billing'; setView('billing'); } flash('Invoice created. Press “UPI QR & link” to collect the payment, then mark it paid.'); }
     }
     else if (name === 'paid') { await api('/api/clinic/invoices/update', { id: Number(el.dataset.id), status: el.dataset.status }); flash(el.dataset.status==='paid' ? 'Marked paid. The dashboard uses paid invoices.' : 'Marked unpaid.'); }
     else if (name === 'remind-inv') { await api('/api/clinic/invoices/remind', { id: Number(el.dataset.id) }); flash('Payment reminder queued. Nothing was sent.'); }
@@ -2379,6 +2648,7 @@ async function act(name, el) {
     else if (name === 'wipe') {
       const confirm = String(new FormData(el).get('confirm') || '').trim().toLowerCase();
       if (confirm !== 'delete my data') throw new Error('Type “delete my data” in the box to confirm.');
+      if (!window.confirm('Delete all your business records?\n\nThis removes every lead, ' + (Lb().who || 'customer') + ', booking, invoice, draft, catalogue item and your booking form from this account. It cannot be undone.\n\nYour sign-in stays. Download your data first if you need a copy.')) { flash('Nothing was deleted.'); return; }
       await api('/api/clinic/data/delete', { confirm });
       ob = null; obDraftClear(); usageLive = null;
       flash('Records deleted. Your sign-in is still here.');
@@ -2397,7 +2667,10 @@ async function act(name, el) {
       const who = (state.labels && state.labels.who) || 'people';
       const visitWord = (state.labels && state.labels.visit) || 'visit';
       const visits = /class$/.test(visitWord) ? visitWord + 'es' : visitWord + 's';
-      flash(`Imported ${r.patients} ${who} and ${r.appointments} ${visits}.` + (r.errors.length?` ${r.errors.length} rows skipped.` : ''));
+      const skipped = r.errors.length ? ` ${r.errors.length} row${r.errors.length === 1 ? '' : 's'} skipped (row ${r.errors[0].row}: ${r.errors[0].message})` : '';
+      if (r.clinic) state = r.clinic;
+      flash(`Imported ${r.patients} new ${who}${r.updated ? ', updated ' + r.updated : ''} and ${r.appointments} ${visits}. They are in CRM.` + skipped);
+      el.reset(); go('crm'); render(); return;
     }
     else if (name === 'chat') {
       const message = (new FormData(el).get('message') || '').trim();
@@ -2568,6 +2841,8 @@ root.addEventListener('paste', (e) => { if (e.target && e.target.name === 'key' 
 root.addEventListener('submit', (e) => { const f = e.target.closest('form[data-act]'); if (!f) return; e.preventDefault(); window.__submitter = e.submitter || null; act(f.dataset.act, f); });
 root.addEventListener('change', (e) => { const t = e.target; if (t && t.dataset && t.dataset.change) act(t.dataset.change, t); });
 root.addEventListener('input', (e) => { if (e.target.id === 'chatIn') chatDraft = e.target.value; });
+root.addEventListener('change', (e) => { const t = e.target; if (t && t.matches && t.matches('[data-svc-pick]')) { const fm = t.closest('form'), o = fm.querySelector('[data-svc-other]'); if (o) o.hidden = t.value !== '__other'; const fee = t.selectedOptions[0] && t.selectedOptions[0].dataset.fee, fi = fm.querySelector('input[name=fee]'); if (fee && fi) fi.value = fee; if (t.value === '__other') { const i = fm.querySelector('input[name=serviceOther]'); if (i) i.focus(); } } });
+root.addEventListener('input', (e) => { const t = e.target; if (t && t.matches && t.matches('[data-digits10]')) { let d = t.value.replace(/\D/g, ''); if (d.length === 12 && d.startsWith('91')) d = d.slice(2); else if (d.length === 11 && d.startsWith('0')) d = d.slice(1); d = d.slice(0, 10); if (d !== t.value) t.value = d; } });
 (async () => {
   const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
   if (hash.get('as_auth')) { token = hash.get('as_auth'); localStorage.setItem('aaas_clinic_token', token); history.replaceState(null, '', location.pathname); }

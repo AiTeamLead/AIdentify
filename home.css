@@ -185,3 +185,5 @@ footer a { color: var(--ink); }
   html { scroll-behavior: auto; }
   .btn.solid:hover, .tabs button { filter: none; transition: none; }
 }
+
+input[type=password]::-ms-reveal, input[type=password]::-ms-clear { display:none; width:0; height:0; }

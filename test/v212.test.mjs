@@ -57,11 +57,11 @@ test('a social post Chief drafted on its own goes on the calendar when approved'
   m.set('as_clinic:' + email, JSON.stringify({ role: 'marketing', biz: 'Indian', city: 'Hyderabad', posts: [], drafts: [], patients: [], appointments: [], enquiries: [], invoices: [] }));
   m.set('as_appr:' + email, JSON.stringify([{ id: 'a1', status: 'done', kind: 'draft' }]));
   const note = await clinicAfterDecision(st, email, { id: 'a1', status: 'done', kind: 'draft', app: 'draft', summary: 'Social media post for 2099-11-17 (Instagram, LinkedIn)', request: 'Line one\nLine two #diwali' }, lock);
-  assert.match(note, /Social Media calendar for 17 Nov/);
+  assert.match(note, /published on 17 Nov, 9:00 am with its picture/);
   const c = JSON.parse(m.get('as_clinic:' + email));
   assert.equal(c.posts.length, 1); assert.equal(c.posts[0].status, 'scheduled'); assert.deepEqual(c.posts[0].platforms, ['Instagram', 'LinkedIn']);
   assert.equal(c.posts[0].text, 'Line one\nLine two #diwali'); assert.match(c.posts[0].at, /^2099-11-17/);
-  assert.match(JSON.parse(m.get('as_appr:' + email))[0].result, /calendar/);
+  assert.match(JSON.parse(m.get('as_appr:' + email))[0].result, /published on 17 Nov/);
   // a denied one, or a draft that is not a post, adds nothing
   await clinicAfterDecision(st, email, { id: 'a2', status: 'declined', kind: 'draft', summary: 'Social media post for 2099-11-19 (X)' }, lock);
   await clinicAfterDecision(st, email, { id: 'a3', status: 'done', kind: 'draft', summary: 'Email to a client about the invoice' }, lock);

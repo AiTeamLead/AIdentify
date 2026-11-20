@@ -21,6 +21,17 @@ try {
   }
 } catch { /* no .env file: fine */ }
 
+// APP_URL is the public address (Composio sign-in returns there; social networks download post images from it).
+// A typo such as "http:https://example.com" or "https://example.com/" made Composio refuse the sign-in. Fix the
+// obvious mistakes here, once, before anything reads it, and say so in the log.
+{ const raw = String(process.env.APP_URL || '').trim();
+  if (raw) {
+    const m = raw.match(/(https?):\/{2}([^\s/?#]+)(\/[^\s?#]*)?\/*\s*$/i);
+    let fixed = m ? (m[1].toLowerCase() + '://' + m[2].toLowerCase() + (m[3] || '').replace(/\/+$/, '')) : (/^[a-z0-9.-]+\.[a-z]{2,}(:\d+)?$/i.test(raw) ? 'https://' + raw.toLowerCase() : raw);
+    if (fixed !== raw) { console.warn(`NOTE: APP_URL in .env was "${raw}". Using "${fixed}". Correct the line in .env to: APP_URL=${fixed}`); process.env.APP_URL = fixed; }
+    process.env.APP_URL_RAW = raw;
+  } }
+
 // Local defaults. Do not force the rate limit off: a public server should keep it on.
 // Set RATE_LIMIT=off in .env only for a private demo on this computer.
 const { handle, HttpError, store, runDueRoutines, runBoardWorker, resetBoards, DATA_DIR, storageProblem, hostedMode } = await import('./lib/backend.js');

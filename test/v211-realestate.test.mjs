@@ -52,7 +52,9 @@ test('a lead goes from enquiry to Closed Won, every message waiting for approval
     // capture, and the same number again updates the lead instead of adding a second one
     const e1 = await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi Kumar', phone: '919876543210', channel: 'Website', message: '3BHK in Gachibowli' }, tok);
     assert.equal(e1.status, 200);
-    const e2 = await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi', phone: '9876543210', channel: 'WhatsApp', message: 'Any update?' }, tok);
+    const dup = await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi', phone: '9876543210', channel: 'WhatsApp', message: 'Any update?' }, tok);
+    assert.equal(dup.status, 409); assert.equal(dup.d.error, 'duplicate_phone'); assert.match(dup.d.message, /already exists: Ravi Kumar/); assert.ok(dup.d.existing.leadId);
+    const e2 = await req(s, 'POST', '/api/clinic/enquiries', { name: 'Ravi', phone: '9876543210', channel: 'WhatsApp', message: 'Any update?', addToExisting: true }, tok);
     assert.equal(e2.d.existing, true);
     let st = (await req(s, 'GET', '/api/clinic', undefined, tok)).d;
     assert.equal(st.flow.leads.length, 1); assert.equal(st.enquiries.length, 1);
@@ -161,7 +163,7 @@ test('no match, no-show, three unanswered follow-ups, lost and opt-out', { timeo
     // lost with a reason; a new enquiry from the same number reopens the lead
     r = await flow({ id: a, action: 'lost', reason: 'Bought elsewhere' });
     assert.equal(r.d.stage, 'lost'); assert.deepEqual(r.d.clinic.flow.report.lostReasons, { 'Bought elsewhere': 1 });
-    await req(s, 'POST', '/api/clinic/enquiries', { name: 'Asha', phone: '919811111111', channel: 'Phone', message: 'Looking again' }, tok);
+    await req(s, 'POST', '/api/clinic/enquiries', { name: 'Asha', phone: '919811111111', channel: 'Phone', message: 'Looking again', addToExisting: true }, tok);
     const st = (await req(s, 'GET', '/api/clinic', undefined, tok)).d;
     assert.equal(st.flow.leads.length, 1); assert.notEqual(st.flow.leads[0].stage, 'lost');
   } finally { await s.stop(); }

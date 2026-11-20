@@ -63,7 +63,9 @@ test('offers become invoice discounts; phones are normalised', () => {
   assert.deepEqual(R.offerOf('Refer a friend: ₹500 off'), { label: 'Refer a friend: ₹500 off', type: 'flat', value: 500 });
   assert.equal(R.offerOf('Free consultation').type, 'other');
   assert.equal(R.phone('98480 12345').value, '+919848012345');
-  assert.equal(R.phone('+14155550123').value, '+14155550123');
+  assert.equal(R.phone('+14155550123').ok, false, 'only 10-digit Indian mobiles');
+  assert.equal(R.phone('919848012345').value, '+919848012345'); assert.equal(R.phone('098480 12345').value, '+919848012345');
+  for (const bad of ['98480123456', '5848012345', '9848O12345']) assert.equal(R.phone(bad).ok, false, bad);
   for (const bad of ['abc', '12345', '1234567890']) assert.equal(R.phone(bad).ok, false, bad);
   const br = R.branches('City, Name, Area, Phone\nHyderabad, Banjara Hills, Road 12, 9848012345\nNowhere, X, Y, 1');
   assert.equal(br.value.length, 1); assert.equal(br.ok, false); assert.match(br.message, /Line 3/);

@@ -133,7 +133,7 @@ Enquiry (website, WhatsApp, Facebook, Instagram, LinkedIn, call, walk-in)
 
 | Step | Where | What you press |
 |---|---|---|
-| Add your properties | Settings › Catalogue | **Add property**, or paste a list (Name, Area, BHK, Price, Size, Status) |
+| Add your properties | Front Desk › Catalogue | **Add property**, or paste a list (Name, Area, BHK, Price, Size, Status) |
 | New lead | Front Desk | **+ New enquiry**, or **Accept** on a WhatsApp message |
 | Requirements | Pipeline › open the lead | Fill the form, **Save and find properties** |
 | Shortlist | Lead window | **Send shortlist** |
@@ -213,7 +213,7 @@ A useful first Skill: add one in **Skills** so every message follows your rule.
 
 ## 3a. The lead workflow in every industry (v2.13)
 
-Every industry now runs the same lead flow as real estate, from its own flowchart and in its own words. Front Desk opens on the **Pipeline**; add what you sell in **Settings › Catalogue** first.
+Every industry now runs the same lead flow as real estate, from its own flowchart and in its own words. Front Desk opens on the **Pipeline**; add what you sell in **Front Desk › Catalogue** first.
 
 ```
 Enquiry -> existing customer? (update, no duplicate) -> collect requirements -> missing? ask

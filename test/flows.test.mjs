@@ -69,7 +69,7 @@ const pending = async (aid) => (await srv.api('/api/agents/state?aid=' + aid, un
 test('social posting no longer goes through Buffer: no Buffer tools are offered', async () => {
   const r = await chat('[[post]] share the guide');
   assert.equal(r.status, 200, JSON.stringify(r.d));
-  assert.ok(!/social_post|social_accounts/.test(r.d.answer), r.d.answer);
+  assert.ok(!/\bsocial_post\b|social_accounts/.test(r.d.answer), r.d.answer); // Buffer's tools; publish_social_post is the app's own
   assert.equal((r.d.approvals || []).length, 0);
 });
 

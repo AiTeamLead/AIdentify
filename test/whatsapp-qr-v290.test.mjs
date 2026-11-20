@@ -87,7 +87,7 @@ test('end to end: customer message -> card -> accept -> reply drafted -> approve
     assert.equal((await req(s, 'POST', '/api/clinic/wa/reply', { phone: '919777777777', text: 'cold message' }, A)).status, 400, 'no replies to unknown numbers');
     const ok = await req(s, 'POST', '/api/clinic/decide', { id: rep.d.draft.approvalId, decision: 'approve' }, A);
     assert.equal(ok.status, 200, JSON.stringify(ok.d));
-    assert.equal(ok.d.approval.result, 'Sent on WhatsApp from your own number.');
+    assert.match(ok.d.approval.result, /^Sent on WhatsApp to .+ from your own number\.$/);
     st = (await req(s, 'GET', '/api/clinic', undefined, A)).d;
     const d = st.drafts.find((x) => x.id === rep.d.draft.id);
     assert.equal(d.waProvider, 'qr'); assert.equal(d.waStatus, 'sent'); assert.match(d.waMessageId, /^qr\.mock/);

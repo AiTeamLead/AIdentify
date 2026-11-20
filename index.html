@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AIdentify</title>
 <script>if(/[?&]bot=1(&|$)/.test(location.search))document.documentElement.classList.add('bot-boot')</script>
-<style>html.bot-boot body>*{visibility:hidden!important}html.bot-boot body::before{content:"Opening Chief…";position:fixed;inset:0;display:grid;place-items:center;font:500 14px/1.4 system-ui,sans-serif;color:#8a90a6;background:inherit;z-index:9999}
+<style>
+input[type=password]::-ms-reveal, input[type=password]::-ms-clear { display:none; width:0; height:0; }
+html.bot-boot body>*{visibility:hidden!important}html.bot-boot body::before{content:"Opening Chief…";position:fixed;inset:0;display:grid;place-items:center;font:500 14px/1.4 system-ui,sans-serif;color:#8a90a6;background:inherit;z-index:9999}
 .wp-jump{align-self:center;margin:-46px 0 8px;position:relative;z-index:3;border:1px solid rgba(127,127,160,.35);background:var(--card,#fff);color:inherit;border-radius:999px;padding:7px 14px;font:600 12.5px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);min-height:32px}.wp-jump[hidden]{display:none}</style>
 </head>
 <body>
@@ -2543,7 +2545,7 @@ function showOnboard(){
    <label>What kind of business?<select name="vertical" id="obVertical" required><option value="" selected disabled>Select your business type</option>${opts}</select></label>
    <label>Business name<input name="business" required maxlength="80" placeholder="e.g. Glow Skin Clinic, Banjara Hills"></label>
    <label>City<input name="city" required maxlength="60" placeholder="e.g. Bengaluru"></label>
-   <label>Phone or WhatsApp<input name="phone" maxlength="40" placeholder="Optional"></label>
+   <label>Phone or WhatsApp (10 digits)<input name="phone" inputmode="numeric" maxlength="16" placeholder="Optional, e.g. 9876543210" oninput="var d=this.value.replace(/\D/g,'');if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);else if(d.length===11&&d[0]==='0')d=d.slice(1);this.value=d.slice(0,10)"></label>
    <label>Website<input name="website" maxlength="160" placeholder="Optional"></label>
    <label>What should we help with first?<textarea name="help" rows="3" placeholder="e.g. reply to new patient enquiries the same day"></textarea></label>
    <details class="hide" id="obAi"><summary><b>Use your own AI key (optional)</b> — test as much as you like on your own credit</summary><div style="margin-top:8px">${aiKeyFields('ob')}</div><small class="muted">Leave this empty to start on the shared demo key (a free daily allowance). You can add or change a key later from the user menu → AI key.</small></details>
@@ -2557,7 +2559,8 @@ function showOnboard(){
     if(okey){ob.disabled=true;ob.textContent='Checking your key…';oe.classList.add('hide');
       try{const r=await aiKeySave(String(f.get('obprov')||'openrouter'),okey,String(f.get('obregion')||''));say('Your '+r.byok.name+' key is saved. Chats use your own credit.')}
       catch(x){ob.disabled=false;ob.textContent='Start working';oe.textContent=(x.message||'That key didn’t work.')+' Fix it, or clear the key field to use the shared demo key.';oe.classList.remove('hide');return}}
-    wp.profile={vertical,verticalLabel:VERTICALS[vertical].label,business,city,phone:String(f.get('phone')||'').trim(),website:String(f.get('website')||'').trim(),help:String(f.get('help')||'').trim(),at:Date.now()};
+    const obRaw=String(f.get('phone')||'').trim();let obPh='';if(obRaw){const d=obRaw.replace(/\D/g,'').replace(/^(91|0)(?=\d{10}$)/,'');if(!/^[6-9]\d{9}$/.test(d)){const oe2=el.querySelector('#obErr');if(oe2){oe2.textContent='Mobile number must be exactly 10 digits, numbers only.';oe2.classList.remove('hide')}return}obPh=d}
+    wp.profile={vertical,verticalLabel:VERTICALS[vertical].label,business,city,phone:obPh,website:String(f.get('website')||'').trim(),help:String(f.get('help')||'').trim(),at:Date.now()};
     (VERTICALS[vertical]||VERTICALS.other).kinds.forEach(ensureAgent);
     const ff=agents.find(a=>a.kind==='formfirst');
     if(ff&&!(ff.forms||[]).length)appDo(ff,'create_form',{title:business+' enquiry',fields:['Name','Email','Phone','How can we help?'],biz:business});
@@ -3006,9 +3009,12 @@ async function wpApprove(t){
   try{window.__apprAt=Date.now();const r=await SYNC.api('/api/agents/approval',{id:a.id,decision:t.dataset.d,always:!!t.dataset.always});Object.assign(a,{status:r.approval.status,result:r.approval.result,shot:r.approval.shot||a.shot||''});ok=true;window.__apprAt=Date.now();
     wpApprDone[a.id]={status:a.status,result:a.result||'',shot:a.shot||''};
     if(r.rule){a.rule=r.rule.action;a.ruleNew=1}
-    say(a.status==='done'?'Approved: '+a.summary+(r.rule?'. Rule saved: this kind of action is now always allowed':''):a.status==='declined'?'Denied. It will not be sent or posted.':'Couldn’t complete: '+(a.result||''));log('research',(a.status==='done'?'Approved: ':a.status==='declined'?'Denied: ':'Failed: ')+a.summary,a.result||'')}
-  catch(e){say(e.message||'Couldn’t update the approval');const row=t.closest('.wp-apb');if(row)row.querySelectorAll('button').forEach(b=>b.disabled=false)}
-  saveData();wpPaint(m);
+    say(r.busy?'Already working on it.':a.status==='done'?'Approved: '+a.summary+(r.rule?'. Rule saved: this kind of action is now always allowed':''):a.status==='declined'?'Denied. It will not be sent or posted.':'Couldn’t complete: '+(a.result||''));log('research',(a.status==='done'?'Approved: ':a.status==='declined'?'Denied: ':'Failed: ')+a.summary,a.result||'')}
+  catch(e){
+    if(/no longer exists/i.test(e.message||'')){ // it was decided elsewhere (Approvals page, another tab) or cleared: show that, never a dead card
+      Object.assign(a,{status:'declined',result:'This request was already handled or removed elsewhere. Nothing was sent from this card.'});wpApprDone[a.id]={status:a.status,result:a.result};say('That request was already handled elsewhere.');
+    }else{say(e.message||'Couldn’t update the approval');const row=t.closest('.wp-apb');if(row)row.querySelectorAll('button').forEach(b=>b.disabled=false)}}
+  saveData();wpPaint(m);if(typeof wpApprSync==='function')wpApprSync();
   if(ok)wpResume(c,m)}
 // open-dot: a paused task carries on once every card in that reply is decided
 function wpResume(c,m){
@@ -3517,7 +3523,7 @@ async function wpSend(text,retryOf,opt){opt=opt||{};
   const hist=c.msgs.filter(m=>m.st!=='error').slice(-6);
   const att=retryOf?[]:wpAtt.splice(0);wpAttPaint();
   const full=text+(att.length?'\n\n'+att.map(f=>'[Attached file: '+f.name+']\n'+f.text).join('\n\n'):'');
-  if(!retryOf){const u={id:Date.now(),r:'u',t:text,at:Date.now(),...(opt.sys?{sys:1}:{}),...(att.length?{files:att.map(f=>f.name)}:{})};c.msgs.push(u);wpAppend(u)}
+  if(!retryOf){const imgs=att.filter(f=>/^Image attached by the user: /.test(f.text)).map(f=>f.text.split('\n')[0]);const u={id:Date.now(),r:'u',t:text,at:Date.now(),...(opt.sys?{sys:1}:{}),...(att.length?{files:att.map(f=>f.name)}:{}),...(imgs.length?{imgs}:{})};c.msgs.push(u);wpAppend(u)}
   const ag=c.ag||null;
   const m={id:Date.now()+1,r:'a',t:'',st:'thinking',at:Date.now(),src:[],ag:ag?ag.id:undefined};c.msgs.push(m);wpAppend(m);
   c.at=Date.now();wpDraft='';const inp=$('#wpIn');if(inp){inp.value='';inp.style.height='auto'}
@@ -3530,7 +3536,7 @@ async function wpSend(text,retryOf,opt){opt=opt||{};
       const rid='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);let pol=true;
       wpLive={aid:ag?String(ag.id):'assistant',name:ag?ag.name:'Chief',q:text.slice(0,140),steps:[],m,at:Date.now(),switched:false};wpPcActPaint();
       (async()=>{await new Promise(z=>setTimeout(z,900));while(pol&&m.st==='thinking'){try{const j=await SYNC.api('/api/agents/run?id='+rid);if(j.run&&pol&&m.st==='thinking'){wpLive.steps=j.run.steps||[];wpPcActPaint();wpLiveFollow();if(!m.t){m.live=j.run.steps;wpStream(m)}}}catch(e){}await new Promise(z=>setTimeout(z,900))}})();
-      const r=await SYNC.api('/api/workplace/chat',{run_id:rid,message:full,history:hist.map(x=>({r:x.r,t:x.t})),agent_id:ag?ag.id:undefined,tz,app:(ag?appSpec(ag):appSpecAll()).slice(0,9000),apps:wpAppsAll()});
+      const r=await SYNC.api('/api/workplace/chat',{run_id:rid,message:full,history:wpHistWithImages(c,hist),agent_id:ag?ag.id:undefined,tz,app:(ag?appSpec(ag):appSpecAll()).slice(0,9000),apps:wpAppsAll()});
       pol=false;delete m.live;if(wpLive&&wpLive.m===m){wpLive.steps=r.steps||wpLive.steps;wpLiveFollow(true);wpLive.end=Date.now();wpPcActPaint()}m.src=r.sources||[];m.t=r.answer||'';m.mode=r.mode;m.live=r.live||null;
       if(ag&&r.kb&&r.kb.length)kbAddDocs(ag,r.kb,'learned');
       m.acts=r.acts||[];m.steps=r.steps||[];m.appr=(r.approvals||[]).map(a=>({id:a.id,app:a.app,summary:a.summary,status:a.status,kind:a.kind||'',shot:a.shot||'',result:a.result||'',auto:!!a.auto,rule:a.rule||'',ruleAction:a.ruleAction||'',...(a.kind==='email'||a.kind==='social'?{to:a.to,subject:a.subject,body:a.body,images:a.images||[]}:{})}));m.q=r.question||null;m.cx=r.connect||null;if(r.computer){wpPane='computer';setTimeout(()=>{renderTab()},60)}
@@ -3715,6 +3721,8 @@ function wpCnDone(d){if(!d||d.type!=='as-conn')return;
     if(m&&m.cx){m.cx.done='ok';saveData();if(wp.cur===c.id)wpPaint(m);if(wp.cur===c.id)wpResume(c,m)}}}
 let wpCxWait=null;
 window.addEventListener('message',e=>{if(e.origin===location.origin)wpCnDone(e.data)});
+// The owner app hands Chief a task ("Publish now with Chief"): send it as the owner's message once signed in.
+let wpAskSeen='';window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='aaas-ask')return;const t=String(e.data.text||'').slice(0,4000);if(!t)return;try{e.source.postMessage({type:'aaas-ask-ok'},location.origin)}catch(_){}if(wpAskSeen===t)return;const go=()=>{if(!user||typeof wpSend!=='function'){setTimeout(go,400);return}wpAskSeen=t;try{if(tab!=='My Workplace'){tab='My Workplace';renderTab()}}catch(_){}wpSend(t)};go()});
 try{new BroadcastChannel('as-conn').onmessage=e=>wpCnDone(e.data)}catch(e){}
 function wpLogo(x,sz,dot){const src=x.img||WP_LOGOS[x.id];
   return `<span class="wp-ctw"><span class="wp-ct${sz>30?' lg':''}${sz<20?' xs':''}" style="--h:${x.hue}">${src?`<img src="${esc(src)}" alt="" width="${sz}" height="${sz}" data-f="${esc(ic(x.icon||'plug',sz))}" onerror="this.outerHTML=this.dataset.f">`:ic(x.icon,sz)}</span>${dot?`<i class="wp-cdot ${dot}" aria-hidden="true"></i>`:''}</span>`}
@@ -4640,6 +4648,13 @@ function bpDraftHtml(a){if(!bpDraft||bpDraft.aid!==a.id)return '';const b=bpDraf
    <p class="wp-cando"><b>Knowledge base:</b> ${bpDraft.docs.map(d=>esc(d[0])).join(' · ')}</p></div>`}
 
 /* ---------- chat attachments: files go to the agent with the message (text, code, CSV, JSON, PDF) ---------- */
+// Pictures stay attached to the conversation: every later turn carries the latest picture link, so "post it" or
+// "use the same image" never makes Chief ask which image.
+function wpHistWithImages(c,hist){
+  const out=hist.map(x=>({r:x.r,t:(x.imgs&&x.imgs.length?x.imgs.join('\n')+'\n':'')+x.t}));
+  const all=(c.msgs||[]).filter(m=>m.imgs&&m.imgs.length),last=all.length?all[all.length-1]:null;
+  if(last&&!hist.includes(last))out.unshift({r:'u',t:'(Earlier in this chat) '+last.imgs.join('\n')});
+  return out}
 let wpAtt=[];
 const WP_ATT_MAX=60000;
 function wpAttHtml(){return wpAtt.map((f,i)=>`<span class="wp-file">${ic('doc',13)} ${esc(f.name)} <small>${(f.text.length/1000).toFixed(1)}k</small><button type="button" class="ib" data-act="wpAttDel" data-k="${i}" aria-label="Remove ${esc(f.name)}">${ic('close',12)}</button></span>`).join('')}

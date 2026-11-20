@@ -1,4 +1,113 @@
-# Fix report — v2.10 (13 Nov 2026), with v2.9 Phase 1 and v2.8 below
+# Fix report — v2.15.5 (20 Nov 2026), earlier versions below
+
+## v2.15.5 — PostgreSQL: every account, sign-in and record
+
+| Need | Done |
+|---|---|
+| See everyone who signed up / signed in, and what they entered | `DATABASE_URL` was empty, so data was in `data/kv.json`. Now: `docker compose up -d db` + `npm run db:setup` (local) or `sudo bash scripts/setup-postgres.sh` (EC2) — creates the tables, copies kv.json in (checked), writes `DATABASE_URL` |
+| Readable data, no secrets | Views `aaas_users`, `aaas_businesses`, `aaas_enquiries`, `aaas_leads`, `aaas_posts` (India time, no password hashes / tokens / keys) |
+| Sign-in history | New table `aaas_logins`: every sign-up and sign-in (password, Google, email link). Without a database: `data/logins.jsonl` |
+| Quick list / Excel | `npm run users -- --since 2026-11-10 [--csv file]`, `--logins` for sign-in history |
+| Guide | docs/POSTGRES.md: setup (Docker, Windows, EC2, RDS), pgAdmin/DBeaver/psql, ready-made queries, read-only login, backups |
+
+Tests: `npm test` 220 (218 pass, 2 skipped, 0 fail), new `test/v2155.test.mjs` (views and logins on a real in-memory PostgreSQL engine, sign-in recording, report, setup helpers). Browser 211/211 + 18/18.
+Not verifiable here: your PostgreSQL server itself (install/connection on your PC or EC2).
+
+## v2.15.4 — 20 Nov: Chief's LinkedIn loop, X through the app's browser
+
+| Issue | Root cause | Fix |
+|---|---|---|
+| Chief kept making new images and approvals; nothing published | Chief queued posts as plain drafts; an approved draft became a post only if its summary had a network name and the word "post", and the picture link was dropped — so approval did nothing and Chief started again (v2.15.2's LinkedIn block pointed it back to the same draft path) | New Chief tool `publish_social_post`: ONE post on Social Media with the picture saved on it + ONE approval; approving publishes it at once (same steps as Social Media); the same post asked again returns the existing one. Approved drafts publish whatever the wording, keeping their picture. Chief told to use only this tool for posts; Composio LinkedIn post tools blocked for Chief |
+| LinkedIn developer app needs a company Page | — | Not needed: v2.15.3 posts text + picture through the Composio connection |
+| X via browser sign-in | — | Settings › Integrations › X › Sign in to X in the app's browser (live view). Approved X posts: compose → text → picture → Post → link → picture checked (deleted if missing). 10/day, 90 s apart. Order: X app (API) → browser → Post on X (free). Warning shown: X forbids automating its website |
+
+Tests: `npm test` 216 (214 pass, 2 skipped, 0 fail), new `test/v2154.test.mjs` (loop fix, draft wording, X browser with a stand-in X site incl. picture dropped → deleted). Browser 211/211 + 18/18.
+Not verifiable here: real X website (it changes its page from time to time; failures say so, nothing wrong is posted) and your accounts.
+
+## v2.15.3 — LinkedIn text + picture through Composio too
+
+| Issue | Fix |
+|---|---|
+| Picture posts on LinkedIn needed your own LinkedIn app | Through your Composio LinkedIn connection the app now runs LinkedIn's own steps itself (Composio proxy): picture via Composio's upload tool with the real file, or LinkedIn's upload slot when LinkedIn never received it → wait for AVAILABLE → `/rest/posts` with `content.media.id` → read back → delete if the picture is missing. Composio's post tool (drops pictures) is never used. If the picture can't reach LinkedIn this way: held with the reason, never text-only. Own LinkedIn app is used first when configured |
+
+Tests: `npm test` 212 (210 pass, 2 skipped, 0 fail), new `test/v2153.test.mjs` (Composio stand-in: picture never received → own upload slot; upload refused → held; LinkedIn drops picture → deleted). Browser 211/211 + 17/17.
+Not verifiable here: your real Composio project and LinkedIn account (the fallback upload depends on LinkedIn accepting the bytes without a separate sign-in).
+
+## v2.15.2 — 19 Nov evening: LinkedIn posted the caption without the picture
+
+| Issue | Root cause | Fix |
+|---|---|---|
+| LinkedIn post went out text-only although the picture upload returned `urn:li:image:…` | `urn:li:image` is the right format; Composio's `LINKEDIN_CREATE_LINKED_IN_POST` accepted the image reference, published only the text and still reported success, so neither Chief nor the app could see the loss | LinkedIn connects with your own LinkedIn app (`LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`). The app uses LinkedIn's own picture flow: initializeUpload → upload bytes → wait for AVAILABLE → `/rest/posts` with `content.media.id` → reads the post back. If the picture is missing, the post is deleted at once and reported (Try again) |
+| Chief could still try it | Chief called Composio's LinkedIn upload/post tools directly | Blocked: LinkedIn picture tools via Composio are refused; Chief puts the post in the approval queue and the app publishes it |
+| Without your own LinkedIn app | — | LinkedIn picture posts are held with the 3 setup steps; never text-only |
+
+Text is escaped for LinkedIn (brackets no longer cut posts short; hashtags stay clickable). API version picked automatically (`LINKEDIN_VERSION` to pin).
+Tests: `npm test` 209 (207 pass, 2 skipped, 0 fail), new `test/v2152.test.mjs` (LinkedIn stand-in, incl. LinkedIn dropping the picture). Browser: 211/211 + 17/17.
+Not verifiable here: your real LinkedIn account.
+
+## v2.15.1 — 19 Nov: X connect, LinkedIn pictures, Engagement
+
+| Issue | Root cause | Fix |
+|---|---|---|
+| X: "You weren't able to give access to the App" even with your own Client ID/Secret | The sign-in still ran through Composio (shared app or a mismatched Composio auth config) | Direct X sign-in with your own X app: `X_CLIENT_ID` / `X_CLIENT_SECRET` in `.env`, OAuth 2.0 + PKCE, scopes for posts, pictures, replies, reading mentions. Works on localhost and the domain (register both callbacks; Integrations shows them) |
+| LinkedIn posted text only | The picture was passed as a link; Composio's LinkedIn tool needs an uploaded file, so it was dropped | The app uploads the picture as a Composio file and creates the post with it attached (fixed steps, no AI). Same file upload for every Composio tool the AI calls (Facebook / Instagram). A post that cannot carry its picture is held with the reason — never text-only |
+| X posts | — | Picture uploaded to X, then the post with it; link shown on Social Media |
+| New: Engagement | — | Social Media › Engagement: comments on your X / Facebook / Instagram posts → drafted replies (Send or auto rule); price/booking/number questions → Enquiries (source Comments) → leads → follow-up; one follow-up reply after a day if no number; comment on other business posts (X keyword search every 6 h, or a pasted X / LinkedIn link), max 10 a day, never automatic |
+
+Platform limits (not fixable in code): Facebook/Instagram APIs allow replies only on your own posts; Composio cannot read
+LinkedIn comments (comments can be posted); X charges per post and per read.
+
+Tests: `npm test` 206 (204 pass, 2 skipped, 0 fail), new `test/v2151.test.mjs` with stand-ins for X and Composio.
+Browser: earlier suites 211/211 + v2.15 suite 16/16. Not verifiable here: your real X / LinkedIn / Facebook / Instagram accounts.
+
+## v2.15 — 18 Nov test round (issues.pdf), updated the same evening for X
+
+| # | Issue | Root cause | Fix |
+|---|---|---|---|
+| 1 | "Approval no longer exists" with several posts queued | Every approve/add re-wrote the whole approvals list; two at once overwrote each other | New `lib/appr-store.js`: one queue per account, each change saved on its own; a second click on the same card says "already working on it"; a gone card is marked closed instead of erroring |
+| 2 | LinkedIn post went out text-only after image generation failed | One image model, no fallback | Tries 3 image models, then makes a designed card (headline + business name) locally; Chief is told never to post text-only; LinkedIn uses its images field |
+| 3 | Facebook shows "Published by Composio" | Facebook labels API posts with the app name, visible only to Page admins | Cannot be removed by any tool. Integrations explains it; own Meta app in Composio Auth Configs shows your name |
+| 4 | Chief asks "which image" after the image was attached | Image link lived only in the first message; history kept the last 6 lines | Attached-image lines always travel with the history; Chief rule: use the attached image, never ask |
+| 5 | Chief opened a browser sign-in although Composio was connected | Browser tool allowed for social sites | Browser blocked for Facebook / Instagram / LinkedIn / X when that network is connected; Chief uses the connected tools |
+| – | Approved posts only went to the calendar | Publishing waited for a manual Chief run | Approve = publish now in the background (or on its date); per-network result + links on Social Media; Publish now / Try again button |
+| 6 | Mobile numbers accepted more than 10 digits | Loose rule (7–15 digits) | Exactly 10 digits starting 6–9 everywhere, server and every input; +91 / 0 prefix stripped |
+| 7 | X connect: "You weren't able to give access to the App" | X blocks Composio's shared app; X's API has no free tier since 6 Feb 2026 | **Free:** every approved X post gets *Post on X (free)* (X opens with the text ready, picture saved), no X app needed; Connect without your own X app explains this instead of opening X's error. **Automatic:** your own X app (≈$0.015/post, billed by X) via Composio Auth Configs + `COMPOSIO_API_KEY`; found automatically |
+
+Tests: `npm test` 203 (201 pass, 2 skipped, 0 fail), new `test/v215.test.mjs`. Browser: v2.14 suites 211/211 + v2.15 suite 13/13.
+Not verifiable here: live posting to your real accounts, X connect with your X app, Facebook's own label.
+
+## v2.14 — Monday test round (Issues on Monday.pdf)
+
+| # | Issue | Status | How it was checked |
+|---|---|---|---|
+| 1 | Two eye icons on the password field | FIXED | browser |
+| 2 | Other business: dashboard with components for its domain | DONE | browser (pet clinic) |
+| 3 | Business phone / toll-free take more than 10 digits | FIXED | automated test + browser |
+| 4 | Composio: Invalid redirect URI | FIXED in code; server .env must also be corrected | code + start-up check; live sign-in not tested here |
+| 5 | Token count and cost with the OpenRouter key | DONE | browser; live OpenRouter numbers need your key |
+| 6 | Integration (Gmail) connect fails | FIXED (address) + Gmail app-password option added | automated test (fake mail server) + browser |
+| 7 | Facebook / X not posted, LinkedIn without the picture; knowledge base for Chief | Root cause fixed (broken APP_URL broke image links); Publish now with Chief added; Chief gets the business knowledge | code; live posting not tested here |
+| 8 | Other services option | DONE | browser |
+| 9 | Delete my data: pop-up first | DONE | browser + automated test |
+| 10 | Approved drafts are not sent to WhatsApp / email | FIXED | automated test (email really delivered to a fake mail server; WhatsApp QR path by existing test) |
+| 11 | UPI link and components; Chief on enquiries, drafts, unpaid invoices | DONE | automated test + browser |
+| 12 | Chief slow to open; accuracy | FIXED (background load, more instant answers) | browser |
+| 13 | Pet clinic sees unrelated services | FIXED | automated test + browser |
+| 14 | Catalogue from Settings to Front Desk | DONE | browser |
+| 15 | Invoice PDF redesign | DONE | PDF rendered and QR scanned |
+| 16 | New enquiry should show in Follow-ups | DONE | browser |
+| 17 | Draft message button in Follow-ups | DONE | browser + automated test |
+| 18 | Remove setup checklist | DONE | browser |
+| 19 | Uploaded CSV not in CRM | FIXED | automated test + browser |
+| 20 | Edit invoice | DONE | browser + automated test |
+| 21 | Same mobile number should warn | DONE | browser + automated test |
+
+Root causes worth knowing:
+- #4/#6/#7: the server's `.env` has `APP_URL=http:https://phanindramalladi.online`. Composio refused that return address, and every post image link was built from it, so LinkedIn posted text only and Facebook/X photo posts failed. Set `APP_URL=https://phanindramalladi.online` and restart.
+- #10: approving only sent when the WhatsApp QR link or the paid API was on; otherwise nothing happened and nothing was said. Email was never tried.
+- #19: the import only understood the exact column names `name`, `phone`, `email`; files from Excel or another CRM were refused.
+
+Not verified here (need your live accounts): real WhatsApp delivery, real Gmail delivery, Composio sign-in on the domain, real Facebook/X/LinkedIn posting, OpenRouter's spend numbers. docs/LOCAL-TESTING.md lists how to test each on localhost first.
 
 ## v2.13 — lead workflow for the other industries (your seven flowcharts + Other)
 

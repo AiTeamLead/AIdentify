@@ -1,6 +1,6 @@
 {
   "name": "aidentify",
-  "version": "2.13.0",
+  "version": "2.15.5",
   "private": true,
   "description": "AaaS: open-source Agents as a Service platform. Create AI agent workers, connect tools and build connectors.",
   "type": "module",
@@ -14,7 +14,9 @@
     "test:clinic": "node --test test/clinic.test.mjs",
     "db:migrate-from-file": "node scripts/db-migrate.mjs from-file",
     "db:export-to-file": "node scripts/db-migrate.mjs to-file",
-    "e2e": "node test/e2e/run.mjs"
+    "e2e": "node test/e2e/run.mjs",
+    "db:setup": "node scripts/db-setup.mjs",
+    "users": "node scripts/users-report.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
@@ -43,5 +45,8 @@
   "license": "UNLICENSED",
   "optionalDependencies": {
     "cloudflared": "^0.7.3"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17"
   }
 }
