@@ -1,0 +1,180 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --omit=dev --no-audit --no-fund",
+  "buildCommand": "node scripts/vercel-build.mjs",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "lib/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/app",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/p/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/t/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/c/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/book/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/clinic",
+      "destination": "/clinic.html"
+    },
+    {
+      "source": "/setup",
+      "destination": "/setup.html"
+    },
+    {
+      "source": "/settings",
+      "destination": "/settings.html"
+    },
+    {
+      "source": "/waitlist",
+      "destination": "/waitlist.html"
+    },
+    {
+      "source": "/early-access",
+      "destination": "/waitlist.html"
+    },
+    {
+      "source": "/v1",
+      "destination": "/waitlist.html"
+    },
+    {
+      "source": "/v2",
+      "destination": "/landing-v2.html"
+    },
+    {
+      "source": "/white-label",
+      "destination": "/white-label.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/t/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/c/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/book/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "regions": [
+    "sin1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/tick",
+      "schedule": "30 2 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/login",
+      "destination": "/Aesthetic",
+      "permanent": false
+    },
+    {
+      "source": "/signin",
+      "destination": "/Aesthetic",
+      "permanent": false
+    },
+    {
+      "source": "/signup",
+      "destination": "/Aesthetic#signup",
+      "permanent": false
+    },
+    {
+      "source": "/register",
+      "destination": "/Aesthetic#signup",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/Aesthetic#forgot",
+      "permanent": false
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/Aesthetic#forgot",
+      "permanent": false
+    }
+  ]
+}

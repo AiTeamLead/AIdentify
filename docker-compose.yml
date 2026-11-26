@@ -1,0 +1,45 @@
+# docker compose up -d   then open http://localhost:3000
+# Starts PostgreSQL (db) and the app together; every account, sign-in and record is saved in PostgreSQL.
+# Already have data in data/kv.json from `npm start`? Run once:  docker compose up -d db  &&  npm run db:setup
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aaas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aaas}
+      POSTGRES_DB: aaas
+    ports:
+      - "127.0.0.1:5432:5432"   # only this computer can reach it (psql, pgAdmin, DBeaver, npm run users)
+    volumes:
+      - aaas-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aaas -d aaas"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  aidentify:
+    build: .
+    image: aidentify:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgres://aaas:${POSTGRES_PASSWORD:-aaas}@db:5432/aaas
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - aidentify-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+volumes:
+  aidentify-data:
+  aaas-pg:
