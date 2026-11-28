@@ -5,6 +5,31 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-11-29 — Auto mode picks the cheapest model; AI credits with an admin dashboard
+
+### Added
+- **Auto mode (model router).** Each AI request is sorted into simple chat, image, website/agent work or hard
+  reasoning, then sent to the cheapest model that can do it through OpenRouter: Gemini 2.5 Flash-Lite for chat and
+  images, Claude Haiku 5.5 for websites and edits, and Claude Sonnet 5.5 only for hard reasoning. If a model fails or is
+  rate limited, the next one in the list is tried. The routing table is a setting the admin can edit.
+- **AI credits.** Hosted customers get 50 free credits at sign-up. Every AI call costs credits, worked out from
+  OpenRouter's real cost × ₹93 × a 3× markup ÷ ₹1 per credit (all editable). At 0 credits AI stops with a friendly
+  "recharge" message, and the balance never goes below zero, even with many calls at once. Settings › AI credits shows
+  the balance, a model picker (Auto or a fixed model; pricier ones use more credits), recharge packs (test mode, no
+  money moves) and the usage history.
+- **Admin › AI credits.** Every customer's balance, credits and AI cost (₹ and $) this month, top models and last
+  active, with Low / Empty flags. Totals for today and the month are shown against the OpenRouter key limit. Admins can
+  grant or deduct credits, set a monthly cap, pause or resume AI for a user, and change the routing table and credit
+  price. Every change goes in an audit log.
+- **Per-user OpenRouter keys.** With a real OpenRouter provisioning key (`OPENROUTER_PROVISIONING_KEY`), each customer
+  gets their own capped key: raised on recharge, disabled on pause, deleted with the account. A normal key is
+  detected, and the app then uses one platform key plus the credit caps. See `ROUTER_AND_CREDITS.md`.
+
+### Changed
+- Claude Sonnet is no longer the default OpenRouter model. The default is now Claude Haiku 5.5, and hosted accounts use
+  Auto mode.
+- Setup can finish on AI credits, without the customer's own key, when credits are on.
+
 ## [2.15.10] - 2026-11-26 — tests never upload pictures to a public image host
 
 ### Fixed

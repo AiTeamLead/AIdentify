@@ -1,5 +1,21 @@
 # AaaS handoff
 
+## v2.16.0: Auto mode, AI credits, admin credits dashboard (29 Nov 2026, IST) — branch `feat/auto-model-router-credits`
+
+- Read `ROUTER_AND_CREDITS.md` first. Auto mode lives in `lib/router.js`, credits in `lib/credits.js`, per-user
+  OpenRouter keys in `lib/orkeys.js` and the routes in `lib/credits-api.js`. The customer screen is in `clinic.html`
+  (Settings › AI credits) and the admin screen is in `index.html` (AI credits tab).
+- On by default only on Vercel (`AI_CREDITS` unset). `AI_CREDITS=on|off` forces it. BYOK customers and staff are never
+  billed in credits.
+- **To go live on Vercel (needs Phani's OK for each env var):** `OPENROUTER_API_KEY` (platform key, with a spend limit
+  set on openrouter.ai), `OPENROUTER_PROVISIONING_KEY` (provisioning / management key, so every user gets a capped
+  key), and optionally `AI_CREDITS=on`. No env vars were added to Vercel in this branch.
+- **Recharge is test mode only.** Orders are added without charging. Live Razorpay keys are refused until billing
+  (GSTIN) is ready. The Razorpay webhook for credit orders is not wired yet.
+- The old `lib/pricing.js` plans (₹2,999 / ₹4,999, BYOK) are unchanged. They should be replaced by credit plans once
+  pricing is final.
+- Tests: `node --test test/router-credits.test.mjs` (mock OpenRouter, nothing spent). Full suite: `npm test`.
+
 ## Clinic team (AaaS v2) — branch `cursor/aaas-v2-dental-dashboard-2181`
 
 Local demo: `npm start`, then http://localhost:3000/clinic. Sample button is on for a local server. `CLINIC_DEMO=1` forces it on, `=0` forces it off. The sample password is never printed.

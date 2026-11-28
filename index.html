@@ -228,6 +228,7 @@ body.locked .botbar{display:none}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}.g2 .panel h3{font-size:14px;font-weight:500;margin-bottom:8px}
 .chart{width:100%;height:auto;color:var(--ink)}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{text-align:left;font-weight:500;color:var(--mute);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.cr-acts{display:flex;flex-wrap:wrap;gap:6px;min-width:220px}.cr-tbl td{font-size:12.5px}.cr-note{margin-bottom:8px}.cr-note .pill{margin-left:6px}.cr-g2{margin-top:20px;align-items:start}.cr-route{display:grid;gap:6px;margin:10px 0}.cr-route span{display:grid;gap:2px}.cr-route textarea{font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;padding:8px 10px;border:1px solid var(--bd);border-radius:10px;resize:vertical;background:var(--bg);color:var(--ink)}.cr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.cr-grid label{display:grid;gap:4px;font-size:12.5px;color:var(--mute)}.cr-grid input{padding:8px 10px;border:1px solid var(--bd);border-radius:10px;font:inherit;color:var(--ink);background:var(--bg)}.cr-formula{font-size:12px;margin-top:10px}
 .tbl td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}.tbl tr:last-child td{border:0}.mu{color:var(--mute2)}
 .tw{overflow-x:auto;padding:0}
 .tools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;align-items:center}
@@ -1149,6 +1150,7 @@ function renderTab(){
   if(tab==='Inbox'&&!isStaff())inbPage();
   if(tab==='Front desk'&&!isStaff())fdPage();
   if(tab==='Agency'&&!isStaff())agPage();
+  if(tab==='AI credits'&&isStaff())crPage();
   if(tab==='My Workplace'&&!isStaff()){wpBind();wpSetBind();if(wlKeep!=null&&$('#wpLog'))$('#wpLog').scrollTop=wlKeep;
     if(wfo&&wfo.n){const el=$('#wpEd [name='+wfo.n+']');if(el){el.focus({preventScroll:true});try{if(wfo.st!=null)el.setSelectionRange(wfo.st,wfo.en)}catch(x){}}}}
 }
@@ -1644,7 +1646,7 @@ const saveReqs=()=>ST.set('as_requests',JSON.stringify(reqs));
 const isStaff=()=>!!(user&&user.role!=='customer'),isTeam=isStaff;
 const fmt=(v,c)=>new Intl.NumberFormat(c==='USD'?'en-US':'en-IN',{style:'currency',currency:c,maximumFractionDigits:0}).format(v);
 const PAGES={admin:null,pricing:['Overview','Quote requests','Plans & pricing','Settings']};
-const ATABS=[['Overview','grid'],['Customers','users'],['Quote requests','tag'],['Plans & pricing','target'],['Payments','card'],['Agents & usage','bot'],['Support','chat'],['Team & roles','users'],['Settings','gear']];
+const ATABS=[['Overview','grid'],['Customers','users'],['AI credits','card'],['Quote requests','tag'],['Plans & pricing','target'],['Payments','card'],['Agents & usage','bot'],['Support','chat'],['Team & roles','users'],['Settings','gear']];
 // customers: Dashboard and My Workplace stay in the sidebar; the other pages live in the profile menus
 const SIDE_KEEP=['Dashboard','My Workplace','Contacts','Inbox','Workflows','Suggestions','Playbooks','Front desk','Agency'];
 const sideTabs=()=>isStaff()?tabsFor():tabsFor().filter(t=>SIDE_KEEP.includes(t[0]));
@@ -1720,6 +1722,65 @@ function decide(id,act){
 }
 addEventListener('storage',e=>{if(e.key==='as_requests'&&user){renderStatic();renderTab()}});
 
+/* ---------- admin: AI credits (Auto mode routing, per-user credits, OpenRouter key) ---------- */
+let crData=null,crQ='',crF='all';
+const crN=(x,d=2)=>Number(x||0).toLocaleString('en-IN',{maximumFractionDigits:d});
+const crUsd=x=>'$'+Number(x||0).toFixed(Number(x||0)<1?4:2),crInr=x=>'₹'+crN(x,2);
+function crRows(){
+  const q=crQ.toLowerCase(),L=(crData.users||[]).filter(u=>(crF==='all'||(crF==='low'&&u.low)||(crF==='paused'&&u.paused))&&(!q||(u.name+u.email).toLowerCase().includes(q)));
+  if(!L.length)return '<div class="empty">No customers in this view.</div>';
+  return `<table class="tbl cr-tbl"><thead><tr><th>Customer</th><th>Plan</th><th>Balance</th><th>Used this month</th><th>AI cost to us</th><th>Top models</th><th>Last active</th><th>AI</th><th></th></tr></thead><tbody>${L.map(u=>`<tr>
+   <td><b>${esc(u.name||u.email)}</b><br><small class="mu">${esc(u.email)}</small></td><td>${esc(u.plan)}</td>
+   <td><b>${crN(u.balance)}</b>${u.empty?' <span class="pill failed">Empty</span>':u.low?' <span class="pill pending">Low</span>':''}${u.started?'':'<br><small class="mu">not started</small>'}</td>
+   <td>${crN(u.usedMonth)}<br><small class="mu">${u.callsMonth} calls${u.capMonth!=null?' · cap '+crN(u.capMonth,0):''}</small></td>
+   <td>${crInr(u.costMonthInr)}<br><small class="mu">${crUsd(u.costMonthUsd)}</small></td>
+   <td><small>${u.topModels.length?u.topModels.map(m=>esc(m.id.split('/').pop())+' ('+m.n+')').join('<br>'):'—'}</small></td>
+   <td>${u.lastActive?ago(u.lastActive):'—'}</td>
+   <td><span class="pill ${u.paused?'failed':'active'}">${u.paused?'Paused':'On'}</span>${u.subKey?`<br><small class="mu" title="Own OpenRouter key">key ${esc(u.subKey.hint)} · $${crN(u.subKey.limitUsd)}</small>`:''}</td>
+   <td class="cr-acts"><button class="btn gh sm" data-cr="grant" data-e="${esc(u.email)}">Grant / deduct</button><button class="btn gh sm" data-cr="cap" data-e="${esc(u.email)}" data-v="${u.capMonth==null?'':u.capMonth}">Monthly cap</button><button class="btn gh sm${u.paused?'':' dnb'}" data-cr="pause" data-e="${esc(u.email)}" data-v="${u.paused?'0':'1'}">${u.paused?'Resume AI':'Pause AI'}</button><button class="btn gh sm" data-cr="ledger" data-e="${esc(u.email)}">Ledger</button></td></tr>`).join('')}</tbody></table>`;
+}
+function crHtml(){
+  if(!crData)return `<div class="sec first"><h2>AI credits</h2></div><div id="crPage"><p class="muted">Loading…</p></div>`;
+  if(crData.error)return `<div id="crRoot"><div class="sec first"><h2>AI credits</h2></div><div class="empty">${esc(crData.error)} <button class="btn gh sm" data-cr="reload">Try again</button></div></div>`;
+  const d=crData,t=d.totals,k=d.key,c=d.config,pv=d.provisioning;
+  const keyUsed=k&&k.limit!=null&&k.remaining!=null?k.limit-k.remaining:null,keyPct=k&&k.limit?Math.min(100,Math.round(keyUsed/k.limit*100)):null;
+  const K=[['AI spend today',crInr(t.todayInr),crUsd(t.todayUsd)+' at cost'],['AI spend this month',crInr(t.monthInr),crUsd(t.monthUsd)+' at cost'],
+   ['OpenRouter key',k&&k.limit!=null?crUsd(keyUsed)+' / $'+crN(k.limit):k?'No limit set':'—',k&&k.limit!=null?keyPct+'% of the key limit used · $'+crN(k.remaining)+' left':d.keyError?'Key check failed ('+esc(d.keyError)+')':'Set OPENROUTER_API_KEY'],
+   ['Credits used this month',crN(t.creditsMonth),crN(t.balances)+' credits still held by users'],['Low balance',t.low,'at or under '+crN(c.lowBalance,0)+' credits'],['AI paused',t.paused,'of '+t.users+' customers']];
+  const mode={subkeys:['active','Per-user keys ON'],fallback:['pending','Fallback: one platform key'],off:['pending','One platform key']}[pv.mode]||['pending',pv.mode];
+  const routeRow=x=>{const pr=id=>{const m=(d.picker||[]).find(p=>p.id===id);return m&&m.in!=null?`$${m.in} / $${m.out}`:''};return `<label class="cr-route"><span><b>${esc(d.tasks[x])}</b><small class="mu">${(c.routes[x]||[]).map(id=>esc(id.split('/').pop())+(pr(id)?' '+pr(id):'')).join(' → ')}</small></span><textarea name="r_${x}" rows="3" spellcheck="false">${esc((c.routes[x]||[]).join('\n'))}</textarea></label>`};
+  return `<div id="crRoot"><div class="sec first"><h2>AI credits</h2><button class="btn gh sm" data-cr="reload">${ic('upgrade',16)} Refresh</button></div>
+  <p class="muted">${d.enabled?'Hosted customers pay for AI from credits. Auto mode picks the model for every call; the real OpenRouter cost is turned into credits with your markup.':'Credits are off on this server (AI_CREDITS is not on). Customers use their own keys.'}</p>
+  <div class="kpis">${K.map(x=>`<div class="card kpi"><span>${x[0]}</span><b>${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div>
+  <section class="card panel cr-note"><b>OpenRouter keys</b> <span class="pill ${mode[0]}">${mode[1]}</span><p class="muted" style="margin:6px 0 0">${esc(pv.reason||'')}${pv.mode!=='subkeys'?' Each user’s credit balance is the cap.':''}</p></section>
+  <div class="sec"><h2>Customers</h2></div>
+  <div class="tools"><input id="crQ" type="search" placeholder="Search name or email" aria-label="Search customers" value="${esc(crQ)}">${[['all','All'],['low','Low balance'],['paused','Paused']].map(([v,l])=>`<button class="fpill ${crF===v?'on':''}" data-cr="filter" data-v="${v}">${l}</button>`).join('')}</div>
+  <div class="card tw" id="crTable">${crRows()}</div>
+  <div class="g2 cr-g2"><form class="card panel" id="crCfg"><h3>Routing table (Auto mode)</h3><p class="muted">First model is tried first; the next ones are fallbacks on an error or a rate limit. One OpenRouter model id per line. Prices are US$ per 1M tokens in / out.</p>${Object.keys(d.tasks).map(routeRow).join('')}
+   <h3 style="margin-top:16px">Credit price</h3><div class="cr-grid"><label>Markup ×<input name="markup" type="number" step="0.1" min="1" max="20" value="${c.markup}"></label><label>₹ per credit<input name="inrPerCredit" type="number" step="0.01" min="0.01" value="${c.inrPerCredit}"></label><label>₹ per US$<input name="usdInr" type="number" step="0.5" min="50" max="200" value="${c.usdInr}"></label><label>Free credits at sign-up<input name="freeCredits" type="number" min="0" value="${c.freeCredits}"></label><label>Low-balance flag at<input name="lowBalance" type="number" min="0" value="${c.lowBalance}"></label></div>
+   <p class="muted cr-formula">credits = OpenRouter cost (US$) × ${c.usdInr} × ${c.markup} ÷ ₹${c.inrPerCredit} · e.g. a $0.001 call = ${crN(Math.max(c.minCharge,Math.ceil(0.001*c.usdInr*c.markup/c.inrPerCredit*100)/100))} credits</p>
+   <div class="acts l"><button class="btn dk sm" type="submit">Save routing and price</button></div></form>
+   <section class="card panel feed"><h3>Admin audit log</h3><ul>${(d.audit||[]).map(a=>`<li><div class="txt"><b>${esc(a.by)}</b> ${esc({grant:'granted '+crN(a.credits)+' credits to '+a.email,deduct:'deducted '+crN(-a.credits)+' credits from '+a.email,user_options:'changed '+a.email+(a.after?(a.after.paused?' · paused AI':' · AI on')+(a.after.capMonth!=null?' · cap '+a.after.capMonth:' · no cap'):''),config:'changed the routing table / credit price'}[a.action]||a.action)}</div><time>${ago(a.t)}</time></li>`).join('')||'<li class="empty">No admin changes yet.</li>'}</ul></section></div></div>`;
+}
+async function crLoad(){try{crData=await SYNC.api('/api/admin/credits')}catch(e){crData={error:e.message||'Could not load AI credits'}}if(tab==='AI credits')renderTab()}
+function crPage(){
+  if(!crData){crLoad();return}
+  const host=$('#crRoot');if(!host)return;
+  const q=$('#crQ');if(q)q.oninput=()=>{crQ=q.value;$('#crTable').innerHTML=crRows()};
+  const f=$('#crCfg');if(f)f.onsubmit=async e=>{e.preventDefault();const fd=new FormData(f),routes={};Object.keys(crData.tasks).forEach(x=>routes[x]=String(fd.get('r_'+x)||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+    try{await SYNC.api('/api/admin/credits/config',{routes,markup:+fd.get('markup'),inrPerCredit:+fd.get('inrPerCredit'),usdInr:+fd.get('usdInr'),freeCredits:+fd.get('freeCredits'),lowBalance:+fd.get('lowBalance')});say('Routing table and credit price saved');crData=null;crLoad()}catch(err){say(err.message||'Could not save')}};
+  host.onclick=async ev=>{const b=ev.target.closest('[data-cr]');if(!b)return;const a=b.dataset.cr,e=b.dataset.e;
+    try{
+      if(a==='reload'){crData=null;renderTab();return}
+      if(a==='filter'){crF=b.dataset.v;renderTab();return}
+      if(a==='grant'){const v=prompt('Credits to add for '+e+' (use a minus sign to deduct, e.g. -25):','100');if(v==null||!v.trim())return;const note=prompt('Note for the ledger (optional):','')||'';const r=await SYNC.api('/api/admin/credits/adjust',{email:e,delta:Number(v),note});say((r.applied>0?'Added ':'Removed ')+crN(Math.abs(r.applied))+' credits · balance '+crN(r.balance))}
+      else if(a==='cap'){const v=prompt('Monthly credit cap for '+e+' (empty = no cap):',b.dataset.v||'');if(v==null)return;await SYNC.api('/api/admin/credits/user',{email:e,capMonth:v.trim()===''?null:Number(v)});say('Monthly cap saved')}
+      else if(a==='pause'){const p=b.dataset.v==='1';if(p&&!confirm('Pause AI for '+e+'? Their agents and chat stop calling models until you resume.'))return;await SYNC.api('/api/admin/credits/user',{email:e,paused:p});say(p?'AI paused for '+e:'AI resumed for '+e)}
+      else if(a==='ledger'){const r=await SYNC.api('/api/admin/credits/ledger?email='+encodeURIComponent(e));panel('Credit ledger · '+e,`<div class="tw" style="max-height:60vh;overflow:auto"><table class="tbl"><thead><tr><th>When</th><th>What</th><th>Credits</th><th>Balance</th></tr></thead><tbody>${(r.ledger||[]).map(x=>`<tr><td><small>${new Date(x.t).toLocaleString('en-IN')}</small></td><td>${esc(x.type)}${x.model?'<br><small class="mu">'+esc(x.model)+(x.cls?' · '+esc(x.cls):'')+'</small>':''}${x.note?'<br><small class="mu">'+esc(x.note)+'</small>':''}${x.by?'<br><small class="mu">by '+esc(x.by)+'</small>':''}</td><td>${x.credits>0?'+':''}${crN(x.credits)}</td><td>${crN(x.balance)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No entries yet.</td></tr>'}</tbody></table></div>`);return}
+      else return;
+      crData=null;crLoad();
+    }catch(err){say(err.message||'That did not work')}};
+}
 /* ---------- admin ---------- */
 let A=null;const fl={c:'',cs:'all',q:'all',p:'all'};
 const saveA=()=>ST.set('as_admin',JSON.stringify(A));
@@ -1761,7 +1822,7 @@ function bars(vals,labels,color,f){
 }
 function adminHtml(){
   loadA();loadReqs();
-  const m={'Overview':ovHtml,'Customers':custHtml,'Quote requests':qrHtml,'Plans & pricing':planHtml,'Payments':payHtml,'Settings':settingsHtml}[tab];
+  const m={'Overview':ovHtml,'Customers':custHtml,'AI credits':crHtml,'Quote requests':qrHtml,'Plans & pricing':planHtml,'Payments':payHtml,'Settings':settingsHtml}[tab];
   return m?m():`<div class="sec first"><h2>${tab}</h2></div><div class="empty">${tab} is coming in the next update.</div>`;
 }
 function ovHtml(){

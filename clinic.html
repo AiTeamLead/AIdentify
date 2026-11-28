@@ -54,6 +54,8 @@ h1 { font-size:26px; letter-spacing:-.03em; margin:0 0 4px; font-weight:650; }
 .tile .k { color:var(--muted); font-size:13px; }
 .tile .v { font-size:26px; font-weight:650; letter-spacing:-.03em; margin-top:4px; }
 .tile .hint { color:var(--muted); font-size:12px; margin-top:4px; }
+.cred-main.low { border-color:#f3d39b; } .cred-main.empty { border-color:#f1b5b5; } .cred-main.empty .v { color:var(--red); }
+.cred-packs button.tile { text-align:left; cursor:pointer; } .cred-packs button.tile:hover { border-color:#c9d7f5; } .cred-packs button.tile:disabled { opacity:.55; cursor:not-allowed; } .cred-plus { color:var(--green); }
 .team button.tile { width:100%; text-align:left; }
 .team button.tile:hover { border-color:#c9d7f5; }
 .muted { color:var(--muted); }
@@ -526,7 +528,7 @@ const dayKey = (iso) => { const t = Date.parse(iso); if (!t) return ''; return n
 const hello = () => { const h = Number(new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Kolkata', hour:'numeric', hourCycle:'h23' }).format(new Date())); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 const PILL = { new:'New', booked:'Booked', closed:'Closed', completed:'Completed', noshow:'No-show', cancelled:'Cancelled', pending:'Waiting', approved:'Approved', rejected:'Skipped', scheduled:'On calendar', draft:'Draft', queued:'Queued', paid:'Paid', unpaid:'Unpaid', overdue:'Overdue' };
 const pill = (s) => `<span class="pill ${esc(s)}">${esc(PILL[s] || s || '')}</span>`;
-const SCREENS = ['crm','skills','guide','dash','front','recall','reviews','social','insights','billing','approvals','connections','pricing','usage','privacy','visit','settings','setup'];
+const SCREENS = ['credits','crm','skills','guide','dash','front','recall','reviews','social','insights','billing','approvals','connections','pricing','usage','privacy','visit','settings','setup'];
 
 let token = localStorage.getItem('aaas_clinic_token') || '';
 let meta = { demoLogin:false };
@@ -642,7 +644,7 @@ function loginView() {
   </form></div>`}`;
 }
 const AI_PROVIDERS_FALLBACK = [
-  { id: 'openrouter', name: 'OpenRouter', models: ['anthropic/claude-sonnet-4.5', 'openai/gpt-4o', 'google/gemini-2.5-pro'], defaultModel: 'anthropic/claude-sonnet-4.5' },
+  { id: 'openrouter', name: 'OpenRouter', models: ['anthropic/claude-haiku-5.5', 'google/gemini-2.5-flash-lite', 'anthropic/claude-sonnet-5.5'], defaultModel: 'anthropic/claude-haiku-5.5' },
   { id: 'openai', name: 'OpenAI', models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1'], defaultModel: 'gpt-4o-mini' },
   { id: 'xai', name: 'xAI Grok', models: ['grok-4.5', 'grok-4', 'grok-3'], defaultModel: 'grok-4.5' },
   { id: 'google', name: 'Google Gemini', models: ['gemini-2.5-flash', 'gemini-2.5-pro'], defaultModel: 'gemini-2.5-flash' },
@@ -1059,7 +1061,7 @@ let modal = null; // { kind: 'enquiry' | 'appointment' | 'invoice', ...prefill }
 let enqFilter = 'open';
 const NAV = [['dash', 'Dashboard'], ['front', 'Front Desk'], ['crm', 'CRM'], ['social', 'Social Media'], ['billing', 'Billing & Invoicing'], ['approvals', 'Approvals'], ['skills', 'Skills'], ['guide', 'Guide'], ['settings', 'Settings']];
 // older screens and links land on their new home
-const MOVED = { recall: ['front', 'followups'], reviews: ['front', 'reviews'], insights: ['dash'], connections: ['settings', 'integrations'], pricing: ['settings', 'usage'], usage: ['settings', 'usage'], privacy: ['settings', 'privacy'], visit: ['dash'] };
+const MOVED = { recall: ['front', 'followups'], reviews: ['front', 'reviews'], insights: ['dash'], connections: ['settings', 'integrations'], pricing: ['settings', 'usage'], usage: ['settings', 'usage'], credits: ['settings', 'credits'], privacy: ['settings', 'privacy'], visit: ['dash'] };
 function route(s) { const m = MOVED[s]; if (m) { if (m[1]) tabs[m[0]] = m[1]; return m[0]; } return s; }
 const Lb = () => (state && state.labels) || {};
 const cap = (s) => String(s || '').replace(/^./, (c) => c.toUpperCase());
@@ -1532,8 +1534,8 @@ function modalHtml() {
 // ---- Settings: one page, six tabs ----
 function settings() {
   if (tabs.settings === 'plan' || tabs.settings === 'reminders') tabs.settings = tabs.settings === 'plan' ? 'usage' : 'business';
-  const body = { business: setBusiness, ai: setAi, integrations: setIntegrations, usage: setUsage, privacy: setPrivacy }[tabs.settings] || setBusiness;
-  return `<h1>Settings</h1>${tabBar('settings', [['business', 'Business profile'], ['ai', 'AI & API key'], ['integrations', 'Integrations'], ['usage', 'Usage'], ['privacy', 'Privacy & data']])}${body()}`;
+  const body = { business: setBusiness, ai: setAi, credits: setCredits, integrations: setIntegrations, usage: setUsage, privacy: setPrivacy }[tabs.settings] || setBusiness;
+  return `<h1>Settings</h1>${tabBar('settings', [['business', 'Business profile'], ['ai', 'AI & API key'], ['credits', 'AI credits'], ['integrations', 'Integrations'], ['usage', 'Usage'], ['privacy', 'Privacy & data']])}${body()}`;
 }
 function setCatalogue() {
   const rows = state.flow.catalogue || [], W = FW();
@@ -1932,6 +1934,39 @@ function guidePage() {
     </tbody></table></div>
     <h2>First week checklist</h2>
     <ol class="guide small-gap"><li>Settings › AI & API key: add your key so the team can write drafts.</li><li>Settings › Integrations: connect WhatsApp with the QR code (free), then Gmail and your social pages.</li><li>Add or import your ${esc(who)} (Settings › Privacy & data › Import a CSV).</li><li>Add two Skills so messages sound like you.</li><li>Ask Chief: “What should I do today?”</li></ol>`;
+}
+// ---- Settings › AI credits: balance, model (Auto or fixed), recharge (test mode until payments go live), history ----
+let credLive = null, credBusy = false;
+async function loadCredits() {
+  if (credBusy) return; credBusy = true;
+  try { credLive = await api('/api/credits'); } catch (e) { credLive = { error: e.message }; }
+  credBusy = false; if (screen === 'settings' && tabs.settings === 'credits') render();
+}
+const credN = (x) => Number(x || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const CRED_WHAT = { grant: 'Credits added', usage: 'AI use', recharge: 'Recharge', adjust: 'Adjustment' };
+const CRED_CLS = { simple: 'chat', vision: 'image', build: 'website / agent work', hard: 'hard reasoning' };
+function setCredits() {
+  if (!credLive) { loadCredits(); return '<p class="small">Loading AI credits…</p>'; }
+  if (credLive.error) return `<p class="err">${esc(credLive.error)}</p><button class="btn-ghost" type="button" data-act="credits-refresh">Try again</button>`;
+  const c = credLive;
+  if (!c.enabled) return `<h2>AI credits</h2><p class="sub">This workspace runs AI on your own key (Settings › AI & API key), so there are no credits to manage here.</p>`;
+  const state0 = c.paused ? 'AI is paused on this account. Contact support.' : c.balance <= 0 ? 'Recharge to keep using AI' : c.low ? 'Running low: recharge soon' : `1 credit = ₹${credN(c.inrPerCredit)} of AI use`;
+  const hist = (c.history || []).map((h) => `<tr><td>${esc(when(new Date(h.t).toISOString()))}</td><td>${esc(CRED_WHAT[h.type] || h.type)}${h.cls ? ` <span class="small">· ${esc(CRED_CLS[h.cls] || h.cls)}</span>` : ''}${h.note ? `<div class="small">${esc(h.note)}</div>` : ''}</td><td class="small">${esc(h.model ? h.model.split('/').pop() : '')}</td><td class="${h.credits > 0 ? 'cred-plus' : ''}">${h.credits > 0 ? '+' : ''}${credN(h.credits)}</td><td>${credN(h.balance)}</td></tr>`).join('');
+  return `<h2>AI credits</h2><p class="sub">Every AI job your team does uses a few credits. Cheap jobs (a chat reply) cost a fraction of a credit; big ones (a website build) cost more. <button class="btn-ghost" type="button" data-act="credits-refresh">Refresh</button></p>
+    ${c.balance <= 0 ? `<p class="notice" role="alert"><b>You’re out of AI credits.</b> Recharge below to keep going. Nothing you’ve built is lost.</p>` : ''}
+    <div class="kpis">
+      <div class="tile cred-main${c.balance <= 0 ? ' empty' : c.low ? ' low' : ''}"><div class="k">Credits left</div><div class="v">${credN(c.balance)}</div><div class="hint">${esc(state0)}</div></div>
+      <div class="tile"><div class="k">Used this month</div><div class="v">${credN(c.usedMonth)}</div><div class="hint">${esc(c.callsMonth || 0)} AI calls</div></div>
+      <div class="tile"><div class="k">Monthly limit</div><div class="v">${c.capMonth == null ? 'None' : credN(c.capMonth)}</div><div class="hint">${c.capMonth == null ? 'Only your balance limits use' : 'Set by support'}</div></div>
+    </div>
+    <div class="card stack" style="padding:16px"><h2 style="margin-top:0">AI model</h2>
+      <p class="small">Auto picks the cheapest model that can do each job: a fast model for chat and widget replies, Claude Haiku for websites and edits, Claude Sonnet only for hard reasoning. A fixed model is used for everything; pricier models use more credits.</p>
+      <label>Model<select data-change="credits-model" aria-label="AI model">${(c.models || []).map((m) => `<option value="${esc(m.id)}" ${m.id === c.model ? 'selected' : ''}>${esc(m.name)}${m.perMessage != null ? ` · about ${credN(m.perMessage)} credits a message` : ''}${m.vision ? ' · reads images' : ''}</option>`).join('')}</select></label></div>
+    <div class="card" style="padding:16px;margin-top:14px"><h2 style="margin-top:0">Recharge</h2>
+      <p class="small">${c.payments === 'test' ? '<span class="pill pending">TEST MODE</span> No money is charged yet. Credits are added straight away so you can try it.' : 'Online payments are off right now. Contact support to add credits.'}</p>
+      <div class="kpis cred-packs">${(c.packs || []).map((p) => `<button class="tile" type="button" data-act="credits-recharge" data-pack="${esc(p.id)}" data-inr="${esc(p.inr)}" data-credits="${esc(p.credits)}" ${c.payments === 'test' ? '' : 'disabled'}><div class="k">₹${credN(p.inr)}</div><div class="v">${credN(p.credits)}</div><div class="hint">credits · ₹${(p.inr / p.credits).toFixed(2)} each</div></button>`).join('')}</div></div>
+    <h2>Usage history</h2>
+    <div class="scroll"><table><thead><tr><th>When</th><th>What</th><th>Model</th><th>Credits</th><th>Balance</th></tr></thead><tbody>${hist || '<tr><td colspan="5">Nothing yet. Your free credits appear here.</td></tr>'}</tbody></table></div>`;
 }
 // Usage: counted from every AI call this account made, plus what the provider itself reports for the key.
 let usageLive = null, usageBusy = false;
@@ -2352,6 +2387,14 @@ async function act(name, el) {
     }
     if (name === 'wa-triage') { state = await api('/api/clinic/wa/triage', { id: el.dataset.id, decision: el.dataset.decision }); flash(el.dataset.decision === 'accept' ? 'Added as a lead.' : 'Declined. Messages from this number are ignored from now on.'); render(); return; }
     if (name === 'usage-refresh') { usageLive = null; render(); return; }
+    if (name === 'credits-refresh') { credLive = null; render(); return; }
+    if (name === 'credits-model') { const r = await api('/api/credits/model', { model: el.value }); flash(r.model === 'auto' ? 'Auto mode on: the cheapest capable model is picked for each job.' : 'Model saved. It is used for every AI job.'); credLive = null; render(); return; }
+    if (name === 'credits-recharge') {
+      if (!confirm(`Add ${el.dataset.credits} credits for ₹${el.dataset.inr}? Test mode: no money is charged.`)) return;
+      const o = await api('/api/credits/recharge', { pack: el.dataset.pack });
+      const r = await api('/api/credits/recharge/confirm', { id: o.order.id });
+      flash(`${Number(r.applied || 0).toLocaleString('en-IN')} credits added. Balance: ${Number(r.balance || 0).toLocaleString('en-IN')}.`); credLive = null; render(); return;
+    }
     if (name === 'skill-add') { const f = Object.fromEntries(new FormData(el).entries()); state = await api('/api/clinic/skills', { name: f.name, text: f.text }); flash('Skill saved. Your team follows it from the next draft.'); render(); return; }
     if (name === 'skill-del') { if (!confirm('Delete this skill?')) return; state = await api('/api/clinic/skills/delete', { id: Number(el.dataset.id) }); flash('Skill deleted.'); render(); return; }
     if (name === 'integ-refresh') { integMsg = {}; integ = null; render(); await loadInteg(true); flash('Status refreshed.'); return; }
